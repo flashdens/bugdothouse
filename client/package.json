@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "nextjs": "^0.0.3",
+    "react-chessboard": "^4.5.0"
+  }
+}
