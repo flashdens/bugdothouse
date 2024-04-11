@@ -51,7 +51,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'bugdothouse.urls'
+ROOT_URLCONF = 'bugdothouse_server.urls'
 
 TEMPLATES = [
     {
