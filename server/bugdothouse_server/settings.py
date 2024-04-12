@@ -77,15 +77,18 @@ WSGI_APPLICATION = 'bugdothouse_server.wsgi.application'
 # CORS configuration
 
 CORS_ALLOWED_ORIGINS = []
-CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 
 if DEBUG:
     # Add localhost:3000 in development mode
-    CORS_ALLOWED_ORIGINS.append('http://127.0.0.1:3000')
+    CORS_ALLOWED_ORIGINS.append('http://localhost:3000')
 else:
     # Add your production server URL in production mode
     CORS_ALLOWED_ORIGINS.append('dupa')
+
+print(CORS_ALLOWED_ORIGINS)
 
 CORS_ALLOW_HEADERS = [
     'accept',

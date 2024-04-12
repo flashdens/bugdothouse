@@ -6,7 +6,7 @@ const TestChessboard = () => {
     const [randomFen, setRandomFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
 
     const getRandomFen = () => {
-        fetch(`${SERVER_URL}/api/random_position`)
+        fetch(`${SERVER_URL}/api/random_position/`)
             .then(response => response.json())
             .then(data => setRandomFen(data.fen))
             .catch(error => console.error('Error fetching data:', error));
