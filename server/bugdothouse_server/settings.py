@@ -88,8 +88,6 @@ else:
     # Add your production server URL in production mode
     CORS_ALLOWED_ORIGINS.append('dupa')
 
-print(CORS_ALLOWED_ORIGINS)
-
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
