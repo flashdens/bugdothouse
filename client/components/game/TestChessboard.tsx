@@ -1,32 +1,82 @@
-import {useEffect, useState} from "react";
-import { Chessboard } from "react-chessboard";
+import React, {useCallback, useState} from 'react';
+import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 
-const TestChessboard = () => {
-    const [randomFen, setRandomFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-    const getRandomFen = () => {
-        fetch(`${SERVER_URL}/api/random_position/`)
+
+enum Sides {
+    'WHITE',
+    'BLACK',
+}
+
+interface GameState {
+    fen: string
+    sideToMove: Sides
+}
+
+interface MoveData {
+    fromSq: string,
+    toSq: string,
+    sideToMove: number
+}
+
+function ChessGame() {
+    const [gameState, setGameState] = useState<GameState>(
+        {
+        fen: START_FEN,
+        sideToMove: Sides.WHITE
+        });
+
+    const startNewGame = () => {
+        fetch(`${SERVER_URL}/api/new_game/`)
             .then(response => response.json())
-            .then(data => setRandomFen(data.fen))
-            .catch(error => console.error('Error fetching data:', error));
-    }
+            .then(data => setGameState(data));
+    };
 
-    useEffect(() => {
-        getRandomFen();
-    }, []);
+
+    const makeMove = useCallback(
+        (moveData: MoveData) => {
+            fetch(`${SERVER_URL}/api/move/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(moveData),
+            })
+                .then(response => response.json())
+                .then(data => setGameState(data));
+
+            return false;
+        }, []);
+    
+
+    const onDrop = (from: string, to: string): boolean => {
+        const moveData: MoveData = {
+            fromSq: from,
+            toSq: to,
+            sideToMove: 0,
+        };
+
+        const move: any = makeMove(moveData);
+
+
+        return !!move;
+    }
 
     return (
         <div>
-            <div style={{ width: '80dvh'}}>
+            <button onClick={startNewGame}>Start New Game</button>
+            {gameState && (
+                <div style={{ width: '80dvh' }}>
                 <Chessboard
-                    id={'basicChessboard'}
-                    position={randomFen}
-                    animationDuration={0}
+                    position={gameState.fen}
+                    onPieceDrop={onDrop}
                 />
-            </div>
+                </div>
+            )}
         </div>
-    )
+    );
 }
 
-export default TestChessboard;
+export default ChessGame;
