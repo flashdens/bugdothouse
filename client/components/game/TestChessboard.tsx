@@ -21,23 +21,37 @@ interface MoveData {
     sideToMove: number
 }
 
-function ChessGame() {
+const ChessGame = () => {
     const [gameState, setGameState] = useState<GameState>(
         {
         fen: START_FEN,
         sideToMove: Sides.WHITE
         });
 
+
     const startNewGame = () => {
-        fetch(`${SERVER_URL}/api/new_game/`)
+        fetch(`${SERVER_URL}/api/test/new_game/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
             .then(response => response.json())
-            .then(data => setGameState(data));
+            .then(data => {
+                setGameState({
+                    ...data,
+                    fen: data.fen
+                })
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     };
 
 
     const makeMove = useCallback(
         (moveData: MoveData) => {
-            fetch(`${SERVER_URL}/api/move/`, {
+            fetch(`${SERVER_URL}/api/test/move/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,7 +59,16 @@ function ChessGame() {
                 body: JSON.stringify(moveData),
             })
                 .then(response => response.json())
-                .then(data => setGameState(data));
+                .then(data => {
+                setGameState({
+                    ...data,
+                    fen: data.fen
+                })
+                return true;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
 
             return false;
         }, []);
@@ -72,6 +95,7 @@ function ChessGame() {
                 <Chessboard
                     position={gameState.fen}
                     onPieceDrop={onDrop}
+                    arePremovesAllowed={false}
                 />
                 </div>
             )}
