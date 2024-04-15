@@ -8,5 +8,5 @@ class ChessPositionSerializer(serializers.Serializer):
 class ChessMoveSerializer(serializers.Serializer):
     fromSq = serializers.CharField()
     toSq = serializers.CharField()
-    sideToMove = serializers.IntegerField()
+    sideToMove = serializers.BooleanField()
     #promotion = serializers.CharField()

@@ -45,19 +45,25 @@ class MakeMoveView(APIView):
             # Your logic to handle the move...
             # Remember to validate the move and update the game state accordingly
 
+            success = False
             move = chess.Move.from_uci(from_sq + to_sq)
-            board.push(move)
+
+            if move in board.legal_moves:
+                success = True
+                board.push(move)
+
             print(board)
 
             response_data = {
-                'message': 'Move received successfully.',
+                'message': 'Move processed successfully' if success else 'Invalid move!',
                 'from_sq': from_sq,
                 'to_sq': to_sq,
                 'side_to_move': side_to_move,
                 'fen': board.fen()
             }
-
             print("received", from_sq + to_sq)
-            return Response(response_data)
+
+            return Response(response_data, status=200 if success else 427)
+
         else:
             return Response(serializer.errors, status=400)

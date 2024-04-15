@@ -3,29 +3,26 @@ import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 
 const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+const WHITE: boolean = false;
+const BLACK: boolean = true;
 
-
-enum Sides {
-    'WHITE',
-    'BLACK',
-}
 
 interface GameState {
     fen: string
-    sideToMove: Sides
+    sideToMove: boolean
 }
 
 interface MoveData {
     fromSq: string,
     toSq: string,
-    sideToMove: number
+    sideToMove: boolean
 }
 
 const ChessGame = () => {
     const [gameState, setGameState] = useState<GameState>(
         {
         fen: START_FEN,
-        sideToMove: Sides.WHITE
+        sideToMove: WHITE
         });
 
 
@@ -40,7 +37,8 @@ const ChessGame = () => {
             .then(data => {
                 setGameState({
                     ...data,
-                    fen: data.fen
+                    fen: data.fen,
+                    sideToMove: !data.sideToMove
                 })
             })
             .catch(error => {
@@ -78,7 +76,7 @@ const ChessGame = () => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            sideToMove: 0,
+            sideToMove: false,
         };
 
         const move: any = makeMove(moveData);
