@@ -63,7 +63,7 @@ class MakeMoveView(APIView):
             }
             print("received", from_sq + to_sq)
 
-            return Response(response_data, status=200 if success else 427)
+            return Response(response_data, status=200 if success else 422)
 
         else:
             return Response(serializer.errors, status=400)
