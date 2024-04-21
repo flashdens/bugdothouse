@@ -27,7 +27,6 @@ const ChessGame = () => {
 
 
     const startNewGame = () => {
-        console.log(SERVER_URL)
         fetch(`${SERVER_URL}/api/test/new_game/`, {
             method: 'POST',
             headers: {

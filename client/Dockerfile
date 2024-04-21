@@ -8,11 +8,10 @@ WORKDIR /app/client
 # Copy the package.json and package-lock.json files to the working directory
 COPY . .
 
+ENV WATCHPACK_POLLING true
+ENV NEXT_TELEMETRY_DISABLED 1
+
 # Install dependencies
 RUN npm install
-
-# Expose the port Next.js will run on
-EXPOSE 3000
-
 # Start the Next.js app
 CMD ["npm", "run", "dev"]
