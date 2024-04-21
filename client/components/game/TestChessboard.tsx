@@ -27,6 +27,7 @@ const ChessGame = () => {
 
 
     const startNewGame = () => {
+        console.log(SERVER_URL)
         fetch(`${SERVER_URL}/api/test/new_game/`, {
             method: 'POST',
             headers: {
@@ -45,6 +46,7 @@ const ChessGame = () => {
                 console.error('Error:', error);
             });
     };
+
 
 
     const makeMove = useCallback(
@@ -87,6 +89,7 @@ const ChessGame = () => {
 
     return (
         <div>
+            <h1>dupa</h1>
             <button onClick={startNewGame}>Start New Game</button>
             {gameState && (
                 <div style={{ width: '80dvh' }}>
