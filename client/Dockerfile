@@ -2,10 +2,11 @@
 FROM node:18-slim
 
 # Set the working directory in the container
+RUN mkdir -p "/app/client"
 WORKDIR /app/client
 
 # Copy the package.json and package-lock.json files to the working directory
-COPY package*.json ./
+COPY . .
 
 # Install dependencies
 RUN npm install
@@ -14,4 +15,4 @@ RUN npm install
 EXPOSE 3000
 
 # Start the Next.js app
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

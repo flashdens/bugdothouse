@@ -1,18 +1,62 @@
 services:
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend:/app/server
 
   client:
+    container_name: bugdothouse_client
     build:
       context: ./client
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    tty: true
+
+
+  db:
+    container_name: bugdothouse_db
+    image: postgres:13
     volumes:
-      - ./frontend:/app/client
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=bugdothouse
+      - POSTGRES_PASSWORD=bugdothouse
+      - POSTGRES_DB=bugdothouse
+
+
+  bugdothouse_wsgi:
+    container_name: bugdothouse_wsgi
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: uwsgi --socket=:9000 --module=bugdothouse_server.wsgi:application --py-autoreload=1
+    volumes:
+      - ./server:/opt/myproject
+    env_file:
+      - ./server/.env
+    depends_on:
+      - db
+    tty: true
+
+
+  bugdothouse_asgi:
+    container_name: bugdothouse_asgi
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: python3 manage.py runserver
+    volumes:
+      - ./server:/opt/myproject
+    env_file:
+      - ./server/.env
+    depends_on:
+      - db
+    tty: true
+
+  nginx:
+    image: nginx
+    container_name: bugdothouse_nginx
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+
+volumes:
+  postgres_data:

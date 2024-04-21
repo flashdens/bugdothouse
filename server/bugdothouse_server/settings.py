@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--v0buoqwwoq%2#kv_$s#e4lh0jh_4^#x4@=o-yy8(9ty7luw4g'
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.environ.get("DEBUG", default=0))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
+
 
 
 # Application definition
@@ -87,8 +88,8 @@ if DEBUG:
     # Add localhost:3000 in development mode
     CORS_ALLOWED_ORIGINS.append('http://localhost:3000')
 else:
-    # Add your production server URL in production mode
-    CORS_ALLOWED_ORIGINS.append('dupa')
+    # Add your production django_asgi URL in production mode
+    CORS_ALLOWED_ORIGINS.append('https://onet.pl')
 
 CORS_ALLOW_HEADERS = [
     'accept',
@@ -106,14 +107,16 @@ CORS_ALLOW_HEADERS = [
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'bugdothouse',
-        'USER': 'bugdothouse',
-        'PASSWORD': 'bugdothouse',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }}
+    "default": {
+        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("SQL_DATABASE", BASE_DIR / "db.sqlite3"),
+        "USER": os.environ.get("SQL_USER", "user"),
+        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
+        "HOST": os.environ.get("SQL_HOST", "localhost"),
+        "PORT": os.environ.get("SQL_PORT", "5432"),
+    }
+}
+
 
 
 # Password validation
