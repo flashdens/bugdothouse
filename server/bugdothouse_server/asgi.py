@@ -9,13 +9,27 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
 
 import os
 
-from channels.routing import ProtocolTypeRouter
+from channels.auth import AuthMiddlewareStack
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
+
+import game_ws.routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bugdothouse_server.settings')
 
-bugdothouse_server = get_asgi_application()
+django_asgi_application = get_asgi_application()
 
-application = ProtocolTypeRouter({
-    "http": bugdothouse_server
-})
+
+class AllowedHostOriginValidator:
+    pass
+
+
+application = ProtocolTypeRouter(
+    {
+        "http": django_asgi_application,
+        "websocket": AllowedHostsOriginValidator(
+            AuthMiddlewareStack(URLRouter(game_ws.routing.websocket_urlpatterns))
+        ),
+    }
+)

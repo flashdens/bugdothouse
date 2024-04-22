@@ -28,11 +28,13 @@ DEBUG = bool(os.environ.get("DEBUG", default=0))
 ALLOWED_HOSTS = ['localhost']
 
 
-
 # Application definition
 
 INSTALLED_APPS = [
     'daphne',
+    'game',
+    'game_api',
+    'game_ws',
     'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -40,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'game',
     'rest_framework'
 ]
 
@@ -75,7 +76,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'bugdothouse_server.wsgi.application'
-ASGI_APPLICATION = "bugdothouse_server.asgi.application"
+ASGI_APPLICATION = 'bugdothouse_server.asgi.application'
 
 # CORS configuration
 

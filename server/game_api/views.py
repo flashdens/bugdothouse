@@ -43,7 +43,7 @@ class MakeMoveView(APIView):
             side_to_move = serializer.validated_data['sideToMove']
 
             # Your logic to handle the move...
-            # Remember to validate the move and update the game state accordingly
+            # Remember to validate the move and update the test state accordingly
 
             success = False
             move = chess.Move.from_uci(from_sq + to_sq)

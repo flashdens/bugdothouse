@@ -1,5 +1,5 @@
 import {Chessboard} from "react-chessboard";
-import TestChessboard from "@/components/game/TestChessboard";
+import TestChessboard from "@/components/test/TestChessboard";
 
 const Index = () => {
     return (

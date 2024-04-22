@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM --platform=$BUILDPLATFORM python:3.11-alpine AS builder
+FROM python:3.11-alpine
 
 # Set environment variables
 ENV PYTHONUNBUFFERED 1
