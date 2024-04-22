@@ -29,7 +29,6 @@ services:
       context: ./server
       dockerfile: Dockerfile
     command: uwsgi --socket=:9000 --module=bugdothouse_server.wsgi:application --py-autoreload=1
-    restart: always
     volumes:
       - ./server:/opt/myproject
     env_file:
@@ -43,8 +42,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: python3 manage.py runserver
-    restart: always
+    command: daphne -b 0.0.0.0 -p 8000 bugdothouse_server.asgi:application
     volumes:
       - ./server:/opt/myproject
     env_file:

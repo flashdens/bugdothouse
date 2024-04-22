@@ -26,7 +26,7 @@ const TestChessboard = () => {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const socket = new WebSocket('ws://localhost/ws/test/' );
+            const socket = new WebSocket('ws://localhost/ws' );
             setMoveSocket(socket);
 
             socket.onmessage = function (e) {
