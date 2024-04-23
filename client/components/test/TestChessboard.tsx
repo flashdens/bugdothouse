@@ -32,6 +32,17 @@ const TestChessboard = () => {
             socket.onmessage = function (e) {
                 const data = JSON.parse(e.data);
                 console.log(data, "got message");
+                setGameState(
+                    {
+                        fen: data.fen,
+                        sideToMove: !gameState.sideToMove
+                    }
+                )
+                const feedback: HTMLElement | null = document.getElementById("feedback");
+                if (feedback !== null) {
+                    feedback.innerText = data.message;
+                }
+
             }
 
             socket.onclose = function (e) {
@@ -100,10 +111,9 @@ const TestChessboard = () => {
 
     return (
         <div>
-            <h1>dupa</h1>
             <button onClick={startNewGame}>Start New Game</button>
             {gameState && (
-                <div style={{ width: '80dvh' }}>
+                <div style={{width: '80dvh'}}>
                     <Chessboard
                         position={gameState.fen}
                         onPieceDrop={onDrop}
@@ -111,6 +121,9 @@ const TestChessboard = () => {
                     />
                 </div>
             )}
+            <h2 id={"feedback"}></h2>
+            <h2>{"side to move: " + gameState.sideToMove ? "WHITE" : "BLACK"}</h2>
+
         </div>
     );
 }
