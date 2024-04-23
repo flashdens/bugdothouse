@@ -11,3 +11,6 @@ class GameViewSet(viewsets.ModelViewSet):
 class MoveViewSet(viewsets.ModelViewSet):
     queryset = Move.objects.all()
     serializer_class = MoveSerializer
+
+
+# def make_move():

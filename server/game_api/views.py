@@ -36,7 +36,6 @@ class MakeMoveView(APIView):
 
     def post(self, request):
         # Deserialize the move data
-        print("dupa")
         serializer = ChessMoveSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
             from_sq = serializer.validated_data['fromSq']
