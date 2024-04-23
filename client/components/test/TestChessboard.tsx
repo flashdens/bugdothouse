@@ -24,6 +24,12 @@ const TestChessboard = () => {
         sideToMove: WHITE
     });
 
+    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
+
+    const handleReverseBoard = () => {
+        setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white');
+    };
+
     useEffect(() => {
         if (typeof window !== "undefined") {
             const socket = new WebSocket('ws://localhost/ws/test/');
@@ -35,7 +41,7 @@ const TestChessboard = () => {
 
                 setGameState(prevState => ({
                     fen: data.fen,
-                    sideToMove: !prevState.sideToMove
+                    sideToMove: data.sideToMove
                 }));
 
                 const feedbackElement = document.getElementById("feedback");
@@ -108,18 +114,20 @@ const TestChessboard = () => {
 
     return (
         <div>
-            <button onClick={startNewGame}>Start New Game</button>
+            <button className={"bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"}
+                    onClick={handleReverseBoard}>Reverse board</button>
             {gameState && (
                 <div style={{width: '80dvh'}}>
                     <Chessboard
                         position={gameState.fen}
                         onPieceDrop={onDrop}
                         arePremovesAllowed={false}
+                        boardOrientation={boardOrientation}
                     />
                 </div>
             )}
             <h2 id={"feedback"}></h2>
-            <h2>{gameState.sideToMove ? 'WHITE' : 'BLACK'}</h2>
+            {/*<h2>{gameState.sideToMove ? 'WHITE' : 'BLACK'}</h2>*/}
 
         </div>
     );
