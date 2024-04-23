@@ -1,14 +1,19 @@
 import json
+import uuid
 
 from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 
 import chess
+from django.shortcuts import redirect
 
 board = chess.Board()
 
 
 class GameConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        self.players = []
+        super().__init__(*args, **kwargs)
 
     def connect(self):
         # self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -19,6 +24,7 @@ class GameConsumer(WebsocketConsumer):
         )
 
         self.accept()
+        # self.players.append(str(uuid.uuid4()))
 
     def disconnect(self, code):
         async_to_sync(self.channel_layer.group_discard)(
@@ -26,8 +32,10 @@ class GameConsumer(WebsocketConsumer):
         )
 
     def receive(self, text_data=None, bytes_data=None):
+        global board
         try:
             data = json.loads(text_data)
+            print(hex(id(board)))
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
             side_to_move = data.get('sideToMove')
@@ -46,9 +54,6 @@ class GameConsumer(WebsocketConsumer):
 
             response_data = {
                 'message': 'Move processed successfully' if success else 'Invalid move!',
-                'from_sq': from_sq,
-                'to_sq': to_sq,
-                'side_to_move': side_to_move,
                 'fen': board.fen()
             }
 

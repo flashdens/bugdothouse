@@ -14,7 +14,7 @@ interface GameState {
 interface MoveData {
     fromSq: string;
     toSq: string;
-    sideToMove: boolean;
+    sideToMove?: boolean;
 }
 
 const TestChessboard = () => {
@@ -24,35 +24,46 @@ const TestChessboard = () => {
         sideToMove: WHITE
     });
 
- useEffect(() => {
-    if (typeof window !== "undefined") {
-        const socket = new WebSocket('ws://localhost/ws/test/');
-        setMoveSocket(socket);
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const socket = new WebSocket('ws://localhost/ws/test/');
+            setMoveSocket(socket);
 
-        socket.onmessage = function (e) {
-            const data = JSON.parse(e.data).move;
-            console.log("Received message:", data);
+            socket.onmessage = function (e) {
+                const data = JSON.parse(e.data).move;
+                console.log("Received message:", data);
 
-            // Update gameState with new fen and sideToMove
-            setGameState(prevState => ({
-                fen: data.fen,
-                sideToMove: !prevState.sideToMove
-            }));
+                setGameState(prevState => ({
+                    fen: data.fen,
+                    sideToMove: !prevState.sideToMove
+                }));
 
-            // Update feedback if it exists
-            const feedbackElement = document.getElementById("feedback");
-            if (feedbackElement) {
-                feedbackElement.innerText = data.message;
-            } else {
-                console.warn("Feedback element not found.");
-            }
-        };
+                const feedbackElement = document.getElementById("feedback");
+                if (feedbackElement) {
+                    feedbackElement.innerText = data.message;
+                }
+            };
 
-        socket.onclose = function (e) {
-            console.error("Socket closed unexpectedly");
-        };
-    }
-}, []);
+            socket.onclose = function (e) {
+                console.error("Socket closed unexpectedly");
+            };
+        }
+
+        fetch(`${SERVER_URL}/api/test/game_info/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                setGameState(prevState => ({
+                    fen: data.fen,
+                    sideToMove: !prevState.sideToMove
+                }));
+            });
+    }, []);
+
 
     const startNewGame = () => {
         fetch(`${SERVER_URL}/api/test/new_game/`, {
@@ -66,7 +77,7 @@ const TestChessboard = () => {
                 setGameState({
                     ...data,
                     fen: data.fen,
-                    sideToMove: !data.sideToMove
+                    sideToMove: !gameState.sideToMove
                 })
             })
             .catch(error => {
@@ -82,31 +93,12 @@ const TestChessboard = () => {
             moveSocket.send(JSON.stringify(moveData));
 
             return true;
-            // fetch(`${SERVER_URL}/api/test/move/`, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify(moveData),
-            // })
-            //     .then(response => response.json())
-            //     .then(data => {
-            //         setGameState({
-            //             ...data,
-            //             fen: data.fen
-            //         })
-            //     })
-                // .catch(error => {
-                //     console.error('Error:', error);
-                // });
-
         }, [moveSocket]);
 
     const onDrop = (from: string, to: string): boolean => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            sideToMove: false,
         };
 
         const move: any = makeMove(moveData);
@@ -127,7 +119,7 @@ const TestChessboard = () => {
                 </div>
             )}
             <h2 id={"feedback"}></h2>
-            <h2>{"side to move: " + gameState.sideToMove ? "WHITE" : "BLACK"}</h2>
+            <h2>{gameState.sideToMove ? 'WHITE' : 'BLACK'}</h2>
 
         </div>
     );
