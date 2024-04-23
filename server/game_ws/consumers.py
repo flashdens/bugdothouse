@@ -1,7 +1,7 @@
 import json
 
 from channels.generic.websocket import WebsocketConsumer
-from .serializers import ChessMoveSerializer
+from asgiref.sync import async_to_sync
 
 import chess
 
@@ -10,6 +10,7 @@ board = chess.Board()
 
 class GameConsumer(WebsocketConsumer):
     def connect(self):
+        # self.room_name =
         self.accept()
 
     def disconnect(self, code):
