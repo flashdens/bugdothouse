@@ -91,7 +91,7 @@ CHANNEL_LAYERS = {
             "PORT": os.environ.get("SQL_PORT", "5432"),
 
             "config": {
-                'symmetric_encryption_keys': [SECRET_KEY],
+                # 'symmetric_encryption_keys': [SECRET_KEY],
             }
         }
     },

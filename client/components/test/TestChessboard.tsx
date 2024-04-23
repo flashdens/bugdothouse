@@ -24,32 +24,35 @@ const TestChessboard = () => {
         sideToMove: WHITE
     });
 
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            const socket = new WebSocket('ws://localhost/ws/test/' );
-            setMoveSocket(socket);
+ useEffect(() => {
+    if (typeof window !== "undefined") {
+        const socket = new WebSocket('ws://localhost/ws/test/');
+        setMoveSocket(socket);
 
-            socket.onmessage = function (e) {
-                const data = JSON.parse(e.data);
-                console.log(data, "got message");
-                setGameState(
-                    {
-                        fen: data.fen,
-                        sideToMove: !gameState.sideToMove
-                    }
-                )
-                const feedback: HTMLElement | null = document.getElementById("feedback");
-                if (feedback !== null) {
-                    feedback.innerText = data.message;
-                }
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data).move;
+            console.log("Received message:", data);
 
+            // Update gameState with new fen and sideToMove
+            setGameState(prevState => ({
+                fen: data.fen,
+                sideToMove: !prevState.sideToMove
+            }));
+
+            // Update feedback if it exists
+            const feedbackElement = document.getElementById("feedback");
+            if (feedbackElement) {
+                feedbackElement.innerText = data.message;
+            } else {
+                console.warn("Feedback element not found.");
             }
+        };
 
-            socket.onclose = function (e) {
-                console.error("socket closed unexpectedly");
-            }
-        }
-    }, []);
+        socket.onclose = function (e) {
+            console.error("Socket closed unexpectedly");
+        };
+    }
+}, []);
 
     const startNewGame = () => {
         fetch(`${SERVER_URL}/api/test/new_game/`, {
@@ -73,28 +76,30 @@ const TestChessboard = () => {
 
     const makeMove = useCallback(
         (moveData: MoveData) => {
-            if (!moveSocket) return false;
+            if (!moveSocket)
+                return false;
 
-            fetch(`${SERVER_URL}/api/test/move/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(moveData),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    setGameState({
-                        ...data,
-                        fen: data.fen
-                    })
-                    moveSocket.send(JSON.stringify(moveData));
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+            moveSocket.send(JSON.stringify(moveData));
 
-            return false;
+            return true;
+            // fetch(`${SERVER_URL}/api/test/move/`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify(moveData),
+            // })
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         setGameState({
+            //             ...data,
+            //             fen: data.fen
+            //         })
+            //     })
+                // .catch(error => {
+                //     console.error('Error:', error);
+                // });
+
         }, [moveSocket]);
 
     const onDrop = (from: string, to: string): boolean => {

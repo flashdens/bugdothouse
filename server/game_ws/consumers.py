@@ -9,12 +9,21 @@ board = chess.Board()
 
 
 class GameConsumer(WebsocketConsumer):
+
     def connect(self):
-        # self.room_name =
+        # self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+        self.room_group_name = "game"
+
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name, self.channel_name
+        )
+
         self.accept()
 
     def disconnect(self, code):
-        pass
+        async_to_sync(self.channel_layer.group_discard)(
+            self.room_group_name, self.channel_name
+        )
 
     def receive(self, text_data=None, bytes_data=None):
         try:
@@ -44,8 +53,13 @@ class GameConsumer(WebsocketConsumer):
             }
 
             print("received", from_sq + to_sq, "over websocket")
-
-            self.send(text_data=json.dumps(response_data))
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name, {"type": "move", "move": response_data}
+            )
 
         except json.JSONDecodeError:
             self.send(text_data=json.dumps({'message': 'invalid json'}))
+
+    def move(self, event):
+        move = event['move']
+        self.send(text_data=json.dumps({'move': move}))
