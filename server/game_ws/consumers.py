@@ -5,7 +5,9 @@ from channels.generic.websocket import WebsocketConsumer
 from asgiref.sync import async_to_sync
 
 import chess
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
+
+from game.models import Game, Move
 
 board = chess.Board()
 
@@ -43,6 +45,8 @@ class GameConsumer(WebsocketConsumer):
             # Your logic to handle the move...
             # Remember to validate the move and update the test state accordingly
 
+            game = get_object_or_404(Game, pk=1)
+
             success = False
             move = chess.Move.from_uci(from_sq + to_sq)
 
@@ -51,6 +55,16 @@ class GameConsumer(WebsocketConsumer):
                 board.push(move)
 
             print(board)
+
+            game.side_to_move = not game.side_to_move
+            game.fen = board.fen()
+            game.save()
+
+            db_move = Move(game=game,
+                           player="TEST",
+                           move=move)
+
+            db_move.save()
 
             response_data = {
                 'message': 'Move processed successfully' if success else 'Invalid move!',

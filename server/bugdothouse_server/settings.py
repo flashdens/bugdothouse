@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'game_api',
     'game_ws',
     'corsheaders',
+    'django_extensions',
     'channels_postgres',
     'django.contrib.admin',
     'django.contrib.auth',

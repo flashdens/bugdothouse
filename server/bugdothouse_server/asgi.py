@@ -14,12 +14,11 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 
-import game_ws.routing
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'bugdothouse_server.settings')
 
 django_asgi_application = get_asgi_application()
 
+import game_ws.routing
 
 class AllowedHostOriginValidator:
     pass

@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from .serializers import ChessPositionSerializer, ChessMoveSerializer
 import chess
 
-from game_ws.consumers import board
+from game.models import Game
 
 class RandomPositionView(APIView):
     def get(request, format=None):
@@ -30,13 +30,12 @@ class NewGameView(APIView):
 
 
 class GameInfoView(APIView):
-    # not working, board has 2 seperate memory addresses
+
     def get(self, request):
-        global board
-        print(hex(id(board)))
+        game = Game.objects.get(pk=1)
         response_data = {
-            "fen": board.fen(),
-            "side_to_move": board.turn,
+            "fen": game.fen,
+            "side_to_move": game.side_to_move,
             "player1_name": "player1",
             "player2_name": "player2"
         }

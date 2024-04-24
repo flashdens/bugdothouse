@@ -19,10 +19,7 @@ interface MoveData {
 
 const TestChessboard = () => {
     const [moveSocket, setMoveSocket] = useState<WebSocket | null>(null);
-    const [gameState, setGameState] = useState<GameState>({
-        fen: START_FEN,
-        sideToMove: WHITE
-    });
+    const [gameState, setGameState] = useState<GameState | null>(null)
 
     const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
 
@@ -31,6 +28,20 @@ const TestChessboard = () => {
     };
 
     useEffect(() => {
+
+        fetch(`${SERVER_URL}/api/test/game_info/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                setGameState(prevState => ({
+                    fen: data.fen,
+                    sideToMove: data.sideToMove
+                }));
+            });
         if (typeof window !== "undefined") {
             const socket = new WebSocket('ws://localhost/ws/test/');
             setMoveSocket(socket);
@@ -39,7 +50,7 @@ const TestChessboard = () => {
                 const data = JSON.parse(e.data).move;
                 console.log("Received message:", data);
 
-                setGameState(prevState => ({
+                setGameState(() => ({
                     fen: data.fen,
                     sideToMove: data.sideToMove
                 }));
@@ -55,19 +66,7 @@ const TestChessboard = () => {
             };
         }
 
-        fetch(`${SERVER_URL}/api/test/game_info/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => response.json())
-            .then(data => {
-                setGameState(prevState => ({
-                    fen: data.fen,
-                    sideToMove: !prevState.sideToMove
-                }));
-            });
+
     }, []);
 
 
@@ -95,10 +94,11 @@ const TestChessboard = () => {
         (moveData: MoveData) => {
             if (!moveSocket)
                 return false;
+            else {
+                moveSocket.send(JSON.stringify(moveData));
+                return true;
+            }
 
-            moveSocket.send(JSON.stringify(moveData));
-
-            return true;
         }, [moveSocket]);
 
     const onDrop = (from: string, to: string): boolean => {
@@ -107,7 +107,7 @@ const TestChessboard = () => {
             toSq: to,
         };
 
-        const move: any = makeMove(moveData);
+        const move: unknown = makeMove(moveData);
 
         return !!move;
     }
