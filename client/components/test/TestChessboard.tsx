@@ -20,7 +20,6 @@ interface MoveData {
 
 const TestChessboard = () => {
     const [gameState, setGameState] = useState<GameState | null>(null)
-
     const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
 
     const handleReverseBoard = () => {
@@ -43,21 +42,21 @@ const TestChessboard = () => {
                 }));
             });
 
-            socket.onmessage = function (e) {
-                console.log(e)
-                const data = JSON.parse(e.data).move;
-                console.log("Received message:", data);
-
-                setGameState(() => ({
-                    fen: data.fen,
-                    sideToMove: data.sideToMove
-                }));
-
-                const feedbackElement = document.getElementById("feedback");
-                if (feedbackElement) {
-                    feedbackElement.innerText = data.message;
-                }
-            }
+            // socket.onmessage = function (e) {
+            //     console.log(e)
+            //     const data = JSON.parse(e.data).move;
+            //     console.log("Received message:", data);
+            //
+            //     setGameState(() => ({
+            //         fen: data.fen,
+            //         sideToMove: data.sideToMove
+            //     }));
+            //
+            //     const feedbackElement = document.getElementById("feedback");
+            //     if (feedbackElement) {
+            //         feedbackElement.innerText = data.message;
+            //     }
+            // }
 
 
     }, []);

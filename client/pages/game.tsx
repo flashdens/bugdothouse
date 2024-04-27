@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import TestGame from "@/components/test/TestGame";
 import Dialog from "@/components/test/Dialog";
+import socket from "@/services/socket";
 
 const Game = () => {
     const [username, setUsername] = useState<string>('');
@@ -8,6 +9,11 @@ const Game = () => {
 
     const handleSubmit = () => {
         console.log("Username submitted:", username);
+        console.log(username)
+        socket.send(JSON.stringify({
+            type: 'connect',
+            username: username}))
+
         setIsDialogOpen(false);
     };
 
