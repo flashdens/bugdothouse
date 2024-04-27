@@ -7,8 +7,6 @@ from django.shortcuts import redirect, get_object_or_404
 
 from game.models import Game, Move
 
-board = chess.Board()
-
 
 class GameConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -31,7 +29,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_connect(self, data):
         username = data.get('username')
-        print(username)
+        print(username, "connected")
 
     async def handle_move(self, data):
         try:
@@ -43,6 +41,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             success = False
             move = chess.Move.from_uci(from_sq + to_sq)
+            board = chess.Board(fen=game.fen)
 
             if move in board.legal_moves:
                 success = True
@@ -56,7 +55,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             db_move = Move(game=game,
                            player="TEST",
-                           move=move)
+                           move=move,
+                           side_to_move='b' if side_to_move == 'w' else 'b')
 
             db_move.save()
 
@@ -75,16 +75,18 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({'message': 'invalid json'}))
 
     async def receive(self, text_data=None, bytes_data=None):
+        print(text_data)
         try:
             data = json.loads(text_data)
-            event_type = json.loads('type')
-
+            event_type = data['type']
+            print(event_type)
             if event_type == 'connect':
                 await self.handle_connect(data)
             elif event_type == 'move':
                 await self.handle_move(data)
             else:
-                assert False
+                await self.send(text_data=json.dumps({'message': 'invalid request received'}))
+                pass
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({'message': 'invalid json'}))

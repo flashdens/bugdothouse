@@ -1,6 +1,17 @@
-const Dialog = ({ isOpen, isClosable, onClose, children }) => {
+import React from "react";
+
+interface DialogProps {
+  isOpen: boolean;
+  isClosable?: boolean;
+  onClose?: () => void;
+  children: React.ReactNode;
+}
+
+const Dialog: React.FC<DialogProps> =  ({ isOpen, isClosable, onClose, children }) => {
     const handleClose = () => {
-        onClose(); // Call the onClose function passed as prop
+        if (onClose) {
+            onClose();
+        }
     };
 
     return (
