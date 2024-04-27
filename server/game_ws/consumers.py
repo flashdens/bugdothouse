@@ -5,7 +5,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import chess
 from django.shortcuts import redirect, get_object_or_404
 
-from game.models import Game, Move
+from game.models import Game, Move, User
 
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -30,6 +30,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def handle_connect(self, data):
         username = data.get('username')
         print(username, "connected")
+        user = get_object_or_404(User, username=username)
+        return user.uuid
 
     async def handle_move(self, data):
         try:

@@ -1,18 +1,42 @@
 import React, { useState } from "react";
 import TestGame from "@/components/test/TestGame";
 import Dialog from "@/components/test/Dialog";
-import socket from "@/services/socket";
+import {getWebSocket} from "@/services/socket";
+import SERVER_URL from "@/config";
 
 const Game = () => {
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
+    const handleSubmit = async () => {
+        let socket = getWebSocket();
+        if (!socket) return;
 
-    const handleSubmit = () => {
-        console.log("Username submitted:", username);
-        console.log(username)
+      try {
+          const response = await fetch(`${SERVER_URL}/ws/ws_auth/`, {
+            method: 'POST',
+            // @ts-ignore
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username
+            })
+        });
+
+        if (!response.ok) {
+            new Error('Failed to fetch data');
+            return;
+        }
+
         socket.send(JSON.stringify({
             type: 'connect',
-            username: username}))
+            username: username
+        }));
+
+        setIsDialogOpen(false);
+    } catch (error) {
+        console.error('Error:', error);
+    }
 
         setIsDialogOpen(false);
     };
@@ -37,7 +61,9 @@ const Game = () => {
                     </button>
                 </div>
             </Dialog>
+            {(!isDialogOpen &&
            <TestGame/>
+            )}
         </div>
     );
 }

@@ -1,19 +1,32 @@
-let socket: WebSocket = new WebSocket('ws://localhost/ws/test/');
+let socket: WebSocket | null = null;
 
-socket.onopen = () => {
-    console.log('WebSocket connected');
+const initializeWebSocket = () => {
+    if (!socket) {
+        socket = new WebSocket('ws://localhost/ws/test/');
+
+        socket.onopen = () => {
+            console.log('WebSocket connected');
+        };
+
+        socket.onmessage = (event) => {
+            console.log('Received message:', event.data);
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket closed');
+        };
+
+        socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    }
 };
 
-socket.onmessage = (event) => {
-    console.log('Received message:', event.data);
+export const getWebSocket = () => {
+    if (!socket) {
+        initializeWebSocket();
+    }
+    return socket;
 };
 
-socket.onclose = () => {
-    console.log('WebSocket closed');
-};
-
-socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
-
-export default socket;
+export default getWebSocket;

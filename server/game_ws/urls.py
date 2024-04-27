@@ -3,5 +3,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("index/", views.index, name="index")
+    path("ws_auth/", views.WebSocketAuthView.as_view(), name="ws_auth")
 ]
