@@ -1,11 +1,8 @@
-import TestChessboard from "@/components/test/TestChessboard";
-import TestWhitePocket from "@/components/test/TestWhitePocket";
+import Lobby from "@/components/test/Lobby"
 
 const Index = () => {
     return (
-        <>
-            <TestChessboard/>
-            <TestWhitePocket/></>
+        <Lobby/>
     )
 }
 
