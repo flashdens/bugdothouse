@@ -1,5 +1,6 @@
 import json
 
+from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 import chess
@@ -19,7 +20,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.channel_layer.group_add(
             self.room_group_name, self.channel_name
         )
-
         await self.accept()
 
     async def disconnect(self, code):
@@ -29,9 +29,28 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_connect(self, data):
         username = data.get('username')
+        uuid = data.get('uuid')
         print(username, "connected")
-        user = get_object_or_404(User, username=username)
-        return user.uuid
+        user = await sync_to_async(get_object_or_404)(User, username=username)
+        if user.uuid != uuid:
+            print("masz przejebane")
+
+        game = await sync_to_async(get_object_or_404)(Game, pk=1)
+        if game.white_player is None:
+            game.white_player = user
+            player_side = 'w'
+        elif game.black_player is None:
+            game.black_player = user
+            player_side = 'b'
+        else:
+            print("spectator")  # todo
+            player_side = None
+
+        await game.asave()
+
+        await self.send(text_data=json.dumps({'type': 'connection_response',
+                                              'message': 'Connected successfully',
+                                              'side': player_side}))
 
     async def handle_move(self, data):
         try:

@@ -1,7 +1,8 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { Chessboard } from "react-chessboard";
 import SERVER_URL from "@/config";
-import socket from "@/services/socket"
+import {getWebSocket} from "@/services/socket"
+import {WebSocket} from "undici-types";
 
 const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const WHITE: boolean = false;
@@ -21,13 +22,13 @@ interface MoveData {
 const TestChessboard = () => {
     const [gameState, setGameState] = useState<GameState | null>(null)
     const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
+    let socket = getWebSocket();
 
     const handleReverseBoard = () => {
         setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white');
     };
 
     useEffect(() => {
-
         fetch(`${SERVER_URL}/api/test/game_info/`, {
             method: 'GET',
             headers: {
