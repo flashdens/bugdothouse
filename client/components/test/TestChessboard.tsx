@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { Chessboard } from "react-chessboard";
 import SERVER_URL from "@/config";
+import socket from "@/services/socket"
 
 const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const WHITE: boolean = false;
@@ -18,7 +19,6 @@ interface MoveData {
 }
 
 const TestChessboard = () => {
-    const [moveSocket, setMoveSocket] = useState<WebSocket | null>(null);
     const [gameState, setGameState] = useState<GameState | null>(null)
 
     const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
@@ -42,11 +42,9 @@ const TestChessboard = () => {
                     sideToMove: data.sideToMove
                 }));
             });
-        if (typeof window !== "undefined") {
-            const socket = new WebSocket('ws://localhost/ws/test/');
-            setMoveSocket(socket);
 
             socket.onmessage = function (e) {
+                console.log(e)
                 const data = JSON.parse(e.data).move;
                 console.log("Received message:", data);
 
@@ -59,12 +57,7 @@ const TestChessboard = () => {
                 if (feedbackElement) {
                     feedbackElement.innerText = data.message;
                 }
-            };
-
-            socket.onclose = function (e) {
-                console.error("Socket closed unexpectedly");
-            };
-        }
+            }
 
 
     }, []);
@@ -92,14 +85,14 @@ const TestChessboard = () => {
 
     const makeMove = useCallback(
         (moveData: MoveData) => {
-            if (!moveSocket)
+            if (!socket)
                 return false;
             else {
-                moveSocket.send(JSON.stringify(moveData));
+                socket.send(JSON.stringify(moveData));
                 return true;
             }
 
-        }, [moveSocket]);
+        }, [socket]);
 
     const onDrop = (from: string, to: string): boolean => {
         const moveData: MoveData = {

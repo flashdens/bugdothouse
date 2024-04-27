@@ -6,30 +6,21 @@ const Game = () => {
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
 
-    const handleCloseDialog = () => {
-        setIsDialogOpen(false);
-    };
-
-    const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setUsername(event.target.value);
-    };
-
     const handleSubmit = () => {
-        // Handle submission logic here
         console.log("Username submitted:", username);
         setIsDialogOpen(false);
     };
 
     return (
         <div>
-             <Dialog isOpen={isDialogOpen} onClose={handleCloseDialog}>
+             <Dialog isOpen={isDialogOpen}>
                 <div className="flex flex-col items-center">
                     <label htmlFor="username" className="mb-2">Enter your username:</label>
                     <input
                         type="text"
                         id="username"
                         value={username}
-                        onChange={handleUsernameChange}
+                        onChange={(e) => {setUsername(e.target.value)}}
                         className="p-2 border border-gray-300 rounded"
                     />
                     <button
