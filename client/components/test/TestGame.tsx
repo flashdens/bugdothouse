@@ -2,10 +2,14 @@ import TestChessboard from "@/components/test/TestChessboard";
 import TestWhitePocket from "@/components/test/TestWhitePocket";
 import React from "react";
 
-const TestGame = () => {
+interface TestGameProps {
+    side: 'w' | 'b' | null;
+}
+
+const TestGame: React.FC<TestGameProps> = (side) => {
     return (
         <div>
-            <TestChessboard/>
+            <TestChessboard side={side}/>
             <TestWhitePocket/>
         </div>
     )

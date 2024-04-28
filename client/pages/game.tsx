@@ -8,6 +8,8 @@ const Game = () => {
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
     const [uuid, setUuid] = useState<string>('');
+    const [side, setSide] = useState<'w'|'b'|null>(null);
+
 
     const handleSubmit = async () => {
         let socket = getWebSocket();
@@ -38,16 +40,15 @@ const Game = () => {
 
             socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-
-                if (data.type === 'connection_response') {
-                    console.log(data.side);
+                console.log(data)
+                if (data.type == 'connection_response') {
+                    setSide(side)
                 }
             }
-            // Close the dialog if everything is successful
+
             setIsDialogOpen(false);
         } catch (error) {
             console.error('Error:', error);
-            // Handle errors here, such as displaying an error message to the user
         }
     }
 
@@ -74,8 +75,9 @@ const Game = () => {
                         </button>
                     </div>
                 </Dialog>
-                {(!isDialogOpen &&
-                    <TestGame/>
+                {(!isDialogOpen && side &&
+                    <TestGame
+                    side={side}/>
                 )}
             </div>
         );

@@ -19,11 +19,15 @@ interface MoveData {
     sideToMove?: boolean;
 }
 
-const TestChessboard = () => {
+interface TestChessboardProps {
+    side: 'w' | 'b' | null;
+}
+
+const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     const [gameState, setGameState] = useState<GameState | null>(null)
     const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
     let socket = getWebSocket();
-
+    console.log(side)
     const handleReverseBoard = () => {
         setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white');
     };
@@ -116,11 +120,12 @@ const TestChessboard = () => {
                         onPieceDrop={onDrop}
                         arePremovesAllowed={false}
                         boardOrientation={boardOrientation}
+                        isDraggablePiece={({ piece }) => piece[0] === side}
                     />
                 </div>
             )}
             <h2 id={"feedback"}></h2>
-            {/*<h2>{gameState.sideToMove ? 'WHITE' : 'BLACK'}</h2>*/}
+            <h2>You're playing as {side}</h2>
 
         </div>
     );

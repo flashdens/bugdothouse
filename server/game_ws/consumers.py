@@ -27,24 +27,29 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_group_name, self.channel_name
         )
 
+    @sync_to_async
+    def determine_side(self, game, user):
+        if game.white_player is None or game.white_player is User:
+            game.white_player = user
+            return 'w'
+        elif game.black_player is None or game.black_player is User:
+            game.black_player = user
+            return 'b'
+        else:
+            print("spectator")  # todo
+            return None
+
     async def handle_connect(self, data):
         username = data.get('username')
         uuid = data.get('uuid')
         print(username, "connected")
         user = await sync_to_async(get_object_or_404)(User, username=username)
+
         if user.uuid != uuid:
             print("masz przejebane")
 
         game = await sync_to_async(get_object_or_404)(Game, pk=1)
-        if game.white_player is None:
-            game.white_player = user
-            player_side = 'w'
-        elif game.black_player is None:
-            game.black_player = user
-            player_side = 'b'
-        else:
-            print("spectator")  # todo
-            player_side = None
+        player_side = self.determine_side(game, user)
 
         await game.asave()
 
