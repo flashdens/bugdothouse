@@ -21,7 +21,10 @@ class RandomPositionView(APIView):
 
 class NewGameView(APIView):
     def post(self, request):
-        board.reset_board()
+        game = Game(pk=1)
+        board = chess.Board()
+        game.fen = board.fen()
+        game.save()
         response_data = {
             "fen": board.fen()
         }

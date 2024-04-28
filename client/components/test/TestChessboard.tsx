@@ -26,9 +26,13 @@ interface TestChessboardProps {
 
 const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     const [gameState, setGameState] = useState<GameState | null>(null)
-    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>('white');
+    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>(side === 'w' ? 'white' : 'black');
     let socket = getWebSocket();
     console.log(side)
+
+
+
+
     const handleReverseBoard = () => {
         setBoardOrientation(boardOrientation === 'white' ? 'black' : 'white');
     };
@@ -46,25 +50,24 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                     fen: data.fen,
                     sideToMove: data.sideToMove
                 }));
+
+                if (!socket) return;
+
+                socket.onmessage = (e) => {
+                    const data = JSON.parse(e.data).message
+                    if (data.type === 'move') {
+                        setGameState(() => ({
+                        fen: data.fen,
+                        sideToMove: data.sideToMove
+                        }));
+
+                        const feedbackElement = document.getElementById("feedback");
+                        if (feedbackElement) {
+                            feedbackElement.innerText = data.message;
+                        }
+                    }
+                }
             });
-
-            // socket.onmessage = function (e) {
-            //     console.log(e)
-            //     const data = JSON.parse(e.data).move;
-            //     console.log("Received message:", data);
-            //
-            //     setGameState(() => ({
-            //         fen: data.fen,
-            //         sideToMove: data.sideToMove
-            //     }));
-            //
-            //     const feedbackElement = document.getElementById("feedback");
-            //     if (feedbackElement) {
-            //         feedbackElement.innerText = data.message;
-            //     }
-            // }
-
-
     }, []);
 
 
@@ -95,7 +98,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
             if (!socket)
                 return false;
             else {
-                socket.send(JSON.stringify(moveData));
+                socket.send(JSON.stringify({
+                    type: 'move',
+                    ...moveData
+                }));
                 return true;
             }
 

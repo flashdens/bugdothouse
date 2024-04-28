@@ -1,9 +1,11 @@
 import json
 
 from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 import chess
+from channels.layers import get_channel_layer
 from django.shortcuts import redirect, get_object_or_404
 
 from game.models import Game, Move, User
@@ -16,8 +18,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def connect(self):
         self.room_group_name = "game"
-        print("connected")
-        self.channel_layer.group_add(
+        await self.channel_layer.group_add(
             self.room_group_name, self.channel_name
         )
         await self.accept()
@@ -29,10 +30,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def determine_side(self, game, user):
-        if game.white_player is None or isinstance(game.white_player, User):
+        if game.white_player is None or game.white_player.pk == user.pk:
             game.white_player = user
             return 'w'
-        elif game.black_player == User or isinstance(game.black_player, User):
+        elif game.black_player is None or game.black_player.pk == user.pk:
             game.black_player = user
             return 'b'
         else:
@@ -57,7 +58,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                                               'message': 'Connected successfully',
                                               'side': player_side}))
 
-    async def handle_move(self, data):
+    @database_sync_to_async
+    def parse_move(self, data):
         try:
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
@@ -82,23 +84,27 @@ class GameConsumer(AsyncWebsocketConsumer):
             db_move = Move(game=game,
                            player="TEST",
                            move=move,
-                           side_to_move='b' if side_to_move == 'w' else 'b')
-
+                           # side_to_move='b' if side_to_move == 'w' else 'b'
+                           )
             db_move.save()
 
             response_data = {
+                'type': 'move',
                 'message': 'Move processed successfully' if success else 'Invalid move!',
                 'fen': board.fen()
             }
 
-            print("received", from_sq + to_sq, "over websocket")
-            self.channel_layer.group_send(
-                self.room_group_name, {"type": "move",
-                                       "move": response_data}
-            )
+            print("received", from_sq + to_sq, "over websocket, success:", success)
+            return response_data
 
         except json.JSONDecodeError:
-            await self.send(text_data=json.dumps({'message': 'invalid json'}))
+            return {'type': 'error', 'message': 'invalid json'}
+
+    async def handle_move(self, data):
+        response_data = await self.parse_move(data)
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'game.move', 'message': response_data}
+        )
 
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
@@ -117,6 +123,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({'message': 'invalid json'}))
 
-    async def move(self, event):
-        move = event['move']
-        await self.send(text_data=json.dumps({'move': move}))
+    async def game_move(self, event):
+        move = event['message']
+        await self.send(json.dumps({'message': move}))
