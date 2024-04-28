@@ -58,50 +58,64 @@ class GameConsumer(AsyncWebsocketConsumer):
                                               'message': 'Connected successfully',
                                               'side': player_side}))
 
+    @sync_to_async
+    def handle_game_ending_move(self, board):
+        if board.is_stalemate():
+            return 'Stalemate'
+        elif board.is_checkmate():
+            return 'Win by checkmate!'
+        elif board.is_insufficient_material():
+            return 'Draw by insufficient material'
+        elif board.is_seventyfive_moves():
+            return 'Draw by seventy-five moves rule'
+        elif board.is_fivefold_repetition():
+            return 'Draw by fivefold repetition'
+        else:
+            return None
+
     @database_sync_to_async
-    def parse_move(self, data):
+    def process_move_in_db(self, data):
         try:
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
-            side_to_move = data.get('sideToMove')
 
             game = get_object_or_404(Game, pk=1)
 
-            success = False
             move = chess.Move.from_uci(from_sq + to_sq)
             board = chess.Board(fen=game.fen)
+            is_move_valid = True if move in board.legal_moves else False
 
-            if move in board.legal_moves:
-                success = True
+            if is_move_valid:
                 board.push(move)
 
             print(board)
 
-            game.side_to_move = not game.side_to_move
+            game.side_to_move = 'b' if game.side_to_move == 'w' else 'b'
             game.fen = board.fen()
             game.save()
 
             db_move = Move(game=game,
                            player="TEST",
                            move=move,
-                           # side_to_move='b' if side_to_move == 'w' else 'b'
                            )
             db_move.save()
 
             response_data = {
                 'type': 'move',
-                'message': 'Move processed successfully' if success else 'Invalid move!',
+                'error': 'Invalid move' if not is_move_valid else None,
+                'game_over': self.handle_game_ending_move(),
+                'side_to_move': game.side_to_move,
                 'fen': board.fen()
             }
 
-            print("received", from_sq + to_sq, "over websocket, success:", success)
+            print("received", from_sq + to_sq, "over websocket, success:", is_move_valid)
             return response_data
 
         except json.JSONDecodeError:
             return {'type': 'error', 'message': 'invalid json'}
 
     async def handle_move(self, data):
-        response_data = await self.parse_move(data)
+        response_data = await self.process_move_in_db(data)
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'game.move', 'message': response_data}
         )
