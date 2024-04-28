@@ -40,9 +40,9 @@ const Game = () => {
 
             socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-                console.log(data)
-                if (data.type == 'connection_response') {
-                    setSide(side)
+                console.log(data.type)
+                if (data.type === 'connection_response') {
+                    setSide(data.side)
                 }
             }
 
@@ -75,7 +75,7 @@ const Game = () => {
                         </button>
                     </div>
                 </Dialog>
-                {(!isDialogOpen && side &&
+                {(side &&
                     <TestGame
                     side={side}/>
                 )}

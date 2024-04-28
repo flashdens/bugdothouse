@@ -6,7 +6,7 @@ interface TestGameProps {
     side: 'w' | 'b' | null;
 }
 
-const TestGame: React.FC<TestGameProps> = (side) => {
+const TestGame: React.FC<TestGameProps> = ( {side} ) => {
     return (
         <div>
             <TestChessboard side={side}/>

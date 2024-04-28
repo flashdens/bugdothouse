@@ -29,10 +29,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def determine_side(self, game, user):
-        if game.white_player is None or game.white_player is User:
+        if game.white_player is None or isinstance(game.white_player, User):
             game.white_player = user
             return 'w'
-        elif game.black_player is None or game.black_player is User:
+        elif game.black_player == User or isinstance(game.black_player, User):
             game.black_player = user
             return 'b'
         else:
@@ -49,7 +49,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             print("masz przejebane")
 
         game = await sync_to_async(get_object_or_404)(Game, pk=1)
-        player_side = self.determine_side(game, user)
+        player_side = await self.determine_side(game, user)
 
         await game.asave()
 

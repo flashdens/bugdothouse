@@ -3,6 +3,7 @@ import { Chessboard } from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {WebSocket} from "undici-types";
+import game from "@/pages/game";
 
 const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const WHITE: boolean = false;
@@ -76,11 +77,13 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
         })
             .then(response => response.json())
             .then(data => {
-                setGameState({
-                    ...data,
-                    fen: data.fen,
-                    sideToMove: !gameState.sideToMove
-                })
+                if (gameState) {
+                    setGameState({
+                        ...data,
+                        fen: data.fen,
+                        sideToMove: !gameState.sideToMove
+                    })
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
