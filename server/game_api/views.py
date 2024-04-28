@@ -39,8 +39,8 @@ class GameInfoView(APIView):
         response_data = {
             "fen": game.fen,
             "side_to_move": game.side_to_move,
-            "player1_name": "player1",
-            "player2_name": "player2"
+            "white_player_name": game.white_player.username if game.white_player else None,
+            "black_player_name": game.black_player.username if game.black_player else None
         }
 
         return Response(response_data)

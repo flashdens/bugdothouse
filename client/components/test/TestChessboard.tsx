@@ -4,6 +4,7 @@ import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {WebSocket} from "undici-types";
 import game from "@/pages/game";
+import {BoardOrientation} from "react-chessboard/dist/chessboard/types";
 
 const START_FEN: string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const WHITE: boolean = false;
@@ -21,12 +22,12 @@ interface MoveData {
 }
 
 interface TestChessboardProps {
-    side: 'w' | 'b' | null;
+    side: 'WHITE' | 'BLACK';
 }
 
 const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     const [gameState, setGameState] = useState<GameState | null>(null)
-    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>(side === 'w' ? 'white' : 'black');
+    const [boardOrientation, setBoardOrientation] = useState<'white' | 'black'>(side.toLowerCase() as BoardOrientation);
     let socket = getWebSocket();
     console.log(side)
 
@@ -46,10 +47,11 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
         })
             .then(response => response.json())
             .then(data => {
-                setGameState(prevState => ({
+                console.log(data);
+                setGameState({
                     fen: data.fen,
                     sideToMove: data.sideToMove
-                }));
+                });
 
                 if (!socket) return;
 
@@ -62,8 +64,8 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                         }));
 
                         const feedbackElement = document.getElementById("feedback");
-                        if (feedbackElement) {
-                            feedbackElement.innerText = data.message;
+                        if (feedbackElement && data.error) {
+                            feedbackElement.innerText = data.error;
                         }
                     }
                 }
@@ -84,7 +86,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                     setGameState({
                         ...data,
                         fen: data.fen,
-                        sideToMove: !gameState.sideToMove
+                        sideToMove: WHITE
                     })
                 }
             })
@@ -129,12 +131,14 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                         onPieceDrop={onDrop}
                         arePremovesAllowed={false}
                         boardOrientation={boardOrientation}
-                        isDraggablePiece={({ piece }) => piece[0] === side}
+                        isDraggablePiece={({ piece }) => piece[0] === (side === 'WHITE' ? 'w' : 'b')}
                     />
                 </div>
             )}
-            <h2 id={"feedback"}></h2>
             <h2>You're playing as {side}</h2>
+            <h2>{"Side to move: " + (gameState?.sideToMove ? "WHITE" : "BLACK")}</h2>
+            <h2 id={"feedback"}></h2>
+            <h2 id={"gameOver"}></h2>
 
         </div>
     );

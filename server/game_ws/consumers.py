@@ -32,10 +32,10 @@ class GameConsumer(AsyncWebsocketConsumer):
     def determine_side(self, game, user):
         if game.white_player is None or game.white_player.pk == user.pk:
             game.white_player = user
-            return 'w'
+            return 'WHITE'
         elif game.black_player is None or game.black_player.pk == user.pk:
             game.black_player = user
-            return 'b'
+            return 'BLACK'
         else:
             print("spectator")  # todo
             return None
@@ -58,7 +58,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                                               'message': 'Connected successfully',
                                               'side': player_side}))
 
-    @sync_to_async
+    # is nesting async functions even a good idea?
+    '''
     def handle_game_ending_move(self, board):
         if board.is_stalemate():
             return 'Stalemate'
@@ -72,6 +73,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             return 'Draw by fivefold repetition'
         else:
             return None
+        '''
 
     @database_sync_to_async
     def process_move_in_db(self, data):
@@ -90,7 +92,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             print(board)
 
-            game.side_to_move = 'b' if game.side_to_move == 'w' else 'b'
+            game.side_to_move = board.turn
             game.fen = board.fen()
             game.save()
 
@@ -103,8 +105,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             response_data = {
                 'type': 'move',
                 'error': 'Invalid move' if not is_move_valid else None,
-                'game_over': self.handle_game_ending_move(),
-                'side_to_move': game.side_to_move,
+                'game_over': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
+                'side_to_move': board.turn,
                 'fen': board.fen()
             }
 

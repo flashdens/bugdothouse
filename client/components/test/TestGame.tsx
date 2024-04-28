@@ -3,7 +3,7 @@ import TestWhitePocket from "@/components/test/TestWhitePocket";
 import React from "react";
 
 interface TestGameProps {
-    side: 'w' | 'b' | null;
+    side: 'WHITE' | 'BLACK';
 }
 
 const TestGame: React.FC<TestGameProps> = ( {side} ) => {
