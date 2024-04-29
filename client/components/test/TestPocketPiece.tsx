@@ -1,25 +1,21 @@
 import React, {ReactNode, useEffect, useState} from 'react';
 import { useDrag } from 'react-dnd';
-import Piece from "react-chessboard/dist/chessboard/types/index"
-
-export const ItemTypes = {
-  CHESS_PIECE: 'chessPiece',
-};
 
 interface ChessPieceProps {
     piece: "wP" | "wB" | "wN" | "wR" | "wQ" | "wK" | "bP" | "bB" | "bN" | "bR" | "bQ" | "bK";
     svg: ReactNode
 }
 
-const ChessPiece: React.FC<ChessPieceProps> = ({ piece, svg }) => {
+const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg }) => {
     const [{ isDragging }, drag, dragPreview] = useDrag({
-        type: ItemTypes.CHESS_PIECE,
+        type: 'piece',
         item: () => {
             console.log("dragged", piece)
             return {piece}
         },
         end: () => {
             console.log("finished dragging")
+
         },
         collect: (monitor) => ({
             isDragging: !!monitor.isDragging(),
@@ -43,4 +39,4 @@ const ChessPiece: React.FC<ChessPieceProps> = ({ piece, svg }) => {
     );
 };
 
-export default ChessPiece;
+export default TestPocketPiece;

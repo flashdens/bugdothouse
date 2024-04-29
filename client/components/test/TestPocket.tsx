@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import ChessPiece, { ItemTypes } from './ChessPiece'; // You'll need to define this
+import TestPocketPiece, { ItemTypes } from './TestPocketPiece'; // You'll need to define this
 import defaultPieces from "@/public/pieces/pieces";
 
 const TestPocket = () => {
@@ -14,9 +14,9 @@ const TestPocket = () => {
                 justifyContent: 'space-between',
             }}
         >
-                <ChessPiece svg={defaultPieces.wP} piece={"wP"} />
-                <ChessPiece svg={defaultPieces.wN} piece={"wN"} />
-                <ChessPiece svg={defaultPieces.wQ} piece={"wQ"} />
+                <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} />
+                <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} />
+                <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} />
         </div>
     );
 };
