@@ -5,8 +5,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 import chess
-from channels.layers import get_channel_layer
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
 
 from game.models import Game, Move, User
 
@@ -105,8 +104,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             response_data = {
                 'type': 'move',
                 'error': 'Invalid move' if not is_move_valid else None,
-                'game_over': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
-                'side_to_move': board.turn,
+                'gameOver': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
+                'sideToMove': board.turn,
                 'fen': board.fen()
             }
 
@@ -116,6 +115,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return {'type': 'error', 'message': 'invalid json'}
 
+    # todo error only locally
+    # todo fetch checkmate from game info endpoint
     async def handle_move(self, data):
         response_data = await self.process_move_in_db(data)
         await self.channel_layer.group_send(
