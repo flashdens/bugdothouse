@@ -1,5 +1,5 @@
 import TestChessboard from "@/components/test/TestChessboard";
-import TestWhitePocket from "@/components/test/TestWhitePocket";
+import TestWhitePocket from "@/components/test/TestPocket";
 import React from "react";
 import {HTML5Backend} from "react-dnd-html5-backend";
 import {DndProvider} from "react-dnd";
@@ -11,8 +11,8 @@ interface TestGameProps {
 const TestGame: React.FC<TestGameProps> = ( {side} ) => {
     return (
         <div>
-                <TestChessboard side={side}/>
             <DndProvider backend={HTML5Backend} context={window}>
+                <TestChessboard side={side}/>
                 <TestWhitePocket/>
             </DndProvider>
         </div>
