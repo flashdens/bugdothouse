@@ -1,3 +1,5 @@
+// svgs to represent the pieces
+
 import { ReactNode } from "react";
 // https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
 // By en:User:Cburnett - Own work
