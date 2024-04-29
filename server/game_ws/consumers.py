@@ -5,6 +5,8 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 import chess
+import chess.variant
+
 from django.shortcuts import get_object_or_404
 
 from game.models import Game, Move, User
@@ -79,20 +81,30 @@ class GameConsumer(AsyncWebsocketConsumer):
         try:
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
+            piece = data.get('piece')
 
             game = get_object_or_404(Game, pk=1)
 
-            move = chess.Move.from_uci(from_sq + to_sq)
-            board = chess.Board(fen=game.fen)
-            is_move_valid = True if move in board.legal_moves else False
+            board = chess.variant.CrazyhouseBoard(fen=game.fen)
 
-            if is_move_valid:
+            print(game.side_to_move)
+            if from_sq:  # move from board
+                move = chess.Move.from_uci(from_sq + to_sq)
+                is_move_valid = True if move in board.legal_moves else False
                 board.push(move)
+            else:  # move from pocket
+                move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
+                pocket = chess.variant.CrazyhousePocket(piece)  # for testing
+                pocket.remove(chess.PIECE_SYMBOLS.index(piece))
+                parsed_sq = chess.parse_square(to_sq)
+                is_move_valid = True if parsed_sq in board.legal_drop_squares() else False
+                board.set_piece_at(parsed_sq, chess.Piece.from_symbol(piece.upper() if game.side_to_move else piece.lower()))
 
             print(board)
+            # emit error to the sender if move is invalid...
 
             game.side_to_move = board.turn
-            game.fen = board.fen()
+            game.fen = board.fen().replace('[]', '')  # temporary replacement so chessboard renders
             game.save()
 
             db_move = Move(game=game,
@@ -106,10 +118,10 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'error': 'Invalid move' if not is_move_valid else None,
                 'gameOver': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
                 'sideToMove': board.turn,
-                'fen': board.fen()
+                'fen': board.fen().replace('[]', '')
             }
 
-            print("received", from_sq + to_sq, "over websocket, success:", is_move_valid)
+            print("received", move, "over websocket, success:", is_move_valid)
             return response_data
 
         except json.JSONDecodeError:

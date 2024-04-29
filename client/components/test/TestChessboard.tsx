@@ -17,7 +17,7 @@ interface MoveData {
     fromSq: string;
     toSq: string;
     sideToMove?: boolean;
-    piece: Piece
+    piece: 'p' | 'n' | 'b' | 'r' | 'q'
 }
 
 interface FetchGameInfoResponse {
@@ -123,7 +123,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            piece: piece
+            piece: piece.slice(1).toLowerCase() // server only needs lower case piece type
         };
         console.log(moveData)
         return makeMove(moveData);

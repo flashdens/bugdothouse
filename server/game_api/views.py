@@ -23,6 +23,7 @@ class NewGameView(APIView):
     def post(self, request):
         game = Game(pk=1)
         board = chess.Board()
+        game.side_to_move = True
         game.fen = board.fen()
         game.save()
         response_data = {
