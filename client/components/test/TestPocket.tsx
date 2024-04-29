@@ -1,22 +1,37 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import TestPocketPiece, { ItemTypes } from './TestPocketPiece'; // You'll need to define this
+import TestPocketPiece from './TestPocketPiece';
 import defaultPieces from "@/public/pieces/pieces";
 
-const TestPocket = () => {
+interface TestPocketProps {
+    side: 'WHITE' | 'BLACK';
+}
 
+const TestPocket: React.FC<TestPocketProps> = ({side}) => {
     return (
         <div
-            style={{
-                width: '200px',
-                border: '1px solid black',
-                display: 'flex',
-                justifyContent: 'space-between',
-            }}
-        >
+        style={{
+            width: '200px',
+            border: '1px solid black',
+            display: 'flex',
+            justifyContent: 'space-between',
+        }}
+    >
+        {side === 'WHITE' ? (
+            <>
                 <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} />
                 <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} />
+                <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} />
                 <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} />
+            </>
+        ) : (
+            <>
+                <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} />
+                <TestPocketPiece svg={defaultPieces.bN} piece={"bN"} />
+                <TestPocketPiece svg={defaultPieces.bB} piece={"bB"} />
+                <TestPocketPiece svg={defaultPieces.bQ} piece={"bQ"} />
+            </>
+        )}
         </div>
     );
 };

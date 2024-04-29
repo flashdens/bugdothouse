@@ -2,7 +2,8 @@ import React, {useCallback, useEffect, useState} from 'react';
 import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
-import {BoardOrientation} from "react-chessboard/dist/chessboard/types";
+import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
+import pieces from "@/public/pieces/pieces";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -16,6 +17,7 @@ interface MoveData {
     fromSq: string;
     toSq: string;
     sideToMove?: boolean;
+    piece: Piece
 }
 
 interface FetchGameInfoResponse {
@@ -117,12 +119,13 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
 
         }, [socket]);
 
-    const onDrop = (from: string, to: string): boolean => {
+    const onDrop = (from: string, to: string, piece: Piece): boolean => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
+            piece: piece
         };
-
+        console.log(moveData)
         return makeMove(moveData);
     }
 

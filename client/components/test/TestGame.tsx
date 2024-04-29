@@ -13,7 +13,7 @@ const TestGame: React.FC<TestGameProps> = ( {side} ) => {
         <div>
             <DndProvider backend={HTML5Backend} context={window}>
                 <TestChessboard side={side}/>
-                <TestWhitePocket/>
+                <TestWhitePocket side={side}/>
             </DndProvider>
         </div>
     )
