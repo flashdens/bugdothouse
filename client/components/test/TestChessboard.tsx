@@ -127,7 +127,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     }
 
     return (
-        <div>
+        <>
            <button
                onClick={resetGame} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                reset game
@@ -148,9 +148,8 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
             <h2>{"Side to move: " + (gameState?.sideToMove ? "WHITE" : "BLACK")}</h2>
             <h2 id={"feedback"}></h2>
             <h2 id={"gameOver"}></h2>
-
-        </div>
-    );
+    </>
+);
 }
 
 export default TestChessboard;

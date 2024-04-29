@@ -1,49 +1,32 @@
-import React, { DragEvent } from 'react';
-import Chessboard from 'react-chessboard';
+import React from 'react';
+import { useDrop } from 'react-dnd';
+import ChessPiece, { ItemTypes } from './ChessPiece'; // You'll need to define this
+import defaultPieces from "@/public/pieces/pieces";
 
-const App: React.FC = () => {
-  const handleDragStart = (event: DragEvent<HTMLDivElement>, piece: string) => {
-    event.dataTransfer.setData('piece', piece);
-  };
+const ChessBoard = () => {
+    const [, drop] = useDrop({
+        accept: ItemTypes.CHESS_PIECE,
+        drop: (item, monitor) => {
+            // Handle drop logic here if needed
+        },
+    });
 
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const piece = event.dataTransfer.getData('piece');
-    // Implement logic to place the dropped piece on the board
-    console.log('Dropped piece:', piece);
-  };
-
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
-
-  return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="flex space-x-4">
-          <div
-              className="piece-white piece"
-              draggable
-              onDragStart={(event) => handleDragStart(event, 'wP')}
-          >
-            PIONECZEK
-          </div>
-          <div
-              className="piece-black piece"
-              draggable
-              onDragStart={(event) => handleDragStart(event, 'bP')}
-          >
-            ♟
-          </div>
-          {/* Add more pieces as needed */}
-        </div>
+    return (
         <div
-            className="chessboard ml-4"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
+            ref={drop}
+            style={{
+                width: '200px',
+                height: '200px',
+                border: '1px solid black',
+                display: 'flex',
+                justifyContent: 'space-between',
+            }}
         >
+            {[1, 2, 3].map((index) => (
+                <ChessPiece key={index} type={defaultPieces.wP} position={`pawn${index}`} />
+            ))}
         </div>
-      </div>
-  );
+    );
 };
 
-export default App;
+export default ChessBoard;
