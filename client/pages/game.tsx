@@ -15,50 +15,52 @@ const Game = () => {
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
 
-    const handleSubmit = async () => {
+
+    const handleSubmit = () => {
         let socket = getWebSocket();
         if (!socket) return;
 
-        try {
-            const response = await fetch(`${SERVER_URL}/ws/ws_auth/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: username
-                })
-            });
-
-            if (!response.ok) {
-                new Error('Failed to fetch data');
-            }
-
-            const responseData = await response.json();
-
-            socket.send(JSON.stringify({
-                type: 'connect',
-                username: username,
-                uuid: responseData.uuid
-            }));
-
-            socket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                console.log(data.type)
-                if (data.type === 'connection_response') {
-                    setPlayer({
-                        username: username,
-                        uuid: responseData.uuid,
-                        side: data.side
-            });
+        fetch(`${SERVER_URL}/ws/ws_auth/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: username
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
                 }
-            }
+                return response.json();
+            })
+            .then(responseData => {
+               socket.addEventListener("open", (e) => {
+                socket.send(JSON.stringify({
+                    type: 'connect',
+                    username: username,
+                    uuid: responseData.uuid
+                }))});
 
-            setIsDialogOpen(false);
-        } catch (error) {
-            console.error('Error:', error);
-        }
+                socket.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    console.log(data.type);
+                    if (data.type === 'connection_response') {
+                        setPlayer({
+                            username: username,
+                            uuid: responseData.uuid,
+                            side: data.side
+                        });
+                    }
+                };
+                setIsDialogOpen(false);
+            })
+            .catch(error => {
+                console.error('Upsi:', error);
+            });
     }
+
 
 
         return (
