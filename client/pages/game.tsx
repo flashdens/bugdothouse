@@ -3,6 +3,8 @@ import TestGame from "@/components/test/TestGame";
 import Dialog from "@/components/test/Dialog";
 import {getWebSocket} from "@/services/socket";
 import SERVER_URL from "@/config";
+import {ToastContainer} from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export interface IPlayer {
     username: string,
@@ -65,6 +67,7 @@ const Game = () => {
 
         return (
             <div>
+                <ToastContainer/>
                 <Dialog isOpen={isDialogOpen}>
                     <div className="flex flex-col items-center">
                         <label htmlFor="username" className="mb-2">Enter your username:</label>
