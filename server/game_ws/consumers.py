@@ -94,11 +94,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                 board.push(move)
             else:  # move from pocket
                 move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
-                pocket = chess.variant.CrazyhousePocket(piece)  # for testing
-                pocket.remove(chess.PIECE_SYMBOLS.index(piece))
+                board.pockets[board.turn].add(chess.Piece.from_symbol(piece).piece_type)
                 parsed_sq = chess.parse_square(to_sq)
                 is_move_valid = True if parsed_sq in board.legal_drop_squares() else False
-                board.set_piece_at(parsed_sq, chess.Piece.from_symbol(piece.upper() if game.side_to_move else piece.lower()))
+                board.set_piece_at(parsed_sq,
+                                   chess.Piece.from_symbol(piece.upper() if game.side_to_move else piece.lower()))
+                board.push(move)  # passes the turn
 
             print(board)
             # emit error to the sender if move is invalid...
@@ -120,6 +121,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'sideToMove': board.turn,
                 'fen': board.fen().replace('[]', '')
             }
+
+            print(board.turn)
 
             print("received", move, "over websocket, success:", is_move_valid)
             return response_data
