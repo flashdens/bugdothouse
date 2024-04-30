@@ -3,7 +3,7 @@ import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
-import {toast} from 'react-toastify'
+import {Flip, toast} from 'react-toastify'
 import {IPlayer} from "@/pages/game";
 
 const WHITE: boolean = false;
@@ -80,7 +80,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                         console.log(data)
                         const feedbackElement = document.getElementById("feedback");
                         if (feedbackElement && data.error) {
-                            toast.error(data.error, {autoClose: 2000})
+                            toast.error(data.error, {autoClose: 2000, transition: Flip, hideProgressBar: true})
                         }
 
                     }
