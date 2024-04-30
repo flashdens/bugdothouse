@@ -7,6 +7,7 @@ import chess
 
 from game.models import Game
 
+
 class NewGameView(APIView):
     def post(self, request):
         game = Game(pk=1)
@@ -33,6 +34,7 @@ class GameInfoView(APIView):
         response_data = {
             "fen": game.fen,
             "sideToMove": game.side_to_move,
+            "gameOver": 'Checkmate' if chess.Board(fen=game.fen).is_checkmate() else None,  # todo more elegant way
             "whitePlayerName": game.white_player.username if game.white_player else None,
             "blackPlayerName": game.black_player.username if game.black_player else None
         }

@@ -88,10 +88,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             game = get_object_or_404(Game, pk=1)
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
-            if board.turn == chess.WHITE:  # todo why isn't game.side_to_move working?
-                player = game.white_player
-            else:
-                player = game.black_player
+
+            player = game.white_player if board.turn == chess.WHITE else game.black_player
 
             if uuid != player.uuid:
                 return False, {'type': 'error', 'error': "you're not the player to move"}
@@ -170,4 +168,5 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_move(self, event):
         move = event['message']
-        await self.send(json.dumps({'data': move}))
+        await self.send(json.dumps(move))
+

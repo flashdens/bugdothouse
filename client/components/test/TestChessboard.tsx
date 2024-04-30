@@ -154,7 +154,6 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
             )}
 
             <h2>Hello {player.username}</h2>
-            <h2>{player.uuid}</h2>
             <h2>{"Side to move: " + (gameState?.sideToMove ? "WHITE" : "BLACK")}</h2>
             <h2 id={"feedback"}></h2>
             <h2 id={"gameOver"}></h2>
