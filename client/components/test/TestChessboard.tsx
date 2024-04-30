@@ -4,6 +4,7 @@ import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import pieces from "@/public/pieces/pieces";
+import {IPlayer} from "@/pages/game";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -14,10 +15,11 @@ interface GameState {
 }
 
 interface MoveData {
-    fromSq: string;
+    fromSq?: string;
     toSq: string;
     sideToMove?: boolean;
-    piece: 'p' | 'n' | 'b' | 'r' | 'q'
+    piece: string
+    uuid: string
 }
 
 interface FetchGameInfoResponse {
@@ -36,10 +38,10 @@ interface WSMoveResponse {
 }
 
 interface TestChessboardProps {
-    side: 'WHITE' | 'BLACK';
+    player: IPlayer
 }
 
-const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
+const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
     const [gameState, setGameState] = useState<GameState | null>(null)
     let socket = getWebSocket();
 
@@ -61,7 +63,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                 if (!socket) return;
 
                 socket.onmessage = (e) => {
-                    const data: WSMoveResponse = JSON.parse(e.data).message
+                    const data: WSMoveResponse = JSON.parse(e.data)
                     console.log(data);
                     if (data.type === 'move') {
                         setGameState(() => ({
@@ -69,15 +71,18 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                         sideToMove: data.sideToMove
                         }));
 
+                        const gameOverElement = document.getElementById("gameOver");
+                        if (gameOverElement && data.gameOver) {
+                            gameOverElement.innerText = data.gameOver as string;
+                        }
+                    }
+                    else if (data.type === 'error') {
+                        console.log(data)
                         const feedbackElement = document.getElementById("feedback");
                         if (feedbackElement && data.error) {
                             feedbackElement.innerText = data.error;
                         }
 
-                        const gameOverElement = document.getElementById("gameOver");
-                        if (gameOverElement && data.gameOver) {
-                            gameOverElement.innerText = data.gameOver as string;
-                        }
                     }
                 }
             });
@@ -123,7 +128,8 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            piece: piece.slice(1).toLowerCase() // server only needs lower case piece type
+            piece: piece.slice(1).toLowerCase(), // server only needs lower case piece type
+            uuid: player.uuid
         };
         console.log(moveData)
         return makeMove(moveData);
@@ -141,13 +147,14 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                         position={gameState.fen}
                         onPieceDrop={onDrop}
                         arePremovesAllowed={false}
-                        boardOrientation={side.toLowerCase() as BoardOrientation}
-                        isDraggablePiece={({ piece }) => piece[0] === (side === 'WHITE' ? 'w' : 'b')}
+                        boardOrientation={player.side.toLowerCase() as BoardOrientation}
+                        isDraggablePiece={({ piece }) => piece[0] === (player.side === 'WHITE' ? 'w' : 'b')}
                     />
                 </div>
             )}
 
-            {/*<h2>You're playing as {side}</h2>*/}
+            <h2>Hello {player.username}</h2>
+            <h2>{player.uuid}</h2>
             <h2>{"Side to move: " + (gameState?.sideToMove ? "WHITE" : "BLACK")}</h2>
             <h2 id={"feedback"}></h2>
             <h2 id={"gameOver"}></h2>

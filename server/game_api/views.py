@@ -1,10 +1,12 @@
 import random
+import re
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import chess
 
 from game.models import Game
+
 class NewGameView(APIView):
     def post(self, request):
         game = Game(pk=1)
@@ -23,6 +25,11 @@ class GameInfoView(APIView):
 
     def get(self, request):
         game = Game.objects.get(pk=1)
+
+        # Assuming game.fen contains the FEN string
+        game.fen = re.sub(r'\[.*?]', '', game.fen)
+        game.fen = game.fen.replace('[]', '')
+
         response_data = {
             "fen": game.fen,
             "sideToMove": game.side_to_move,

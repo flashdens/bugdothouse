@@ -4,12 +4,16 @@ import Dialog from "@/components/test/Dialog";
 import {getWebSocket} from "@/services/socket";
 import SERVER_URL from "@/config";
 
+export interface IPlayer {
+    username: string,
+    side: 'WHITE' | 'BLACK',
+    uuid: string,
+}
+
 const Game = () => {
+    const [player, setPlayer] = useState<IPlayer | null>(null)
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
-    const [uuid, setUuid] = useState<string>('');
-    const [side, setSide] = useState<'w'|'b'|null>(null);
-
 
     const handleSubmit = async () => {
         let socket = getWebSocket();
@@ -42,7 +46,11 @@ const Game = () => {
                 const data = JSON.parse(e.data);
                 console.log(data.type)
                 if (data.type === 'connection_response') {
-                    setSide(data.side)
+                    setPlayer({
+                        username: username,
+                        uuid: responseData.uuid,
+                        side: data.side
+            });
                 }
             }
 
@@ -75,9 +83,9 @@ const Game = () => {
                         </button>
                     </div>
                 </Dialog>
-                {(side &&
+                {(player &&
                     <TestGame
-                    side={side}/>
+                    player={player}/>
                 )}
             </div>
         );

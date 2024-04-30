@@ -1,4 +1,5 @@
 import json
+import re
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -82,30 +83,40 @@ class GameConsumer(AsyncWebsocketConsumer):
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
             piece = data.get('piece')
+            uuid = data.get('uuid')
 
             game = get_object_or_404(Game, pk=1)
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
+            if board.turn == chess.WHITE:  # todo why isn't game.side_to_move working?
+                player = game.white_player
+            else:
+                player = game.black_player
 
-            print(game.side_to_move)
+            if uuid != player.uuid:
+                return False, {'type': 'error', 'error': "you're not the player to move"}
+
             if from_sq:  # move from board
                 move = chess.Move.from_uci(from_sq + to_sq)
                 is_move_valid = True if move in board.legal_moves else False
-                board.push(move)
             else:  # move from pocket
                 move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
-                board.pockets[board.turn].add(chess.Piece.from_symbol(piece).piece_type)
-                parsed_sq = chess.parse_square(to_sq)
-                is_move_valid = True if parsed_sq in board.legal_drop_squares() else False
-                board.set_piece_at(parsed_sq,
-                                   chess.Piece.from_symbol(piece.upper() if game.side_to_move else piece.lower()))
-                board.push(move)  # passes the turn
+                board.pockets[board.turn].add(chess.Piece.from_symbol(piece).piece_type)  # temporary workaround
+                is_move_valid = True if chess.parse_square(to_sq) in board.legal_drop_squares() else False
+
+            if is_move_valid:
+                board.push(move)
+            else:
+                return False, {'type': 'error', 'error': 'invalid move'}
 
             print(board)
-            # emit error to the sender if move is invalid...
 
             game.side_to_move = board.turn
-            game.fen = board.fen().replace('[]', '')  # temporary replacement so chessboard renders
+
+            temp_board = board.fen()
+            pattern = re.compile(r'\[.*?\]')
+            temp_board = re.sub(pattern, '', temp_board)
+            game.fen = temp_board
             game.save()
 
             db_move = Move(game=game,
@@ -116,27 +127,29 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             response_data = {
                 'type': 'move',
-                'error': 'Invalid move' if not is_move_valid else None,
                 'gameOver': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
                 'sideToMove': board.turn,
-                'fen': board.fen().replace('[]', '')
+                'fen': game.fen
             }
 
             print(board.turn)
 
             print("received", move, "over websocket, success:", is_move_valid)
-            return response_data
+            return True, response_data
 
         except json.JSONDecodeError:
-            return {'type': 'error', 'message': 'invalid json'}
+            return False, {'type': 'error', 'error': 'invalid json'}
 
     # todo error only locally
     # todo fetch checkmate from game info endpoint
     async def handle_move(self, data):
-        response_data = await self.process_move_in_db(data)
-        await self.channel_layer.group_send(
-            self.room_group_name, {'type': 'game.move', 'message': response_data}
-        )
+        success, response_data = await self.process_move_in_db(data)
+        if success:
+            await self.channel_layer.group_send(
+                self.room_group_name, {'type': 'game.move', 'message': response_data})
+        else:
+            await self.send(json.dumps(response_data)
+                            )
 
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
@@ -157,4 +170,4 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_move(self, event):
         move = event['message']
-        await self.send(json.dumps({'message': move}))
+        await self.send(json.dumps({'data': move}))

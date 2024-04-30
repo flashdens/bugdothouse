@@ -3,17 +3,18 @@ import TestWhitePocket from "@/components/test/TestPocket";
 import React from "react";
 import {HTML5Backend} from "react-dnd-html5-backend";
 import {DndProvider} from "react-dnd";
+import {IPlayer} from "@/pages/game";
 
 interface TestGameProps {
-    side: 'WHITE' | 'BLACK';
+    player: IPlayer;
 }
 
-const TestGame: React.FC<TestGameProps> = ( {side} ) => {
+const TestGame: React.FC<TestGameProps> = ( {player} ) => {
     return (
         <div>
             <DndProvider backend={HTML5Backend} context={window}>
-                <TestChessboard side={side}/>
-                <TestWhitePocket side={side}/>
+                <TestChessboard player={player}/>
+                <TestWhitePocket side={player.side}/>
             </DndProvider>
         </div>
     )
