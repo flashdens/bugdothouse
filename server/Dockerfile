@@ -4,10 +4,10 @@ FROM python:3.11-alpine
 # Set environment variables
 ENV PYTHONUNBUFFERED 1
 
-RUN mkdir -p /opt/myproject
-WORKDIR /opt/myproject
+RUN mkdir -p /opt/bugdothouse
+WORKDIR /opt/bugdothouse
 
-COPY requirements.txt /opt/myproject
+COPY requirements.txt /opt/bugdothouse
 
 # Install system dependencies
 RUN apk update && \
@@ -16,6 +16,6 @@ RUN apk update && \
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy project files
-COPY . /opt/myproject
+COPY . /opt/bugdothouse
 
 CMD ["python3", "manage.py", "migrate"]
