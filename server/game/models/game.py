@@ -14,4 +14,3 @@ class Game(models.Model):
     side_to_move = models.CharField(default="WHITE", null=True)
     white_player = models.ForeignKey(User, related_name='white_games', on_delete=models.SET_NULL, null=True)
     black_player = models.ForeignKey(User, related_name='black_games', on_delete=models.SET_NULL, null=True)
-game_user
