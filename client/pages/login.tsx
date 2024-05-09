@@ -1,8 +1,11 @@
 import LoginPage from "@/components/auth/LoginPage";
+import {AuthProvider} from "@/context/AuthContext";
 
 const Login = () => {
     return(
-        <LoginPage/>
+        <AuthProvider>
+            <LoginPage/>
+        </AuthProvider>
     )
 }
 

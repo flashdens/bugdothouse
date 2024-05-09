@@ -6,7 +6,6 @@ const LoginPage = () => {
     const authContext = useContext(AuthContext);
 
     if (!authContext) {
-        // Handle the case where AuthContext is null
         return <div>Loading...</div>;
     }
 

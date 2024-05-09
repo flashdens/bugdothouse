@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, FormEvent, useEffect } from "react";
-import { jwtDecode, JwtHeader } from 'jwt-decode';
+import {jwtDecode, JwtHeader, JwtPayload} from 'jwt-decode';
 import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 
@@ -9,7 +9,7 @@ interface AuthTokens {
 }
 
 interface AuthContext {
-    user: JwtHeader | null;
+    user: JwtPayload | null;
     authTokens: AuthTokens | null;
     loginUser: (e: FormEvent<HTMLFormElement>) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
@@ -19,8 +19,22 @@ const AuthContext = createContext<AuthContext | null>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<JwtHeader | null>(() => (localStorage.getItem('authTokens') ? jwtDecode(localStorage.getItem('authTokens') as string) : null));
-    const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() => (localStorage.getItem('authTokens') ? JSON.parse(localStorage.getItem('authTokens') as string) : null));
+    const [user, setUser] = useState<JwtHeader | null>(() => {
+        if (typeof window !== 'undefined') {
+            const authTokens = localStorage.getItem('authTokens');
+            return authTokens ? jwtDecode(authTokens) : null;
+        }
+        return null;
+    });
+
+    const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() => {
+        if (typeof window !== 'undefined') {
+            const authTokens = localStorage.getItem('authTokens');
+            return authTokens ? JSON.parse(authTokens) : null;
+        }
+        return null;
+    });
+
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
