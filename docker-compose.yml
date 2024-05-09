@@ -59,6 +59,7 @@ services:
     container_name: bugdothouse_nginx
     volumes:
       - ./nginx:/etc/nginx/conf.d
+      - ./server/static:/var/www/static
     ports:
       - "80:80"
     depends_on:
