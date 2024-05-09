@@ -1,18 +1,28 @@
-import React from 'react'
+import React, { useContext } from 'react'
+import AuthContext from '@/context/AuthContext';
 
 const HomePage = () => {
-    const isAuthenticated: boolean = false;
-    return (
-        isAuthenticated ? (
-        <div>
-            <p>You are logged in to the homepage!</p>
-        </div>
-        ):(
-        <div>
-            <p>You are not logged in, redirecting...</p>
-        </div>
+
+    const authContext = useContext(AuthContext);
+
+    if (!authContext) {
+        // Handle the case where AuthContext is null
+        return <div>Loading...</div>;
+    }
+
+    const { user } = authContext;
+
+    return (user ? (
+            <div>
+                <p>You are logged in to the homepage!</p>
+            </div>
+        )
+            :(
+            <div>
+                <p>You are not logged in, redirecting...</p>
+            </div>
         )
     )
 }
 
-export default HomePage;
+export default HomePage

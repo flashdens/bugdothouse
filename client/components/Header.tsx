@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import Link from 'next/link';
-
-interface User {
-    username: string;
-}
+import AuthContext from "@/context/AuthContext";
 
 const Header: React.FC = () => {
-    const [user, setUser] = useState<User | null>(null);
+    const authContext = useContext(AuthContext);
 
-    const logoutUser = (e: React.MouseEvent<HTMLParagraphElement, MouseEvent>) => {
-        e.preventDefault();
-        // Add your logout logic here
+    if (!authContext) {
+        return <div>Loading...</div>;
     }
+
+    const { user, logoutUser } = authContext;
 
     return (
         <div>
