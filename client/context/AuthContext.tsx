@@ -1,33 +1,94 @@
-import React, {createContext, useState, ReactNode, FormEvent, FormEventHandler} from "react";
+import React, { createContext, useState, ReactNode, FormEvent, useEffect } from "react";
+import { jwtDecode, JwtHeader } from 'jwt-decode';
+import { useRouter } from 'next/router';
+import SERVER_URL from "@/config";
 
-interface User {
-    username: string;
+interface AuthTokens {
+    access: string;
+    refresh: string;
 }
 
 interface AuthContext {
-    user: User | null;
-    authTokens: any; // Update this to the appropriate type for authentication tokens
-    loginUser: (e: any) => Promise<void> // todo
-    logoutUser: (e: any) => void // TODO
+    user: JwtHeader | null;
+    authTokens: AuthTokens | null;
+    loginUser: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+    logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
 const AuthContext = createContext<AuthContext | null>(null);
-
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<User | null>({username: 'milosz'});
-    const [authTokens, setAuthTokens] = useState<any>(null); // Update this to the appropriate type for authentication tokens
+    const [user, setUser] = useState<JwtHeader | null>(() => (localStorage.getItem('authTokens') ? jwtDecode(localStorage.getItem('authTokens') as string) : null));
+    const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() => (localStorage.getItem('authTokens') ? JSON.parse(localStorage.getItem('authTokens') as string) : null));
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
-    const loginUser = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    const loginUser = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Add login logic here
+        const response = await fetch(`${SERVER_URL}/auth/token/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: e.currentTarget.username.value, password: e.currentTarget.password.value })
+        });
+
+        const data = await response.json();
+
+        if (data) {
+            localStorage.setItem('authTokens', JSON.stringify(data));
+            setAuthTokens(data);
+            setUser(jwtDecode(data.access));
+            await router.push('/');
+        } else {
+            alert('Something went wrong while logging in the user!');
+        }
     };
 
-    const logoutUser = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-        e.preventDefault();
-        // Add logout logic here
+    const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+        if (e) e.preventDefault();
+
+        localStorage.removeItem('authTokens');
+        setAuthTokens(null);
+        setUser(null);
+        void router.push('/login');
     };
+
+    const updateToken = async () => {
+        const response = await fetch('http://127.0.0.1:8000/auth/token/refresh/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ refresh: authTokens?.refresh })
+        });
+
+        const data = await response.json();
+        if (response.status === 200) {
+            setAuthTokens(data);
+            setUser(jwtDecode(data.access));
+            localStorage.setItem('authTokens', JSON.stringify(data));
+        } else {
+            logoutUser();
+        }
+
+        if (loading) {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const REFRESH_INTERVAL = 1000 * 60 * 4; // 4 minutes
+        let interval: NodeJS.Timeout;
+        if (authTokens) {
+            interval = setInterval(() => {
+                void updateToken();
+            }, REFRESH_INTERVAL);
+        }
+        return () => clearInterval(interval);
+
+    }, [authTokens]);
 
     const contextData: AuthContext = {
         user: user,
