@@ -10,7 +10,8 @@ import chess.variant
 
 from django.shortcuts import get_object_or_404
 
-from game.models import Game, Move, User
+from game.models import Game, Move
+from authorization.models import User
 
 
 class GameConsumer(AsyncWebsocketConsumer):

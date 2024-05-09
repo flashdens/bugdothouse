@@ -33,11 +33,11 @@ INSTALLED_APPS = [
     'game',
     'game_api',
     'game_ws',
-    'auth',
+    'authorization',
     'corsheaders',
     'django_extensions',
     'channels_postgres',
-    'django.contrib.admin',
+    # 'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -152,7 +152,7 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
-AUTH_USER_MODEL = 'game.User'
+AUTH_USER_MODEL = 'authorization.User'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
