@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
+from .serializers import AuthTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 @api_view(['GET'])
 def get_routes(request):
@@ -11,3 +13,6 @@ def get_routes(request):
     ]
 
     return Response(routes)
+
+class AuthTokenObtainPairView(TokenObtainPairView):
+    serializer_class = AuthTokenObtainPairSerializer
