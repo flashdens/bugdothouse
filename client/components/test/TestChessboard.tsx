@@ -1,10 +1,11 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect, useState} from 'react';
 import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
-import {IPlayer} from "@/pages/game";
+import game, {IPlayer} from "@/pages/game";
+import GameContext from "@/context/GameContext";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -42,7 +43,12 @@ interface TestChessboardProps {
 }
 
 const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
-    const [gameState, setGameState] = useState<GameState | null>(null)
+    const {gameContext, updateGameContext }= useContext(GameContext);
+
+    if (!gameContext) return (<div>loading</div>);
+
+    const {fen, sideToMove} = gameContext;
+
     let socket = getWebSocket();
 
     useEffect(() => {
@@ -54,8 +60,8 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
         })
             .then(response => response.json())
             .then((data: FetchGameInfoResponse) => {
-
-                setGameState({
+                updateGameContext({
+                    ...GameContext,
                     fen: data.fen,
                     sideToMove: data.sideToMove
                 });
@@ -66,9 +72,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                     const data: WSMoveResponse = JSON.parse(e.data)
                     console.log(data);
                     if (data.type === 'move') {
-                        setGameState(() => ({
-                        fen: data.fen,
-                        sideToMove: data.sideToMove
+                        updateGameContext(() => ({
+                            ...GameContext,
+                            fen: data.fen,
+                            sideToMove: data.sideToMove
                         }));
 
                         const gameOverElement = document.getElementById("gameOver");
@@ -80,7 +87,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                         console.log(data)
                         const feedbackElement = document.getElementById("feedback");
                         if (feedbackElement && data.error) {
-                            toast.error(data.error, {autoClose: 2000})
+                            toast.error(data.error, {autoClose: 2000, hideProgressBar: true})
                         }
 
                     }
@@ -97,9 +104,9 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
         })
             .then(response => response.json())
             .then(data => {
-                if (gameState) {
-                    setGameState({
-                        ...data,
+                if (gameContext) {
+                    updateGameContext({
+                        ...GameContext,
                         fen: data.fen,
                         sideToMove: WHITE
                     })
@@ -141,10 +148,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                onClick={resetGame} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                reset game
            </button>
-            {gameState && (
+            {gameContext && (
                 <div style={{width: '80dvh'}}>
                     <Chessboard
-                        position={gameState.fen}
+                        position={fen}
                         onPieceDrop={onDrop}
                         arePremovesAllowed={false}
                         boardOrientation={player.side.toLowerCase() as BoardOrientation}
@@ -154,7 +161,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
             )}
 
             <h2>Hello {player.username}</h2>
-            <h2>{"Side to move: " + (gameState?.sideToMove ? "WHITE" : "BLACK")}</h2>
+            <h2>{"Side to move: " + (gameContext?.sideToMove ? "WHITE" : "BLACK")}</h2>
             <h2 id={"feedback"}></h2>
             <h2 id={"gameOver"}></h2>
     </>

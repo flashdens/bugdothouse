@@ -11,12 +11,20 @@ interface GameContextData {
     blackPocket: string[];
 }
 
+interface GameContextValue extends GameContextData {
+    updateGameContext: (data: Partial<GameContextData>) => void;
+}
+
+
 const GameContext = createContext<GameContextData | null>(null);
 export default GameContext;
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [contextData, setContextData] = useState<GameContextData | null>(null);
 
+    const updateGameContext = (data: GameContextData) => {
+        setContextData({...contextData, ...data})
+    }
     useEffect(() => {
         fetch(`${SERVER_URL}/api/test/game_info/`, {
             method: 'GET',
