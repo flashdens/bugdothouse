@@ -3,6 +3,7 @@ import TestGame from "@/components/test/TestGame";
 import Dialog from "@/components/test/Dialog";
 import {getWebSocket} from "@/services/socket";
 import SERVER_URL from "@/config";
+import GameContext, {GameProvider} from "@/context/GameContext";
 import {ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -16,7 +17,6 @@ const Game = () => {
     const [player, setPlayer] = useState<IPlayer | null>(null)
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
-
 
     const handleSubmit = () => {
         let socket = getWebSocket();

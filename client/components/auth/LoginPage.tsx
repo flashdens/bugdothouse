@@ -5,7 +5,6 @@ import {useRouter} from "next/router";
 const LoginPage = () => {
 
     const authContext = useContext(AuthContext);
-    const router = useRouter();
 
     if (!authContext) {
         return <div>Loading...</div>;
