@@ -17,9 +17,6 @@ const HomePage = () => {
     const { authTokens, logoutUser } = authContext;
     let [profile, setProfile] = useState<Profile|null>(null);
 
-    useEffect(() => {
-        getProfile()
-    },[])
 
     const getProfile = async() => {
         if (!authTokens) return;
@@ -31,13 +28,16 @@ const HomePage = () => {
             }
         })
         let data = await response.json()
-        console.log(data)
         if(response.status === 200){
             setProfile(data)
         } else if(response.statusText === 'Unauthorized'){
             logoutUser()
         }
     }
+
+    useEffect(() => {
+       void getProfile()
+    },[])
 
     return (
         profile ? (

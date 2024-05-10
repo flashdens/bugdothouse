@@ -16,13 +16,12 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
     }
     let {user} = authContext;
 
-    useEffect(() => {
         if (!user) {
-            router.push('/login');
+            void router.push('/login');
+            return null;
         }
-    }, [user, router]);
 
-    return (user ? <>{children}</> : null);
+    return (<>{children}</>);
 }
 
 export default PrivateRoute;

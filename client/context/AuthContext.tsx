@@ -19,18 +19,16 @@ const AuthContext = createContext<AuthContext | null>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [user, setUser] = useState<JwtHeader | null>(() => {
-        if (typeof window !== 'undefined') {
-            const authTokens = localStorage.getItem('authTokens');
-            return authTokens ? jwtDecode(authTokens) : null;
+      let [user, setUser] = useState(() => {
+        if (typeof window !== 'undefined' && localStorage.getItem('authTokens')) {
+            return jwtDecode(localStorage.getItem('authTokens'));
         }
         return null;
     });
 
-    const [authTokens, setAuthTokens] = useState<AuthTokens | null>(() => {
-        if (typeof window !== 'undefined') {
-            const authTokens = localStorage.getItem('authTokens');
-            return authTokens ? JSON.parse(authTokens) : null;
+    let [authTokens, setAuthTokens] = useState(() => {
+        if (typeof window !== 'undefined' && localStorage.getItem('authTokens')) {
+            return JSON.parse(localStorage.getItem('authTokens'));
         }
         return null;
     });
@@ -54,7 +52,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.setItem('authTokens', JSON.stringify(data));
             setAuthTokens(data);
             setUser(jwtDecode(data.access));
-            await router.push('/');
+            setTimeout(() => {}, 500);
+            void router.push('/');
+
         } else {
             alert('Something went wrong while logging in the user!');
         }
@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const updateToken = async () => {
-        const response = await fetch('http://127.0.0.1:8000/auth/token/refresh/', {
+        const response = await fetch(`${SERVER_URL}/auth/token/refresh/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
