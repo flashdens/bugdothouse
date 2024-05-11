@@ -6,6 +6,7 @@ import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
 import game, {Player} from "@/pages/game";
 import GameContext from "@/context/GameContext";
+import socket from "@/services/socket";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -40,27 +41,12 @@ interface TestChessboardProps {
 const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
     // @ts-ignore
     const {contextData, updateGameContext} = useContext(GameContext);
-    console.log(contextData);
-
-    if (!contextData) return (<div>loading</div>);
-
+    if (!contextData) return(<div>gowno</div>);
     const {fen, sideToMove} = contextData;
 
     let socket = getWebSocket();
 
     useEffect(() => {
-        fetch(`${SERVER_URL}/api/test/game_info/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => response.json())
-            .then((data: FetchGameInfoResponse) => {
-                updateGameContext({
-                    fen: data.fen,
-                    sideToMove: data.sideToMove
-                });
 
                 if (!socket) return;
 
@@ -89,7 +75,6 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                     }
                 }
             });
-    }, []);
 
     const resetGame = () => {
         fetch(`${SERVER_URL}/api/test/new_game/`, {
