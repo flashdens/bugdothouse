@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.setItem('authTokens', JSON.stringify(data));
             setAuthTokens(data);
             setUser(jwtDecode(data.access));
-            setTimeout(() => {}, 500);
+            // setTimeout(() => {}, 500);
             void router.push('/');
 
         } else {

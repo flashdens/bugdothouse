@@ -7,14 +7,14 @@ import GameContext, {GameProvider} from "@/context/GameContext";
 import {ToastContainer} from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 
-export interface IPlayer {
+export interface Player {
     username: string,
     side: 'WHITE' | 'BLACK',
     uuid: string,
 }
 
 const Game = () => {
-    const [player, setPlayer] = useState<IPlayer | null>(null)
+    const [player, setPlayer] = useState<Player | null>(null)
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
 
