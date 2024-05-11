@@ -27,7 +27,7 @@ export default GameContext;
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [contextData, setContextData] = useState<GameContextData | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
     const updateGameContext = useCallback((data: Partial<GameContextData>) => {

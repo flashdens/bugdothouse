@@ -21,6 +21,7 @@ const TestGame: React.FC<TestGameProps> = ({ player }) => {
         return <div>Error: {error}</div>;
     }
 
+    // todo don't render chessboard until context data is fetched
     return (
         <GameProvider>
             <DndProvider backend={HTML5Backend} context={window}>

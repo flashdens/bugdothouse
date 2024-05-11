@@ -111,11 +111,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             print(board)
 
             game.side_to_move = board.turn
-
-            temp_board = board.fen()
-            pattern = re.compile(r'\[.*?\]')
-            temp_board = re.sub(pattern, '', temp_board)
-            game.fen = temp_board
+            game.fen = board.fen()
             game.save()
 
             db_move = Move(game=game,
@@ -124,12 +120,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                            )
             db_move.save()
 
+            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everything but pockets
+            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+
             response_data = {
                 'type': 'move',
-                'gameOver': 'Checkmate' if board.is_checkmate() else None,  # self.handle_game_ending_move,
-                'sideToMove': board.turn,
-                'fen': game.fen
-            }
+                "fen": no_pocket_fen,
+                "whitePocket": [p for p in pockets if p.upper()], # todo map to dict?
+                "blackPocket": [p for p in pockets if p.lower()],
+                "sideToMove": game.side_to_move,
+                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
+        }
 
             print(board.turn)
 

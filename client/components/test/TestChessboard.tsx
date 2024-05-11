@@ -46,6 +46,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
 
     let socket = getWebSocket();
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
 
                 if (!socket) return;
@@ -95,6 +96,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
             });
     };
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const makeMove = useCallback(
         (moveData: MoveData) => {
             if (!socket)

@@ -17,7 +17,7 @@ class NewGameView(APIView):
         game.fen = board.fen()
         game.save()
         response_data = {
-            "fen": board.fen()
+            "fen":  re.sub(r'\[.*?]', '', game.fen).replace('[]', '') # cut out the pockets
         }
 
         return Response(response_data)
