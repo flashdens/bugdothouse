@@ -130,8 +130,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
-                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
-        }
+                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
+                # todo more elegant way
+            }
 
             print(board.turn)
 
@@ -171,4 +172,3 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_move(self, event):
         move = event['message']
         await self.send(json.dumps(move))
-

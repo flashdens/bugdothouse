@@ -20,22 +20,24 @@ interface MoveData {
 }
 
 interface FetchGameInfoResponse {
-    fen: string,
-    sideToMove: boolean,
-    whitePlayerName: string,
-    blackPlayerName: string
+    fen: string;
+    sideToMove: boolean;
+    whitePlayerName: string;
+    blackPlayerName: string;
 }
 
 interface WSMoveResponse {
-    error?: string,
-    fen: string,
-    gameOver?: string,
-    sideToMove: boolean,
-    type: 'move'
+    error?: string;
+    fen: string;
+    gameOver?: string;
+    sideToMove: boolean;
+    type: 'move';
+    whitePocket: {[key: string]: number};
+    blackPocket: {[key: string]: number};
 }
 
 interface TestChessboardProps {
-    player: Player
+    player: Player;
 }
 
 const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
@@ -57,7 +59,9 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                     if (data.type === 'move') {
                         updateGameContext({
                             fen: data.fen,
-                            sideToMove: data.sideToMove
+                            sideToMove: data.sideToMove,
+                            whitePocket: data.whitePocket,
+                            blackPocket: data.blackPocket,
                         });
 
                         const gameOverElement = document.getElementById("gameOver");
