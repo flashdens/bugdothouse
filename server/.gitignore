@@ -1,5 +1,0 @@
-venv
-**/__pycache__/
-**/migrations/*.py
-**/migrations/*.pyc
-staticy/
