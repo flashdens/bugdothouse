@@ -128,7 +128,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'type': 'move',
                 "fen": no_pocket_fen,
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-                "blackPocket": dict(Counter([p for p in pockets if p.lower()])),
+                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
                 "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
         }

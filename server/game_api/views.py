@@ -38,7 +38,7 @@ class GameInfoView(APIView):
             "fen": no_pocket_fen,
             # count each piece in the pocket string, then return as a dict
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-            "blackPocket": dict(Counter([p for p in pockets if p.lower()])),
+            "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
             "sideToMove": game.side_to_move,
             "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
             "whitePlayerName": game.white_player.username if game.white_player else None,
