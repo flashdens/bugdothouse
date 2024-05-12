@@ -6,8 +6,8 @@ interface GameContextData {
     sideToMove: boolean;
     whitePlayerName: string;
     blackPlayerName: string;
-    whitePocket: string[];
-    blackPocket: string[];
+    whitePocket: {[key: string]: number};
+    blackPocket: {[key: string]: number};
 }
 
 interface GameContextValue {

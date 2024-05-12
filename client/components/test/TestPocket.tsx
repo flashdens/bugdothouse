@@ -1,13 +1,21 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { useDrop } from 'react-dnd';
 import TestPocketPiece from './TestPocketPiece';
 import defaultPieces from "@/public/pieces/pieces";
+import GameContext from "@/context/GameContext";
 
 interface TestPocketProps {
     side: 'WHITE' | 'BLACK';
 }
 
+
 const TestPocket: React.FC<TestPocketProps> = ({side}) => {
+
+    const {contextData, updateGameContext} = useContext(GameContext);
+    if (!contextData) return;
+
+    const {whitePocket, blackPocket} = contextData;
+
     return (
         <div
         style={{
@@ -19,19 +27,19 @@ const TestPocket: React.FC<TestPocketProps> = ({side}) => {
     >
         {side === 'WHITE' ? (
             <>
-                <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} />
-                <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} />
-                <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} />
-                <TestPocketPiece svg={defaultPieces.wR} piece={"wR"} />
-                <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} />
+                <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} count={whitePocket["P"]} />
+                <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} count={whitePocket["N"]}/>
+                <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} count={whitePocket["B"]} />
+                <TestPocketPiece svg={defaultPieces.wR} piece={"wR"} count={whitePocket["R"]} />
+                <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} count={whitePocket["Q"]}/>
             </>
         ) : (
             <>
-                <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} />
-                <TestPocketPiece svg={defaultPieces.bN} piece={"bN"} />
-                <TestPocketPiece svg={defaultPieces.bB} piece={"bB"} />
-                <TestPocketPiece svg={defaultPieces.bR} piece={"bR"} />
-                <TestPocketPiece svg={defaultPieces.bQ} piece={"bQ"} />
+                <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} count={blackPocket["p"]} />
+                <TestPocketPiece svg={defaultPieces.bN} piece={"bN"} count={blackPocket["n"]}/>
+                <TestPocketPiece svg={defaultPieces.bB} piece={"bB"} count={blackPocket["b"]}/>
+                <TestPocketPiece svg={defaultPieces.bR} piece={"bR"} count={blackPocket["r"]}/>
+                <TestPocketPiece svg={defaultPieces.bQ} piece={"bQ"} count={blackPocket["q"]}/>
             </>
         )}
         </div>

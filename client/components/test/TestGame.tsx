@@ -1,5 +1,5 @@
 import TestChessboard from "@/components/test/TestChessboard";
-import TestWhitePocket from "@/components/test/TestPocket";
+import TestPocket from "@/components/test/TestPocket";
 import React, { useContext } from "react";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
@@ -25,8 +25,9 @@ const TestGame: React.FC<TestGameProps> = ({ player }) => {
     return (
         <GameProvider>
             <DndProvider backend={HTML5Backend} context={window}>
+                    <TestPocket side={player.side == 'WHITE' ? 'BLACK' : 'WHITE'} />
                     <TestChessboard player={player} />
-                    <TestWhitePocket side={player.side} />
+                    <TestPocket side={player.side} />
             </DndProvider>
         </GameProvider>
     );
