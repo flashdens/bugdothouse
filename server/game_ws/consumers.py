@@ -1,5 +1,6 @@
 import json
 import re
+from collections import Counter
 
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
@@ -126,8 +127,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             response_data = {
                 'type': 'move',
                 "fen": no_pocket_fen,
-                "whitePocket": [p for p in pockets if p.upper()], # todo map to dict?
-                "blackPocket": [p for p in pockets if p.lower()],
+                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+                "blackPocket": dict(Counter([p for p in pockets if p.lower()])),
                 "sideToMove": game.side_to_move,
                 "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
         }
@@ -148,8 +149,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name, {'type': 'game.move', 'message': response_data})
         else:
-            await self.send(json.dumps(response_data)
-                            )
+            await self.send(json.dumps(response_data))
 
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)

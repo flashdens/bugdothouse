@@ -1,5 +1,5 @@
-import random
 import re
+from collections import Counter
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -36,8 +36,9 @@ class GameInfoView(APIView):
 
         response_data = {
             "fen": no_pocket_fen,
-            "whitePocket": [p for p in pockets if p.upper()], # todo map to dict?
-            "blackPocket": [p for p in pockets if p.lower()],
+            # count each piece in the pocket string, then return as a dict
+            "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+            "blackPocket": dict(Counter([p for p in pockets if p.lower()])),
             "sideToMove": game.side_to_move,
             "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,  # todo more elegant way
             "whitePlayerName": game.white_player.username if game.white_player else None,
