@@ -85,7 +85,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
             piece = data.get('piece')
-            uuid = data.get('uuid')
+            promotion = data.get('promotion')
 
             game = get_object_or_404(Game, pk=1)
 
@@ -93,18 +93,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             player = game.white_player if board.turn == chess.WHITE else game.black_player
 
-            if uuid != player.uuid:
-                return False, {'type': 'error', 'error': "you're not the player to move"}
+            # if uuid != player.uuid: # todo authenticate the mover
+            #     return False, {'type': 'error', 'error': "you're not the player to move"}
 
             if from_sq:  # move from board
-                move = chess.Move.from_uci(from_sq + to_sq)
+                move = chess.Move.from_uci(from_sq + to_sq + promotion)
                 is_move_valid = True if move in board.legal_moves else False
             else:  # move from pocket
                 move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
                 is_move_valid = (True if chess.parse_square(to_sq) in board.legal_drop_squares()
-                                    and move in board.legal_moves
-                                    else False)
+                                         and move in board.legal_moves
+                                 else False)
 
+            print(move)
             if is_move_valid:
                 board.push(move)
             else:
@@ -117,9 +118,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             game.save()
 
             db_move = Move(game=game,
-                           player="TEST",
-                           move=move,
-                           )
+                           player=player,
+                           move=move)
             db_move.save()
 
             pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everything but pockets
@@ -127,7 +127,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             response_data = {
                 'type': 'move',
-                "fen": no_pocket_fen,
+                "fen": no_pocket_fen.replace('~', ''),  # remove tildas from crazyhouse string
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,

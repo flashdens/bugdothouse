@@ -18,11 +18,11 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
             isDragging: monitor.isDragging(),
         }),
         canDrag: () => {
-            return (side === "WHITE" && piece[0] === "w") || (side === "BLACK" && piece[0] === "b");
+            return count && (side === "WHITE" && piece[0] === "w") || (side === "BLACK" && piece[0] === "b");
         }
     });
 
-    console.log(count);
+    console.log(piece, count);
 
     return (
         <div
@@ -38,7 +38,7 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
                     opacity: (isDragging || !count || side !== pocketOf) ? 0.4 : 1,
                     fontSize: 25,
                     fontWeight: 'bold',
-                    cursor: (side === pocketOf || !count) ? 'move' : 'not-allowed',
+                    cursor: (side === pocketOf && count) ? 'move' : 'not-allowed',
                 }}>
                 {svg}
             </div>

@@ -7,6 +7,7 @@ import {toast} from 'react-toastify'
 import game, {Player} from "@/pages/game";
 import GameContext from "@/context/GameContext";
 import socket from "@/services/socket";
+import {retry} from "next/dist/compiled/@next/font/dist/google/retry";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -15,8 +16,8 @@ interface MoveData {
     fromSq?: string;
     toSq: string;
     sideToMove?: boolean;
-    piece: string
-    uuid: string
+    piece: string;
+    promotion: 'n' | 'b' | 'r' | 'q' | '';
 }
 
 interface FetchGameInfoResponse {
@@ -115,12 +116,21 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
 
         }, [socket]);
 
+
+    const isPromotion = (sourceSquare: string, targetSquare: string, piece: Piece) => {
+        if (!sourceSquare)
+            return false;
+
+        return (piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
+            (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1") &&
+            (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
+    }
     const onDrop = (from: string, to: string, piece: Piece): boolean => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
             piece: piece.slice(1).toLowerCase(), // server only needs lower case piece type
-            uuid: player.uuid
+            promotion: isPromotion(from, to, piece) ? "q" : ''
         };
         return makeMove(moveData);
     }
@@ -136,10 +146,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                     <Chessboard
                         position={contextData.fen}
                         onPieceDrop={onDrop}
-                        arePremovesAllowed={false}
+                        arePremovesAllowed={true}
                         boardOrientation={player.side.toLowerCase() as BoardOrientation}
                         isDraggablePiece={({ piece }) => piece[0] === (player.side === 'WHITE' ? 'w' : 'b')}
-                        onPromotionCheck={() => {return false}} // todo temporary workaround
+                        onPromotionCheck={isPromotion}
                     />
                 </div>
             )}
