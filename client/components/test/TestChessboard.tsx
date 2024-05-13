@@ -139,6 +139,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                         arePremovesAllowed={false}
                         boardOrientation={player.side.toLowerCase() as BoardOrientation}
                         isDraggablePiece={({ piece }) => piece[0] === (player.side === 'WHITE' ? 'w' : 'b')}
+                        onPromotionCheck={() => {return false}} // todo temporary workaround
                     />
                 </div>
             )}

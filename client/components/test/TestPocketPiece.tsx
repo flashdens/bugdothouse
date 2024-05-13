@@ -22,6 +22,8 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
         }
     });
 
+    console.log(count);
+
     return (
         <div
             style={{
@@ -33,12 +35,11 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
                 ref={drag}
                 className={"piece"}
                 style={{
-                    opacity: (isDragging || side !== pocketOf) ? 0.4 : 1,
+                    opacity: (isDragging || !count || side !== pocketOf) ? 0.4 : 1,
                     fontSize: 25,
                     fontWeight: 'bold',
-                    cursor: side === pocketOf ? 'move' : 'not-allowed',
-                }}
-            >
+                    cursor: (side === pocketOf || !count) ? 'move' : 'not-allowed',
+                }}>
                 {svg}
             </div>
             <div
@@ -57,24 +58,8 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
             >
                 {count ? count : 0}
             </div>
-            {side !== pocketOf && (
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0.4,
-                        fontSize: 25,
-                        fontWeight: 'bold',
-                        cursor: 'not-allowed',
-                    }}
-                />
-            )}
         </div>
     );
-;
 };
 
 

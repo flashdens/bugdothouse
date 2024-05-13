@@ -101,8 +101,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 is_move_valid = True if move in board.legal_moves else False
             else:  # move from pocket
                 move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
-                board.pockets[board.turn].add(chess.Piece.from_symbol(piece).piece_type)  # temporary workaround
-                is_move_valid = True if chess.parse_square(to_sq) in board.legal_drop_squares() else False
+                is_move_valid = (True if chess.parse_square(to_sq) in board.legal_drop_squares()
+                                    and move in board.legal_moves
+                                    else False)
 
             if is_move_valid:
                 board.push(move)
