@@ -1,6 +1,8 @@
 aiopg==1.4.0
 asgiref==3.7.2
 async-timeout==4.0.3
+asyncio==3.4.3
+asyncssh==2.14.2
 attrs==23.2.0
 autobahn==23.6.2
 Automat==22.10.0

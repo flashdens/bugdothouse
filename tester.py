@@ -1,10 +1,16 @@
-import chess, chess.variant
+import asyncio
+import asyncssh
+import chess
+import chess.engine
 
-fen = 'rk6/1P6/8/8/8/8/8/2K5 w q - 0 1'
-board = chess.variant.CrazyhouseBoard(fen=fen)
-board.push(chess.Move.from_uci('b7a8q'))
-print(board)
-print()
-board.push(chess.Move.from_uci('b8a8'))
-print(board)
-print(board.fen())
+
+async def main() -> None:
+    async with asyncssh.connect("fairy_stockfish:23249") as conn:
+        channel, engine = await conn.create_subprocess(chess.engine.UciProtocol, "/stockfish/stockfish")
+        await engine.initialize()
+
+        # Play, analyse, ...
+        await engine.ping()
+
+
+asyncio.run(main())
