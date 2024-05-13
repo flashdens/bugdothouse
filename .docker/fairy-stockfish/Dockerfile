@@ -1,0 +1,48 @@
+# based on https://github.com/tchorwat/stockfish/blob/master/Dockerfile.14
+
+FROM alpine:latest AS builder
+
+# Install dependencies
+RUN apk add --no-cache git g++ make
+
+RUN git clone --depth 1 --branch master https://github.com/fairy-stockfish/Fairy-Stockfish.git
+RUN ls -al /
+
+WORKDIR /Fairy-Stockfish/src
+RUN echo "arch:$( uname -m )" \
+&& case $( uname -m ) in \
+  x86_64) \
+    make build ARCH=x86-64-modern \
+  ;; \
+  aarch64) \
+    make build ARCH=armv8 \
+  ;; \
+  armv7l) \
+    make build ARCH=armv7 \
+  ;; \
+  ppc64le) \
+    make build ARCH=ppc-64 \
+  ;; \
+  *) \
+    exit 1 \
+  ;; \
+esac
+
+FROM alpine:latest
+COPY ./entrypoint.sh /
+
+RUN chmod +x /entrypoint.sh \
+ && apk add --no-cache libstdc++ ucspi-tcp6 \
+ && addgroup -g 1000 stockfish \
+ && adduser -u 1000 -G stockfish -HD stockfish
+
+WORKDIR /stockfish/
+USER stockfish:stockfish
+
+COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/src/stockfish /stockfish/
+COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/Copying.txt /stockfish/
+COPY --chown=stockfish:stockfish source.txt /stockfish/
+COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/src/*.nnue /stockfish/
+
+EXPOSE 23249
+ENTRYPOINT ["/entrypoint.sh"]

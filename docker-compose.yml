@@ -58,13 +58,18 @@ services:
     image: nginx
     container_name: bugdothouse_nginx
     volumes:
-      - ./nginx:/etc/nginx/conf.d
+      - .docker/nginx:/etc/nginx/conf.d
       - ./server/static:/var/www/static
     ports:
       - "80:80"
     depends_on:
       - asgi
       - wsgi
+
+  fairy-stockish:
+    build: .docker/fairy-stockfish
+    ports:
+      - "23249:23249"
 
 volumes:
   postgres_data:
