@@ -25,9 +25,9 @@ const TestGame: React.FC<TestGameProps> = ({ player }) => {
     return (
         <GameProvider>
             <DndProvider backend={HTML5Backend} context={window}>
-                    <TestPocket side={player.side == 'WHITE' ? 'BLACK' : 'WHITE'} />
+                    <TestPocket pocketOf={player.side == "WHITE" ? "BLACK" : "WHITE"} side={player.side} />
                     <TestChessboard player={player} />
-                    <TestPocket side={player.side} />
+                    <TestPocket pocketOf={player.side} side={player.side} />
             </DndProvider>
         </GameProvider>
     );

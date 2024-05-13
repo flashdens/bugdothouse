@@ -6,10 +6,11 @@ import GameContext from "@/context/GameContext";
 
 interface TestPocketProps {
     side: 'WHITE' | 'BLACK';
+    pocketOf: 'WHITE' | 'BLACK';
 }
 
 
-const TestPocket: React.FC<TestPocketProps> = ({side}) => {
+const TestPocket: React.FC<TestPocketProps> = ({side, pocketOf}) => {
 
     const {contextData, updateGameContext} = useContext(GameContext);
     if (!contextData) return;
@@ -26,21 +27,21 @@ const TestPocket: React.FC<TestPocketProps> = ({side}) => {
             justifyContent: 'space-between',
         }}
     >
-        {side === 'WHITE' ? (
+        {pocketOf === 'WHITE' ? (
             <div>
-                <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} side={side} count={whitePocket["P"]} />
-                <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} side={side} count={whitePocket["N"]}/>
-                <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} side={side} count={whitePocket["B"]} />
-                <TestPocketPiece svg={defaultPieces.wR} piece={"wR"} side={side} count={whitePocket["R"]} />
-                <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} side={side}  count={whitePocket["Q"]}/>
+                <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} side={side} pocketOf={pocketOf} count={whitePocket["P"]} />
+                <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} side={side}  pocketOf={pocketOf} count={whitePocket["N"]}/>
+                <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} side={side}  pocketOf={pocketOf} count={whitePocket["B"]} />
+                <TestPocketPiece svg={defaultPieces.wR} piece={"wR"} side={side}  pocketOf={pocketOf} count={whitePocket["R"]} />
+                <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} side={side}  pocketOf={pocketOf}  count={whitePocket["Q"]}/>
             </div>
         ) : (
             <div>
-                <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} side={side} count={blackPocket["p"]} />
-                <TestPocketPiece svg={defaultPieces.bN} piece={"bN"} side={side} count={blackPocket["n"]}/>
-                <TestPocketPiece svg={defaultPieces.bB} piece={"bB"} side={side} count={blackPocket["b"]}/>
-                <TestPocketPiece svg={defaultPieces.bR} piece={"bR"} side={side} count={blackPocket["r"]}/>
-                <TestPocketPiece svg={defaultPieces.bQ} piece={"bQ"} side={side} count={blackPocket["q"]}/>
+                <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} side={side}  pocketOf={pocketOf} count={blackPocket["p"]} />
+                <TestPocketPiece svg={defaultPieces.bN} piece={"bN"} side={side}  pocketOf={pocketOf} count={blackPocket["n"]}/>
+                <TestPocketPiece svg={defaultPieces.bB} piece={"bB"} side={side}  pocketOf={pocketOf} count={blackPocket["b"]}/>
+                <TestPocketPiece svg={defaultPieces.bR} piece={"bR"} side={side}  pocketOf={pocketOf} count={blackPocket["r"]}/>
+                <TestPocketPiece svg={defaultPieces.bQ} piece={"bQ"} side={side}  pocketOf={pocketOf} count={blackPocket["q"]}/>
             </div>
         )}
         </div>
