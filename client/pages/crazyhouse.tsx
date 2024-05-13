@@ -13,7 +13,7 @@ export interface Player {
     uuid: string,
 }
 
-const Game = () => {
+const Crazyhouse = () => {
     const [player, setPlayer] = useState<Player | null>(null)
     const [username, setUsername] = useState<string>('');
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(true);
@@ -96,4 +96,4 @@ const Game = () => {
         );
 }
 
-export default Game;
+export default Crazyhouse;

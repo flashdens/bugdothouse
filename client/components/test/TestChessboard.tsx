@@ -4,7 +4,7 @@ import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
-import game, {Player} from "@/pages/game";
+import game, {Player} from "@/pages/crazyhouse";
 import GameContext from "@/context/GameContext";
 import socket from "@/services/socket";
 import {retry} from "next/dist/compiled/@next/font/dist/google/retry";
@@ -142,7 +142,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                reset game
            </button>
             {contextData && (
-                <div style={{width: '80dvh'}}>
+                <div style={{width: '70dvh'}}>
                     <Chessboard
                         position={contextData.fen}
                         onPieceDrop={onDrop}

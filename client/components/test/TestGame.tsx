@@ -3,7 +3,7 @@ import TestPocket from "@/components/test/TestPocket";
 import React, { useContext } from "react";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { Player } from "@/pages/game";
+import { Player } from "@/pages/crazyhouse";
 import GameContext, { GameProvider } from "@/context/GameContext";
 
 interface TestGameProps {
