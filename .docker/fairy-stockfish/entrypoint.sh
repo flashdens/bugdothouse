@@ -1,12 +1,12 @@
 #!/bin/sh
 set -e
 
-if [ -z "$1" ]; then
-  /usr/sbin/sshd -D &
-  echo "ssh daemon is ready to accept connections"
-  tcpserver -c2 0 23249 /stockfish/stockfish &
-  echo "fairy-stockfish TCP server is ready to accept connections"
+# Check if sshd is available and start it
+if which /usr/sbin/sshd > /dev/null; then
+  ssh-keygen -A
+  echo "SSH daemon is ready to accept connections"
+  /usr/sbin/sshd -D
 else
-  # else default to run whatever the user wanted like "bash" or "sh"
+  echo "SSH daemon not found"
   exec "$@"
 fi

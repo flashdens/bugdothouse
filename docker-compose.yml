@@ -69,8 +69,6 @@ services:
   fairy-stockfish:
     container_name: bugdothouse_fairy-stockfish
     build: .docker/fairy-stockfish
-    ports:
-      - "23249:23249"
 
 volumes:
   postgres_data:

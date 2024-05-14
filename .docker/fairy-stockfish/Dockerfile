@@ -37,10 +37,9 @@ RUN chmod +x /entrypoint.sh \
  && addgroup -g 1000 stockfish \
  && adduser -u 1000 -G stockfish -HD stockfish \
  && mkdir "/var/run/sshd" \
-  #todo replace password
- && echo 'root:password' | chpasswd \
- && sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config \
- && ssh-keygen -A
+ && echo 'root:password' | chpasswd
+
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 WORKDIR /stockfish/
 USER stockfish:stockfish
@@ -50,10 +49,6 @@ COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/Copying.txt /st
 COPY --chown=stockfish:stockfish source.txt /stockfish/
 COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/src/*.nnue /stockfish/
 
-RUN #sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 USER root
-RUN sed 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config > /etc/ssh/sshd_config.tmp && mv /etc/ssh/sshd_config.tmp /etc/ssh/sshd_config
-
 EXPOSE 22
-EXPOSE 23249
 ENTRYPOINT ["/entrypoint.sh"]

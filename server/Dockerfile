@@ -11,7 +11,7 @@ COPY requirements.txt /opt/bugdothouse
 
 # Install system dependencies
 RUN apk update && \
-    apk add --no-cache git linux-headers musl-dev gcc python3-dev
+    apk add --no-cache git linux-headers musl-dev gcc python3-dev openssh-client
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
