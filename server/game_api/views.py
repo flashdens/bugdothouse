@@ -1,11 +1,19 @@
 import re
 from collections import Counter
+import random
 
+import jwt
+from jwt import InvalidTokenError, ExpiredSignatureError
+from rest_framework import status
+from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import chess
 import chess.variant
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
+from authorization.models import User
+from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game
 
 
@@ -52,5 +60,62 @@ class GameInfoView(APIView):
         return Response(response_data)
 
 
-class LobbyList(APIView):
-    pass
+class JoinGameView(APIView):
+    # permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
+
+    def generate_guest_username(self):
+        while True:  # roll till nonexistent
+            random_sequence = f"guest-{random.randint(100000, 999999)}"
+            if not User.objects.filter(username=random_sequence).exists():
+                return random_sequence
+
+    def post(self, request, game_id):
+        access_token = request.data.get('accessToken')
+
+        if not game_id:
+            return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        game = get_object_or_404(Game, id=game_id)
+
+        if request.access_token:
+            try:
+                jwt.decode(access_token, SECRET_KEY, algorithms=['HS256'])
+            except Exception as e:
+                return Response({'error': e}, status=status.HTTP_403_FORBIDDEN)
+
+            user = request.user
+            guest_token = None
+        else:  # create a guest account
+            guest_username = 'guest-' + self.generate_guest_username()
+            user = User(username=guest_username)
+            user.save()
+
+            # Create a token for the guest user
+            access = AccessToken.for_user(user)
+            refresh = RefreshToken.for_user(user)
+            guest_token = {
+                'refresh': str(refresh),
+                'access': str(access),
+            }
+
+        if game.white_player and game.white_player.pk == user.pk or game.black_player and game.black_player.pk == user.pk:
+            return Response({'error': 'You already joined the game'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not game.white_player:
+            game.white_player = user
+        elif not game.black_player:
+            game.black_player = user
+        else:
+            return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
+
+        game.save()
+
+        response_data = {
+            'message': 'Successfully joined the game',
+            'gameId': game.id,
+        }
+
+        if guest_token:
+            response_data['guestToken'] = guest_token
+
+        return Response(response_data, status=status.HTTP_200_OK)

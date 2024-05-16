@@ -2,6 +2,7 @@ import json
 import re
 from collections import Counter
 
+import jwt
 from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
@@ -11,6 +12,7 @@ import chess.variant
 
 from django.shortcuts import get_object_or_404
 
+from bugdothouse_server import settings
 from game.models import Game, Move
 from authorization.models import User
 
@@ -79,72 +81,75 @@ class GameConsumer(AsyncWebsocketConsumer):
             return None
         '''
 
-    @database_sync_to_async
-    def process_move_in_db(self, data):
+
+    async def process_move_in_db(self, data):
         try:
+            token = data.get('token')
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
             piece = data.get('piece')
             promotion = data.get('promotion')
 
-            game = get_object_or_404(Game, pk=1)
+            # Decode JWT token
+            try:
+                decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                user_id = decoded_token.get('user_id')
+            except jwt.ExpiredSignatureError:
+                return False, {'type': 'error', 'error': 'Token has expired'}
+            except jwt.InvalidTokenError:
+                return False, {'type': 'error', 'error': 'Invalid token'}
+
+            # Authenticate the user
+            user = await sync_to_async(get_object_or_404)(User, id=user_id)
+
+            game = await sync_to_async(get_object_or_404)(Game, pk=1)
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
 
             player = game.white_player if board.turn == chess.WHITE else game.black_player
 
-            # if uuid != player.uuid: # todo authenticate the mover
-            #     return False, {'type': 'error', 'error': "you're not the player to move"}
+            # Check if the authenticated user is the player to move
+            if user != player:
+                return False, {'type': 'error', 'error': "You're not the player to move"}
 
             if from_sq:  # move from board
-                move = chess.Move.from_uci(from_sq + to_sq + promotion)
-                is_move_valid = True if move in board.legal_moves else False
+                move = chess.Move.from_uci(from_sq + to_sq + (promotion if promotion else ''))
+                is_move_valid = move in board.legal_moves
             else:  # move from pocket
                 move = chess.Move.from_uci((piece.upper() if game.side_to_move else piece.lower()) + '@' + to_sq)
-                is_move_valid = (True if chess.parse_square(to_sq) in board.legal_drop_squares()
-                                         and move in board.legal_moves
-                                 else False)
+                is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
-            print(move)
             if is_move_valid:
                 board.push(move)
             else:
-                return False, {'type': 'error', 'error': 'invalid move'}
-
-            print(board)
+                return False, {'type': 'error', 'error': 'Invalid move'}
 
             game.side_to_move = board.turn
             game.fen = board.fen()
-            game.save()
+            await sync_to_async(game.save)()
 
-            db_move = Move(game=game,
-                           player=player,
-                           move=move)
-            db_move.save()
+            db_move = Move(game=game, player=player, move=move)
+            await sync_to_async(db_move.save)()
 
-            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everything but pockets
-            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
+            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove the pockets from the FEN string
 
             response_data = {
                 'type': 'move',
-                "fen": no_pocket_fen.replace('~', ''),  # remove tildas from crazyhouse string
+                "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
                 "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
-                # todo more elegant way
             }
 
-            print(board.turn)
-
-            print("received", move, "over websocket, success:", is_move_valid)
             return True, response_data
 
         except json.JSONDecodeError:
-            return False, {'type': 'error', 'error': 'invalid json'}
+            return False, {'type': 'error', 'error': 'Invalid JSON'}
+        except Exception as e:
+            return False, {'type': 'error', 'error': str(e)}
 
-    # todo error only locally
-    # todo fetch checkmate from game info endpoint
     async def handle_move(self, data):
         success, response_data = await self.process_move_in_db(data)
         if success:

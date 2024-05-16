@@ -36,18 +36,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const loginUser = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const response = await fetch(`${SERVER_URL}/auth/token/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username: e.currentTarget.username.value, password: e.currentTarget.password.value })
-        });
+    const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: any) => {
+        if (e) e.preventDefault();
+        if (!data) {
+            const response = await fetch(`${SERVER_URL}/auth/token/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: e.currentTarget.username.value,
+                    password: e.currentTarget.password.value
+                })
+            });
 
-        const data = await response.json();
-
+            data = await response.json();
+        }
         if (data) {
             localStorage.setItem('authTokens', JSON.stringify(data));
             setAuthTokens(data);
