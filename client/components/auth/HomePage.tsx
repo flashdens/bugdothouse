@@ -3,8 +3,9 @@ import AuthContext from '@/context/AuthContext';
 import SERVER_URL from "@/config";
 import {toast} from "react-toastify";
 import {Simulate} from "react-dom/test-utils";
-import reset = Simulate.reset;
+import Dialog from "@/components/Dialog";
 import {useRouter} from "next/router";
+import NewGameDialog from "@/components/NewGameDialog";
 
 interface Profile {
     username: string;
@@ -16,6 +17,7 @@ const HomePage = () => {
     const router = useRouter();
 
     const {authTokens, loginUser, logoutUser} = authContext;
+       const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
     let [profile, setProfile] = useState<Profile | null>(null);
 
 
@@ -38,7 +40,7 @@ const HomePage = () => {
 
 
     const joinGame = async (gameId: number) => {
-        fetch(`${SERVER_URL}/api/test/join/${gameId}`, {
+        fetch(`${SERVER_URL}/game/join/${gameId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -66,6 +68,10 @@ const HomePage = () => {
             });
     }
 
+    const createNewGame = () => {
+        console.log('creating...');
+    }
+
 
     useEffect(() => {
         void getProfile()
@@ -82,8 +88,17 @@ const HomePage = () => {
                 <div>
                     <p>You are logged in to the homepage!</p>
                     <p>Username: {profile.username} </p>
-                    <p>Elo: {profile.elo}</p>
+                <button onClick={() => setNewGameDialogOpen(true)}
+                        className="bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 border border-pink-500 hover:border-transparent rounded"
+                >
+                    CREATE A NEW GAME
+                </button>
+                   <NewGameDialog
+                        isOpen={isNewGameDialogOpen}
+                        onClose={() => setNewGameDialogOpen(false)}
+                    />
                 </div>
+
             ) : (<div>
                 Loading...
             </div>)

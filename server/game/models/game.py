@@ -17,6 +17,9 @@ class Game(models.Model):
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="waiting_for_start")
     gamemode = models.CharField(max_length=20, choices=GAMEMODE_CHOICES, default="crazyhouse")
+    code = models.CharField(max_length=8, null=True, unique=True)
+    is_private = models.BooleanField(default=False, null=False)
+    host = models.ForeignKey(User, related_name='host', on_delete=models.SET_NULL, null=True)
     fen = models.CharField(max_length=128, default="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
                            null=False)
     side_to_move = models.CharField(default="WHITE", null=True)

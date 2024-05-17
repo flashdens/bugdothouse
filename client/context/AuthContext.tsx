@@ -109,12 +109,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         const REFRESH_INTERVAL = 1000 * 60 * 4; // 4 minutes
-        let interval: NodeJS.Timeout;
-        if (authTokens) {
-            interval = setInterval(() => {
-                void updateToken();
+        let interval: NodeJS.Timeout =
+            setInterval(() => {
+                if (authTokens) {
+                    void updateToken();
+                }
             }, REFRESH_INTERVAL);
-        }
         return () => clearInterval(interval);
 
     }, [authTokens]);

@@ -1,5 +1,6 @@
 import json
 import re
+import traceback
 from collections import Counter
 
 import jwt
@@ -46,24 +47,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             print("spectator")  # todo
             return None
 
-    async def handle_connect(self, data):
-        username = data.get('username')
-        uuid = data.get('uuid')
-        print(username, "connected")
-        user = await sync_to_async(get_object_or_404)(User, username=username)
-
-        if user.uuid != uuid:
-            print("masz przejebane")
-
-        game = await sync_to_async(get_object_or_404)(Game, pk=1)
-        player_side = await self.determine_side(game, user)
-
-        await game.asave()
-
-        await self.send(text_data=json.dumps({'type': 'connection_response',
-                                              'message': 'Connected successfully',
-                                              'side': player_side}))
-
     # is nesting async functions even a good idea?
     '''
     def handle_game_ending_move(self, board):
@@ -81,7 +64,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             return None
         '''
 
-
     async def process_move_in_db(self, data):
         try:
             token = data.get('token')
@@ -92,8 +74,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # Decode JWT token
             try:
-                decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                user_id = decoded_token.get('user_id')
+                decoded_token = await sync_to_async(jwt.decode)(token, settings.SECRET_KEY, algorithms=["HS256"])
+                user_id = decoded_token['user_id']
             except jwt.ExpiredSignatureError:
                 return False, {'type': 'error', 'error': 'Token has expired'}
             except jwt.InvalidTokenError:
@@ -106,7 +88,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
 
-            player = game.white_player if board.turn == chess.WHITE else game.black_player
+            player = await sync_to_async(
+                lambda: game.white_player if board.turn == chess.WHITE else game.black_player)()
 
             # Check if the authenticated user is the player to move
             if user != player:
@@ -148,6 +131,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except json.JSONDecodeError:
             return False, {'type': 'error', 'error': 'Invalid JSON'}
         except Exception as e:
+            traceback.print_exc()
             return False, {'type': 'error', 'error': str(e)}
 
     async def handle_move(self, data):
@@ -163,10 +147,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         try:
             data = json.loads(text_data)
             event_type = data['type']
-            print(event_type)
-            if event_type == 'connect':
-                await self.handle_connect(data)
-            elif event_type == 'move':
+            if event_type == 'move':
                 await self.handle_move(data)
             else:
                 await self.send(text_data=json.dumps({'message': 'invalid request received'}))

@@ -39,7 +39,7 @@ interface TestChessboardProps {
 const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     // @ts-ignore
     const {gameContextData, updateGameContext} = useContext(GameContext);
-    const {user} = useContext(AuthContext)
+    const {user, authTokens} = useContext(AuthContext)
     if (!gameContextData) return(<div>gowno</div>);
     const {fen, sideToMove} = gameContextData;
 
@@ -105,6 +105,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
             else {
                 socket.send(JSON.stringify({
                     type: 'move',
+                    token: authTokens.access,
                     ...moveData
                 }));
                 return true;

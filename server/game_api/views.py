@@ -1,5 +1,6 @@
 import json
 import re
+import secrets
 from collections import Counter
 import random
 
@@ -14,11 +15,12 @@ import chess.variant
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from authorization.models import User
+from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game
 
 
-class NewGameView(APIView):
+class ResetGameView(APIView):
     def post(self, request):
         game = Game(pk=1)
         board = chess.variant.CrazyhouseBoard()
@@ -79,7 +81,7 @@ class JoinGameView(APIView):
 
         if auth_tokens:
             try:
-               token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
+                token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
 
             except jwt.ExpiredSignatureError:
                 return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
@@ -90,7 +92,7 @@ class JoinGameView(APIView):
             guest_token = None
         else:  # create a guest account
             guest_username = 'guest-' + self.generate_guest_username()
-            user = User(username=guest_username, email=guest_username+'@bug.house')
+            user = User(username=guest_username, email=guest_username + '@bug.house')
             user.save()
 
             # Create a token for the guest user
@@ -119,3 +121,40 @@ class JoinGameView(APIView):
             response_data['guestToken'] = guest_token
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+
+class NewGameView(APIView):
+
+    def generate_game_code(self):
+        while True:  # roll till nonexistent
+            code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
+            if not Game.objects.filter(code=code).exists():
+                return code
+
+    def post(self, request):
+        gamemode = request.data.get('gamemode')
+        room_type = request.data.get('roomType')
+
+        # Get the JWT token from the Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return Response("Authorization header missing", status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            # Extract the token from "Bearer <token>"
+            token = auth_header.split()[1]
+            # Decode the token to get the user ID
+            decoded_token = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = decoded_token['user_id']
+        except (jwt.ExpiredSignatureError, jwt.InvalidTokenError, IndexError, KeyError):
+            return Response("Invalid or expired token", status=status.HTTP_401_UNAUTHORIZED)
+
+        user = get_object_or_404(User, pk=user_id)
+
+        game = Game(host=user,
+                    gamemode=gamemode,
+                    is_private=True if room_type == 'private' else False,
+                    code=self.generate_game_code())
+
+        game.save()
+        return Response({'code': game.code}, status=status.HTTP_200_OK)
