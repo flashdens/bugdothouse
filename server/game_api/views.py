@@ -1,3 +1,4 @@
+import json
 import re
 from collections import Counter
 import random
@@ -65,25 +66,27 @@ class JoinGameView(APIView):
 
     def generate_guest_username(self):
         while True:  # roll till nonexistent
-            random_sequence = f"guest-{random.randint(100000, 999999)}"
+            random_sequence = random.randint(100000, 999999)
             if not User.objects.filter(username=random_sequence).exists():
                 return random_sequence
 
     def post(self, request, game_id):
-        access_token = request.data.get('accessToken')
-
         if not game_id:
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+        auth_tokens = request.data.get('authTokens')
         game = get_object_or_404(Game, id=game_id)
 
-        if request.access_token:
+        if auth_tokens:
             try:
-                jwt.decode(access_token, SECRET_KEY, algorithms=['HS256'])
-            except Exception as e:
-                return Response({'error': e}, status=status.HTTP_403_FORBIDDEN)
+               token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
 
-            user = request.user
+            except jwt.ExpiredSignatureError:
+                return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
+            except jwt.InvalidTokenError:
+                return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
+
+            user = get_object_or_404(User, pk=token.get('user_id'))
             guest_token = None
         else:  # create a guest account
             guest_username = 'guest-' + self.generate_guest_username()

@@ -2,6 +2,7 @@ import React, { createContext, useState, ReactNode, FormEvent, useEffect } from 
 import {jwtDecode, JwtHeader, JwtPayload} from 'jwt-decode';
 import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
+import {toast, ToastContainer} from "react-toastify";
 
 interface AuthTokens {
     access: string;
@@ -49,6 +50,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     password: e.currentTarget.password.value
                 })
             });
+
+            if (!response.ok) {
+                toast('bruh')
+                return;
+            }
 
             data = await response.json();
         }
@@ -115,8 +121,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <AuthContext.Provider value={contextData}>
+        <>
+            <AuthContext.Provider value={contextData}>
             {children}
-        </AuthContext.Provider>
+            </AuthContext.Provider>
+        </>
     );
 };

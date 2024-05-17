@@ -13,9 +13,7 @@ const Index = () => {
                     <nav className={"bg-pink-200"}>
                         <Header/>
                     </nav>
-                    <PrivateRoute>
                         <HomePage/>
-                    </PrivateRoute>
                 </AuthProvider>
             </div>
             <Lobby/>
