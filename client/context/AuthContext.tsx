@@ -4,19 +4,24 @@ import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 import {toast, ToastContainer} from "react-toastify";
 
+interface JwtUser extends JwtPayload {
+    user_id: number
+    username: string
+}
+
 interface AuthTokens {
     access: string;
     refresh: string;
 }
 
 interface AuthContext {
-    user: JwtPayload | null;
-    authTokens: AuthTokens | null;
-    loginUser: (e: FormEvent<HTMLFormElement>) => Promise<void>;
+    user: JwtUser | null;
+    authTokens: AuthTokens;
+    loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens| {error: string} ) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
-const AuthContext = createContext<AuthContext | null>(null);
+const AuthContext = createContext<AuthContext>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -37,9 +42,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: any) => {
+    const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: AuthTokens | object) => {
         if (e) e.preventDefault();
-        if (!data) {
+        if (!data && e) {
             const response = await fetch(`${SERVER_URL}/auth/token/`, {
                 method: 'POST',
                 headers: {
@@ -51,12 +56,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 })
             });
 
-            if (!response.ok) {
-                toast('bruh')
-                return;
-            }
+
 
             data = await response.json();
+            if (!response.ok) {
+                if (data) toast(data.error)
+                    return;
+            }
         }
         if (data) {
             localStorage.setItem('authTokens', JSON.stringify(data));
@@ -114,7 +120,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [authTokens]);
 
     const contextData: AuthContext = {
-        user: user,
+        user: user as JwtPayload,
         authTokens: authTokens,
         loginUser: loginUser,
         logoutUser: logoutUser,

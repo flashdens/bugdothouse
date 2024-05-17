@@ -1,35 +1,42 @@
 import TestChessboard from "@/components/test/TestChessboard";
 import TestPocket from "@/components/test/TestPocket";
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { Player } from "@/pages/crazyhouse";
-import GameContext, { GameProvider } from "@/context/GameContext";
+import GameContext from "@/context/GameContext";
+import AuthContext from "@/context/AuthContext";
 
-interface TestGameProps {
-    player: Player;
-}
+const TestGame: React.FC = () => {
+    const { gameContextData } = useContext(GameContext);
+    const { user } = useContext(AuthContext);
+    const [side, setSide] = useState<'WHITE' | 'BLACK' | null>(null);
+    const [loading, setLoading] = useState(true);
 
-const TestGame: React.FC<TestGameProps> = ({ player }) => {
-    const {loading, error } = useContext(GameContext);
+    useEffect(() => {
+        if (gameContextData && user) {
+            if (gameContextData.whitePlayer === user.user_id) {
+                setSide('WHITE');
+            } else if (gameContextData.blackPlayer === user.user_id) {
+                setSide('BLACK');
+            }
+            setLoading(false);
+        }
+    }, [gameContextData, user, loading]);
 
     if (loading) {
         return <div>Loading...</div>;
     }
 
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
-
-    // todo don't render chessboard until context data is fetched
     return (
-        <GameProvider>
-            <DndProvider backend={HTML5Backend} context={window}>
-                    <TestPocket pocketOf={player.side == "WHITE" ? "BLACK" : "WHITE"} side={player.side} />
-                    <TestChessboard player={player} />
-                    <TestPocket pocketOf={player.side} side={player.side} />
-            </DndProvider>
-        </GameProvider>
+        <DndProvider backend={HTML5Backend}>
+            {side && (
+                <>
+                    <TestPocket pocketOf={side === "WHITE" ? "BLACK" : "WHITE"} side={side} />
+                    <TestChessboard side={side} />
+                    <TestPocket pocketOf={side} side={side} />
+                </>
+            )}
+        </DndProvider>
     );
 };
 

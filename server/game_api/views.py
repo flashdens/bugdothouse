@@ -54,8 +54,8 @@ class GameInfoView(APIView):
             "sideToMove": game.side_to_move,
             "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
             # todo more elegant way
-            "whitePlayerName": game.white_player.username if game.white_player else None,
-            "blackPlayerName": game.black_player.username if game.black_player else None
+            "whitePlayer": game.white_player.id if game.white_player else None,
+            "blackPlayer": game.black_player.id if game.black_player else None
         }
 
         return Response(response_data)
@@ -68,7 +68,7 @@ class JoinGameView(APIView):
         while True:  # roll till nonexistent
             random_sequence = random.randint(100000, 999999)
             if not User.objects.filter(username=random_sequence).exists():
-                return random_sequence
+                return str(random_sequence)
 
     def post(self, request, game_id):
         if not game_id:
@@ -90,7 +90,7 @@ class JoinGameView(APIView):
             guest_token = None
         else:  # create a guest account
             guest_username = 'guest-' + self.generate_guest_username()
-            user = User(username=guest_username)
+            user = User(username=guest_username, email=guest_username+'@bug.house')
             user.save()
 
             # Create a token for the guest user
@@ -101,12 +101,9 @@ class JoinGameView(APIView):
                 'access': str(access),
             }
 
-        if game.white_player and game.white_player.pk == user.pk or game.black_player and game.black_player.pk == user.pk:
-            return Response({'error': 'You already joined the game'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not game.white_player:
+        if not game.white_player or (game.black_player != user and game.white_player == user):
             game.white_player = user
-        elif not game.black_player:
+        elif not game.black_player or (game.white_player != user and game.black_player == user):
             game.black_player = user
         else:
             return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)

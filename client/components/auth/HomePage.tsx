@@ -15,10 +15,6 @@ const HomePage = () => {
     const authContext = useContext(AuthContext);
     const router = useRouter();
 
-    if (!authContext) {
-        return (<div>loading</div>)
-    }
-
     const {authTokens, loginUser, logoutUser} = authContext;
     let [profile, setProfile] = useState<Profile | null>(null);
 
@@ -62,7 +58,7 @@ const HomePage = () => {
                 if (data.guestToken)
                     loginUser(undefined, data.guestToken);
 
-                router.push(`/crazyhouse`)
+                router.push(`/game`)
 
             })
             .catch(error => {
@@ -88,7 +84,9 @@ const HomePage = () => {
                     <p>Username: {profile.username} </p>
                     <p>Elo: {profile.elo}</p>
                 </div>
-            ) : (<div></div>)
+            ) : (<div>
+                Loading...
+            </div>)
             }
         </>
     );

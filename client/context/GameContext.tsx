@@ -4,21 +4,21 @@ import SERVER_URL from "@/config";
 interface GameContextData {
     fen: string;
     sideToMove: boolean;
-    whitePlayerName: string;
-    blackPlayerName: string;
+    whitePlayer: number;
+    blackPlayer: number;
     whitePocket: {[key: string]: number};
     blackPocket: {[key: string]: number};
 }
 
 interface GameContextValue {
-    contextData: GameContextData | null;
+    gameContextData: GameContextData | null;
     loading: boolean;
     error: string | null;
     updateGameContext: (data: Partial<GameContextData>) => void;
 }
 
 const GameContext = createContext<GameContextValue>({
-    contextData: null,
+    gameContextData: null,
     loading: false,
     error: null,
     updateGameContext: () => {},
@@ -46,7 +46,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setLoading(true);
                 const response = await fetch(`${SERVER_URL}/api/test/game_info/`);
                 if (!response.ok) {
-                    throw new Error("Failed to fetch game info");
+                    new Error("Failed to fetch game info");
                 }
                 const data: GameContextData = await response.json();
                 updateGameContext(data);
@@ -57,11 +57,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         };
 
-        fetchGameData();
+        void fetchGameData();
     }, [updateGameContext]);
 
     return (
-        <GameContext.Provider value={{ contextData, loading, error, updateGameContext }}>
+        <GameContext.Provider value={{ gameContextData: contextData, loading, error, updateGameContext }}>
             {children}
         </GameContext.Provider>
     );

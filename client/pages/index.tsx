@@ -11,7 +11,7 @@ const Index = () => {
             <div className="App">
                 <AuthProvider>
                     <nav className={"bg-pink-200"}>
-                        <Header/>
+                        {/*<Header/>*/}
                     </nav>
                         <HomePage/>
                 </AuthProvider>

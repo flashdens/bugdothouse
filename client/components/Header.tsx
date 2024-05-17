@@ -5,10 +5,6 @@ import AuthContext from "@/context/AuthContext";
 const Header: React.FC = () => {
     const authContext = useContext(AuthContext);
 
-    if (!authContext) {
-        return <div>Loading...</div>;
-    }
-
     const { user, logoutUser } = authContext;
 
     return (

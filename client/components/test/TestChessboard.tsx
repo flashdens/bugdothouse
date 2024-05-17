@@ -4,10 +4,11 @@ import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
-import game, {Player} from "@/pages/crazyhouse";
+import game, {Player} from "@/pages/game";
 import GameContext from "@/context/GameContext";
 import socket from "@/services/socket";
 import {retry} from "next/dist/compiled/@next/font/dist/google/retry";
+import AuthContext from "@/context/AuthContext";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -20,12 +21,6 @@ interface MoveData {
     promotion: 'n' | 'b' | 'r' | 'q' | '';
 }
 
-interface FetchGameInfoResponse {
-    fen: string;
-    sideToMove: boolean;
-    whitePlayerName: string;
-    blackPlayerName: string;
-}
 
 interface WSMoveResponse {
     error?: string;
@@ -38,14 +33,15 @@ interface WSMoveResponse {
 }
 
 interface TestChessboardProps {
-    player: Player;
+    side: 'WHITE' | 'BLACK';
 }
 
-const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
+const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     // @ts-ignore
-    const {contextData, updateGameContext} = useContext(GameContext);
-    if (!contextData) return(<div>gowno</div>);
-    const {fen, sideToMove} = contextData;
+    const {gameContextData, updateGameContext} = useContext(GameContext);
+    const {user} = useContext(AuthContext)
+    if (!gameContextData) return(<div>gowno</div>);
+    const {fen, sideToMove} = gameContextData;
 
     let socket = getWebSocket();
 
@@ -141,21 +137,22 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {player} ) => {
                onClick={resetGame} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                reset game
            </button>
-            {contextData && (
+            {gameContextData && (
                 <div style={{width: '70dvh'}}>
                     <Chessboard
-                        position={contextData.fen}
+                        position={gameContextData.fen}
                         onPieceDrop={onDrop}
                         arePremovesAllowed={true}
-                        boardOrientation={player.side.toLowerCase() as BoardOrientation}
-                        isDraggablePiece={({ piece }) => piece[0] === (player.side === 'WHITE' ? 'w' : 'b')}
+                        boardOrientation={side.toLowerCase() as BoardOrientation}
+                        isDraggablePiece={({ piece }) => piece[0] === (side === 'WHITE' ? 'w' : 'b')}
                         onPromotionCheck={isPromotion}
                     />
                 </div>
             )}
 
-            <h2>Hello {player.username}</h2>
-            <h2>{"Side to move: " + (contextData?.sideToMove ? "WHITE" : "BLACK")}</h2>
+            <h2>Hello {user?.username}</h2>
+            <h2>{"Side to move: " + (gameContextData?.sideToMove ? "WHITE" : "BLACK")}</h2>
+            <h2>{side ? "You're playing as " + side : "You're spectating the game"}</h2>
             <h2 id={"feedback"}></h2>
             <h2 id={"gameOver"}></h2>
     </>

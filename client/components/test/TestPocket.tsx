@@ -12,11 +12,11 @@ interface TestPocketProps {
 
 const TestPocket: React.FC<TestPocketProps> = ({side, pocketOf}) => {
 
-    const {contextData, updateGameContext} = useContext(GameContext);
-    if (!contextData) return;
-    console.log(contextData)
+    const {gameContextData, updateGameContext} = useContext(GameContext);
+    if (!gameContextData) return;
+    console.log(gameContextData)
 
-    const {whitePocket, blackPocket} = contextData;
+    const {whitePocket, blackPocket} = gameContextData;
 
     return (
         <div
