@@ -2,6 +2,7 @@ import React, { createContext, ReactNode, useEffect, useState, useCallback } fro
 import SERVER_URL from "@/config";
 
 interface GameContextData {
+    status: "waiting_for_start" | "ongoing" | "finished";
     fen: string;
     sideToMove: boolean;
     whitePlayer: number;
@@ -41,23 +42,23 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     useEffect(() => {
-        const fetchGameData = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(`${SERVER_URL}/api/test/game_info/`);
-                if (!response.ok) {
-                    new Error("Failed to fetch game info");
-                }
-                const data: GameContextData = await response.json();
-                updateGameContext(data);
-            } catch (error: any) {
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        void fetchGameData();
+        // const fetchGameData = async () => {
+        //     try {
+        //         setLoading(true);
+        //         const response = await fetch(`${SERVER_URL}/api/game/game_info/`);
+        //         if (!response.ok) {
+        //             new Error("Failed to fetch game info");
+        //         }
+        //         const data: GameContextData = await response.json();
+        //         updateGameContext(data);
+        //     } catch (error: any) {
+        //         setError(error.message);
+        //     } finally {
+        //         setLoading(false);
+        //     }
+        // };
+        //
+        // void fetchGameData();
     }, [updateGameContext]);
 
     return (

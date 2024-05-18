@@ -39,8 +39,9 @@ class ResetGameView(APIView):
 
 class GameInfoView(APIView):
 
-    def get(self, request):
-        game = Game.objects.get(pk=1)
+    def get(self, request, game_code):
+
+        game = get_object_or_404(Game, code=game_code)
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
@@ -49,6 +50,7 @@ class GameInfoView(APIView):
         print(no_pocket_fen)
 
         response_data = {
+            "status": game.status,
             "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
             # count each piece in the pocket string, then return as a dict
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
