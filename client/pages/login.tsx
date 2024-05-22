@@ -4,10 +4,10 @@ import {ToastContainer} from "react-toastify";
 
 const Login = () => {
     return(
-        <AuthProvider>
-        <ToastContainer/>
+        <>
+            <ToastContainer/>
             <LoginPage/>
-        </AuthProvider>
+        </>
     )
 }
 

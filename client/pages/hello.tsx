@@ -8,14 +8,12 @@ import AuthContext, {AuthProvider} from "@/context/AuthContext";
 const App: React.FC = () => {
     return (
         <div className="App">
-            <AuthProvider>
             <nav className={"bg-pink-200"}>
                 <Header/>
             </nav>
             <PrivateRoute>
                 <HomePage />
             </PrivateRoute>
-            </AuthProvider>
         </div>
     );
 };

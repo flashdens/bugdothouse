@@ -53,6 +53,7 @@ class GameInfoView(APIView):
             "status": game.status,
             "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
             # count each piece in the pocket string, then return as a dict
+            "code": game.code,
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
             "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
             "sideToMove": game.side_to_move,
@@ -74,14 +75,15 @@ class JoinGameView(APIView):
             if not User.objects.filter(username=random_sequence).exists():
                 return str(random_sequence)
 
-    def post(self, request, game_id):
-        if not game_id:
+    def post(self, request, game_code):
+        if not game_code:
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         auth_tokens = request.data.get('authTokens')
-        game = get_object_or_404(Game, id=game_id)
+        game = get_object_or_404(Game, code=game_code)
 
         if auth_tokens:
+            guest_token = None
             try:
                 token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
 
@@ -91,7 +93,6 @@ class JoinGameView(APIView):
                 return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
 
             user = get_object_or_404(User, pk=token.get('user_id'))
-            guest_token = None
         else:  # create a guest account
             guest_username = 'guest-' + self.generate_guest_username()
             user = User(username=guest_username, email=guest_username + '@bug.house')

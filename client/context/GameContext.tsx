@@ -1,9 +1,10 @@
 import React, { createContext, ReactNode, useEffect, useState, useCallback } from "react";
 import SERVER_URL from "@/config";
 
-interface GameContextData {
+export interface GameContextData {
     status: "waiting_for_start" | "ongoing" | "finished";
     fen: string;
+    code: string;
     sideToMove: boolean;
     whitePlayer: number;
     blackPlayer: number;
