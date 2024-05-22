@@ -18,6 +18,7 @@ from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game
+from game_api.serializers import SpectatorSerializer
 
 
 class ResetGameView(APIView):
@@ -54,6 +55,7 @@ class GameInfoView(APIView):
             "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
             # count each piece in the pocket string, then return as a dict
             "code": game.code,
+            "spectators": SpectatorSerializer(game.spectators, many=True).data,
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
             "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
             "sideToMove": game.side_to_move,
@@ -86,13 +88,13 @@ class JoinGameView(APIView):
             guest_token = None
             try:
                 token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
+                user = get_object_or_404(User, pk=token.get('user_id'))
 
             except jwt.ExpiredSignatureError:
                 return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
             except jwt.InvalidTokenError:
                 return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
 
-            user = get_object_or_404(User, pk=token.get('user_id'))
         else:  # create a guest account
             guest_username = 'guest-' + self.generate_guest_username()
             user = User(username=guest_username, email=guest_username + '@bug.house')
@@ -106,13 +108,14 @@ class JoinGameView(APIView):
                 'access': str(access),
             }
 
-        if not game.white_player or (game.black_player != user and game.white_player == user):
-            game.white_player = user
-        elif not game.black_player or (game.white_player != user and game.black_player == user):
-            game.black_player = user
-        else:
-            return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
+        # if not game.white_player or (game.black_player != user and game.white_player == user):
+        #     game.white_player = user
+        # elif not game.black_player or (game.white_player != user and game.black_player == user):
+        #     game.black_player = user
+        # else:
+        #     return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
 
+        game.spectators.add(user)
         game.save()
 
         response_data = {
