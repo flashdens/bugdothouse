@@ -1,5 +1,3 @@
-'use client'
-
 import { useRouter } from 'next/router'
 import Lobby from "@/components/Lobby";
 import {useContext, useEffect, useState} from "react";
@@ -7,11 +5,9 @@ import SERVER_URL from "@/config";
 import GameContext, {GameProvider, GameContextData} from "@/context/GameContext";
 import Game from "@/pages/game";
 import AuthContext from "@/context/AuthContext";
-const GameIndex = () => {
+const GameIndex = ({ gameCode }) => {
     const [game, setGame] = useState<GameContextData | null>(null);
     const router = useRouter();
-    const { gameCode } = router.query;
-
     const {authTokens, user, loginUser} = useContext(AuthContext);
 
 
@@ -62,19 +58,29 @@ const GameIndex = () => {
 
     return (
         <GameProvider>
-    {game ? (
-        game.status === 'waiting_for_start' ? (
-            <Lobby gameData={game} />
-        ) : game.status === 'ongoing' ? (
-            <Game/>
-        ) : (
-            <div>this will be a match history</div>
-        )
-    ) : (
-        <div>waiting...</div>
-    )}
-</GameProvider>
+            {game ? (
+                game.status === 'waiting_for_start' ? (
+                    <Lobby gameData={game} />
+                ) : game.status === 'ongoing' ? (
+                    <Game/>
+                ) : (
+                    <div>this will be a match history</div>
+                )
+            ) : (
+                <div>waiting...</div>
+            )}
+        </GameProvider>
     );
 }
 
 export default GameIndex;
+
+export async function getServerSideProps(context: any) {
+    const gameCode: string = context.params.gameCode;
+
+    return {
+        props: {
+            gameCode,
+        },
+    }
+}

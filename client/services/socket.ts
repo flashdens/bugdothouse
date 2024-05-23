@@ -1,8 +1,8 @@
 let socket: WebSocket | null = null;
 
-const initializeWebSocket = () => {
+const initializeWebSocket = (code: string) => {
     if (!socket) {
-        socket = new WebSocket('ws://localhost/ws/test/');
+        socket = new WebSocket(`ws://localhost/ws/game/${code}`);
 
         socket.onopen = () => {
             console.log('WebSocket connected');
@@ -14,6 +14,8 @@ const initializeWebSocket = () => {
 
         socket.onclose = () => {
             console.log('WebSocket closed');
+            socket?.close();
+            socket = null;
         };
 
         socket.onerror = (error) => {
@@ -22,9 +24,9 @@ const initializeWebSocket = () => {
     }
 };
 
-export const getWebSocket = () => {
+export const getWebSocket = (code: string) => {
     if (!socket) {
-        initializeWebSocket();
+        initializeWebSocket(code);
     }
     return socket;
 };
