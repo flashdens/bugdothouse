@@ -24,7 +24,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
 
     async def connect(self):
-        self.room_group_name = "game"
+        self.room_name = self.scope["url_route"]["kwargs"]["game_code"]
+        self.room_group_name = f"lobby_{self.room_name}"
+        print('someone connected')
         await self.channel_layer.group_add(
             self.room_group_name, self.channel_name
         )
@@ -91,6 +93,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             player = await sync_to_async(
                 lambda: game.white_player if board.turn == chess.WHITE else game.black_player)()
 
+            if game.status != 'ongoing':
+                return False, {'type': 'error', 'error': "Game is not going on"}
+
             # Check if the authenticated user is the player to move
             if user != player:
                 return False, {'type': 'error', 'error': "You're not the player to move"}
@@ -142,6 +147,38 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             await self.send(json.dumps(response_data))
 
+    async def handle_user_switch(self, data):
+        game = get_object_or_404(code=self.room_name)
+        user_token = data['user']
+        move_from = data['moveFrom']
+        move_to = data['moveTo']
+
+        if game.status != 'waiting_for_start':
+            return False, {'type': 'error', 'error': 'Game has already started'}
+
+        try:
+            decoded_token = await sync_to_async(jwt.decode)(user_token, settings.SECRET_KEY, algorithms=["HS256"])
+            user_id = decoded_token['user_id']
+        except jwt.ExpiredSignatureError:
+            return False, {'type': 'error', 'error': 'Token has expired'}
+        except jwt.InvalidTokenError:
+            return False, {'type': 'error', 'error': 'Invalid token'}
+
+        user = get_object_or_404(id=user_id)
+
+        if user not in game.spectators \
+                and game.white_player != user \
+                and game.black_player != user:
+            return False, 'co ty tutaj robisz'
+
+        if not game.white_player and move_to == 'white':
+            game.black_player = user
+        if not game.black_player and move_to == 'black':
+            game.black_player = user
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'lobby.action', 'message': {'success': True}})
+
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
         try:
@@ -149,6 +186,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             event_type = data['type']
             if event_type == 'move':
                 await self.handle_move(data)
+            elif event_type == 'switch':
+                await self.handle_user_switch(data)
             else:
                 await self.send(text_data=json.dumps({'message': 'invalid request received'}))
                 pass
@@ -159,3 +198,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_move(self, event):
         move = event['message']
         await self.send(json.dumps(move))
+
+    async def lobby_action(self, event):
+        message = event["message"]
+
+        await self.send(text_data=json.dumps({"message": message}))

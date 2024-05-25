@@ -41,7 +41,6 @@ class ResetGameView(APIView):
 class GameInfoView(APIView):
 
     def get(self, request, game_code):
-
         game = get_object_or_404(Game, code=game_code)
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'

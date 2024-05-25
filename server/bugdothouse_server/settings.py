@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'authorization',
     'corsheaders',
     'django_extensions',
+    'channels',
     'channels_postgres',
     'django.contrib.admin',
     'django.contrib.auth',

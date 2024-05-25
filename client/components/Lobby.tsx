@@ -11,31 +11,38 @@ interface LobbyProps {
 const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
     const { gameContextData, updateGameContext, fetchGameData } = useContext(GameContext);
 
+    // Initialize the socket outside of useEffect to ensure it's done at the top level.
+    const socket = getWebSocket(gameData?.code);
+
     useEffect(() => {
+        if (!gameData) return;
+
         updateGameContext(gameData);
-    }, [gameData, updateGameContext]);
+
+        if (socket) {
+            socket.onmessage = (event) => {
+                // Handle incoming WebSocket messages here
+                console.log('Received WebSocket message:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.success) {
+                    fetchGameData();
+                }
+            };
+        }
+
+        // Clean up the socket connection on component unmount
+        return () => {
+            if (socket) {
+                socket.close();
+            }
+        };
+    }, [gameData, socket, updateGameContext, fetchGameData]);
 
     if (!gameContextData) {
         return (<h3>Loading...</h3>);
     }
 
     const { code, spectators } = gameContextData;
-    const socket = getWebSocket(code);
-
-    useEffect(() => {
-        console.log(code)
-        if (socket) {
-            socket.onmessage = (event) => {
-                // Handle incoming WebSocket messages here
-                console.log('Received WebSocket message:', event.data);
-                if (event.data.success) {
-                    fetchGameData();
-                }
-            };
-        }
-
-    }, [socket]);
-
 
     const sendWebSocketEvent = (eventType: string) => {
         if (socket) {
@@ -46,11 +53,11 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
     return (
         <>
             <h1>This is a lobby page. Lobby ID: {code}</h1>
-            <div className={"flex flex-col items-center h-screen"}>
+            <div className="flex flex-col items-center h-screen">
                 <h3>Black player:</h3>
                 <button
                     onClick={() => sendWebSocketEvent("switch_to_black")}
-                    className={"bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"}>
+                    className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Play as black
                 </button>
                 <Image
@@ -60,19 +67,19 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
                 <h3>White player:</h3>
                 <button
                     onClick={() => sendWebSocketEvent("switch_to_white")}
-                    className={"bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"}>
+                    className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Play as white
                 </button>
 
                 <h3>Spectators:</h3>
                 <ul>
-                    {spectators.map((spectator: { username: string; }, index: number) => (
+                    {spectators.map((spectator: { username: string }, index: number) => (
                         <li key={index}>{spectator.username}</li>
                     ))}
                 </ul>
                 <button
                     onClick={() => sendWebSocketEvent("switch_to_spectator")}
-                    className={"bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"}>
+                    className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Move to spectators
                 </button>
             </div>

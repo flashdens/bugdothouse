@@ -7,4 +7,4 @@ from game.models import Game
 class SpectatorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email']  # Add fields you want to serialize
+        fields = ['id', 'username', 'email']  # todo

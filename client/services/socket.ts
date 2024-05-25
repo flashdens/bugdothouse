@@ -1,8 +1,10 @@
+import SERVER_URL from "@/config";
+
 let socket: WebSocket | null = null;
 
 const initializeWebSocket = (code: string) => {
     if (!socket) {
-        socket = new WebSocket(`ws://localhost/ws/game/${code}`);
+        socket = new WebSocket(`ws://localhost/ws/${code}/`);
 
         socket.onopen = () => {
             console.log('WebSocket connected');

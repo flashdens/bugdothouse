@@ -53,24 +53,24 @@ const GameIndex = ({ gameCode }) => {
             });
     }, [gameCode, router, authTokens, loginUser]);
 
-
-
-
     return (
-        <GameProvider>
-            {game ? (
-                game.status === 'waiting_for_start' ? (
-                    <Lobby gameData={game} />
-                ) : game.status === 'ongoing' ? (
-                    <Game/>
-                ) : (
-                    <div>this will be a match history</div>
-                )
+        <>
+            {game != null ? (
+                <GameProvider>
+                    {game.status === 'waiting_for_start' ? (
+                        <Lobby gameData={game} />
+                    ) : game.status === 'ongoing' ? (
+                        <Game />
+                    ) : (
+                        <div>this will be a match history</div>
+                    )}
+                </GameProvider>
             ) : (
                 <div>waiting...</div>
             )}
-        </GameProvider>
+        </>
     );
+
 }
 
 export default GameIndex;
