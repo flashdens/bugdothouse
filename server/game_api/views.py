@@ -113,7 +113,10 @@ class JoinGameView(APIView):
         #     game.black_player = user
         # else:
         #     return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
-        if user not in game.spectators.all():
+        print(game.spectators.all())
+        if (user not in game.spectators.all()
+                and user != game.white_player
+                and user != game.black_player):
             game.spectators.add(user)
 
         game.save()
