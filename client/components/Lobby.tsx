@@ -10,13 +10,9 @@ interface LobbyProps {
 
 const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
     const { gameContextData, updateGameContext, fetchGameData } = useContext(GameContext);
-
-    // Initialize the socket outside of useEffect to ensure it's done at the top level.
-    const socket = getWebSocket(gameData?.code);
+    const socket: WebSocket | null = getWebSocket(gameData.code);
 
     useEffect(() => {
-        if (!gameData) return;
-
         updateGameContext(gameData);
 
         if (socket) {
@@ -36,7 +32,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
                 socket.close();
             }
         };
-    }, [gameData, socket, updateGameContext, fetchGameData]);
+    }, []);
 
     if (!gameContextData) {
         return (<h3>Loading...</h3>);
@@ -44,9 +40,13 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
 
     const { code, spectators } = gameContextData;
 
-    const sendWebSocketEvent = (eventType: string) => {
+    const sendWSLobbyEvent = (switchTo: string) => {
         if (socket) {
-            socket.send(JSON.stringify({ event: eventType }));
+            socket.send(JSON.stringify({
+                type: 'lobby_action',
+                switchFrom: gameContextData.localPlayerIs,
+                switchTo: switchTo,
+            }));
         }
     };
 
@@ -56,7 +56,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
             <div className="flex flex-col items-center h-screen">
                 <h3>Black player:</h3>
                 <button
-                    onClick={() => sendWebSocketEvent("switch_to_black")}
+                    onClick={() => sendWSLobbyEvent("black")}
                     className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Play as black
                 </button>
@@ -66,7 +66,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
                     className="w-64 h-64 my-3" />
                 <h3>White player:</h3>
                 <button
-                    onClick={() => sendWebSocketEvent("switch_to_white")}
+                    onClick={() => sendWSLobbyEvent("white")}
                     className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Play as white
                 </button>
@@ -78,7 +78,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
                     ))}
                 </ul>
                 <button
-                    onClick={() => sendWebSocketEvent("switch_to_spectator")}
+                    onClick={() => sendWSLobbyEvent("spectator")}
                     className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
                     Move to spectators
                 </button>

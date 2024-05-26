@@ -1,5 +1,18 @@
-import React, { createContext, ReactNode, useEffect, useState, useCallback } from "react";
+import React, {createContext, ReactNode, useEffect, useState, useCallback, useContext} from "react";
 import SERVER_URL from "@/config";
+import authContext from "@/context/AuthContext";
+
+enum localPlayerRoles {
+    'spectator',
+    'whitePlayer',
+    'blackPlayer'
+}
+
+export interface Player {
+    id: number,
+    username: string
+    email: string,
+}
 
 export interface GameContextData {
     status: "waiting_for_start" | "ongoing" | "finished";
@@ -7,10 +20,11 @@ export interface GameContextData {
     spectators: any[],
     code: string;
     sideToMove: boolean;
-    whitePlayer: number;
-    blackPlayer: number;
+    whitePlayer: Player;
+    blackPlayer: Player;
     whitePocket: {[key: string]: number};
     blackPocket: {[key: string]: number};
+    localPlayerIs: localPlayerRoles
 }
 
 interface GameContextValue {
@@ -34,14 +48,24 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [contextData, setContextData] = useState<GameContextData | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const {user} = useContext(authContext);
 
     const updateGameContext = useCallback((data: Partial<GameContextData>) => {
         if (!data) return;
         console.log("updating with", data);
-        // @ts-ignore
+        let localPlayerIs: localPlayerRoles| null = null
+        if (data.blackPlayer && data.blackPlayer.id === user?.user_id) {
+            localPlayerIs = localPlayerRoles.blackPlayer;
+        } else if (data.whitePlayer && data.whitePlayer.id === user?.user_id) {
+            localPlayerIs = localPlayerRoles.whitePlayer;
+        } else {
+            localPlayerIs = localPlayerRoles.spectator;
+        }
+
         setContextData((prevData) => ({
             ...prevData,
             ...data,
+            localPlayerIs: localPlayerIs
         }));
     }, []);
 
