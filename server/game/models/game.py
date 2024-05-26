@@ -1,6 +1,8 @@
 from django.db import models
 from authorization.models.user import User
 
+from enum import Enum
+
 
 class Game(models.Model):
     STATUS_CHOICES = [

@@ -18,7 +18,7 @@ from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game
-from game_api.serializers import SpectatorSerializer
+from game_api.serializers import UserSerializer
 
 
 class ResetGameView(APIView):
@@ -54,14 +54,14 @@ class GameInfoView(APIView):
             "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
             # count each piece in the pocket string, then return as a dict
             "code": game.code,
-            "spectators": SpectatorSerializer(game.spectators, many=True).data,
+            "spectators": UserSerializer(game.spectators, many=True).data,
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
             "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
             "sideToMove": game.side_to_move,
             "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
             # todo more elegant way
-            "whitePlayer": game.white_player.id if game.white_player else None,
-            "blackPlayer": game.black_player.id if game.black_player else None
+            "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
+            "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
         }
 
         return Response(response_data)

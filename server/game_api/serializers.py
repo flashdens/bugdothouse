@@ -4,7 +4,7 @@ from authorization.models import User
 from game.models import Game
 
 
-class SpectatorSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email']  # todo

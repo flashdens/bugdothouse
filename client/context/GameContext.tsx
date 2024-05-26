@@ -2,10 +2,10 @@ import React, {createContext, ReactNode, useEffect, useState, useCallback, useCo
 import SERVER_URL from "@/config";
 import authContext from "@/context/AuthContext";
 
-enum localPlayerRoles {
-    'spectator',
+export enum PlayerRoles {
     'whitePlayer',
-    'blackPlayer'
+    'blackPlayer',
+    'spectator'
 }
 
 export interface Player {
@@ -24,7 +24,7 @@ export interface GameContextData {
     blackPlayer: Player;
     whitePocket: {[key: string]: number};
     blackPocket: {[key: string]: number};
-    localPlayerIs: localPlayerRoles
+    localPlayerIs: PlayerRoles
 }
 
 interface GameContextValue {
@@ -53,13 +53,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateGameContext = useCallback((data: Partial<GameContextData>) => {
         if (!data) return;
         console.log("updating with", data);
-        let localPlayerIs: localPlayerRoles| null = null
+        let localPlayerIs: PlayerRoles| null = null
         if (data.blackPlayer && data.blackPlayer.id === user?.user_id) {
-            localPlayerIs = localPlayerRoles.blackPlayer;
+            localPlayerIs = PlayerRoles.blackPlayer;
         } else if (data.whitePlayer && data.whitePlayer.id === user?.user_id) {
-            localPlayerIs = localPlayerRoles.whitePlayer;
+            localPlayerIs = PlayerRoles.whitePlayer;
         } else {
-            localPlayerIs = localPlayerRoles.spectator;
+            localPlayerIs = PlayerRoles.spectator;
         }
 
         setContextData((prevData) => ({
