@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
+cp /stockfish/stockfish /usr/bin
 
-# Check if sshd is available and start it
 if which /usr/sbin/sshd > /dev/null; then
   ssh-keygen -A
   echo "SSH daemon is ready to accept connections"

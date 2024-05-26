@@ -50,5 +50,7 @@ COPY --chown=stockfish:stockfish source.txt /stockfish/
 COPY --chown=stockfish:stockfish --from=builder /Fairy-Stockfish/src/*.nnue /stockfish/
 
 USER root
+RUN cp /stockfish/stockfish /usr/bin/stockfish && chmod +x /usr/bin/stockfish
+
 EXPOSE 22
 ENTRYPOINT ["/entrypoint.sh"]
