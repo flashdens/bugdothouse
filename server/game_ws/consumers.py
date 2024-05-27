@@ -73,6 +73,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
             piece = data.get('piece')
+            code = data.get('code')
             promotion = data.get('promotion')
 
             # Decode JWT token
@@ -87,7 +88,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Authenticate the user
             user = await sync_to_async(get_object_or_404)(User, id=user_id)
 
-            game = await sync_to_async(get_object_or_404)(Game, pk=1)
+            game = await sync_to_async(get_object_or_404)(Game, code=code)
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
 

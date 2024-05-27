@@ -15,6 +15,7 @@ interface MoveData {
     fromSq?: string;
     toSq: string;
     sideToMove?: boolean;
+    code: string;
     piece: string;
     promotion: 'n' | 'b' | 'r' | 'q' | '';
 }
@@ -95,21 +96,18 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
             });
     };
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const makeMove = useCallback(
-        (moveData: MoveData) => {
-            if (!socket)
-                return false;
-            else {
-                socket.send(JSON.stringify({
-                    type: 'move',
-                    token: authTokens.access,
-                    ...moveData
-                }));
-                return true;
-            }
-
-        }, [socket]);
+    const makeMove = (moveData: MoveData): boolean => {
+        if (!socket)
+            return false;
+        else {
+            socket.send(JSON.stringify({
+                type: 'move',
+                token: authTokens.access,
+                ...moveData
+            }));
+            return true;
+        }
+    };
 
 
     const isPromotion = (sourceSquare: string, targetSquare: string, piece: Piece) => {
@@ -124,6 +122,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
+            code: gameCode,
             piece: piece.slice(1).toLowerCase(), // server only needs lower case piece type
             promotion: isPromotion(from, to, piece) ? "q" : ''
         };
