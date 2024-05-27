@@ -27,7 +27,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
             } else if (gameContextData.blackPlayer.id === user.user_id) {
                 setSide('BLACK');
             }
-            console.log('typie ja tu nie wchodze nawet')
             setLoading(false);
         }
     }, [gameContextData, user, loading]);

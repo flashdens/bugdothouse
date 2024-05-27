@@ -46,8 +46,8 @@ class GameInfoView(APIView):
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
         no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
-        print(pockets)
-        print(no_pocket_fen)
+        # print(pockets)
+        # print(no_pocket_fen)
 
         response_data = {
             "status": game.status,

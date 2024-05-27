@@ -26,12 +26,14 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["game_code"]
         self.room_group_name = f"lobby_{self.room_name}"
+        print('connected')
         await self.channel_layer.group_add(
             self.room_group_name, self.channel_name
         )
         await self.accept()
 
     async def disconnect(self, code):
+        print('disconnected')
         self.channel_layer.group_discard(
             self.room_group_name, self.channel_name
         )
@@ -231,6 +233,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 print('click')
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'lobby.connect'})
+            elif event_type == 'gameStart':
+                await self.channel_layer.group_send(
+                    self.room_group_name, {'type': 'game.start'})
             else:
                 await self.send(text_data=json.dumps({'message': 'invalid request received'}))
                 pass
@@ -249,3 +254,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def lobby_connect(self, event):
         await self.send(text_data=json.dumps({"type": "connect"}))
+
+    async def game_start(self, event):
+        await self.send(text_data=json.dumps({"type": "gameStart"}))

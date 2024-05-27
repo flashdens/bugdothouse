@@ -28,6 +28,17 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             socket.onopen = () => {
                 socket.send(JSON.stringify({ type: 'connect' }));
             }
+
+            socket.onmessage = (event) => {
+                console.log('Received WebSocket message:', event.data);
+                const data = JSON.parse(event.data);
+                if (data.type === 'lobbySwitch' || data.type === 'connect') {
+                    fetchGameData();
+                }
+                else if (data.type == 'gameStart') {
+                    rerenderParent();
+                }
+            }
         }
 
         return () => {
@@ -35,7 +46,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 socket.close();
             }
         };
-    }, []);
+    }, [socket]);
 
     if (!gameContextData) {
         return (<h3>Loading...</h3>);
@@ -51,13 +62,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 switchTo: PlayerRoles[switchTo as keyof typeof PlayerRoles],
                 token: authTokens.access,
             }));
-            socket.onmessage = (event) => {
-                console.log('Received WebSocket message:', event.data);
-                const data = JSON.parse(event.data);
-                if (data.type == 'lobbySwitch' || data.type == 'connect') {
-                    fetchGameData();
-                }
-            };
+            ;
         }
 
     };
@@ -73,14 +78,13 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             .then(response => {
                 if (!response.ok)
                     throw new Error('upsi');
-                else return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    rerenderParent();
+                else {
+                    // response ok -> game started
+                    socket?.send(JSON.stringify({ 'type': 'gameStart' }));
+                    return response.json();
                 }
             })
-        console.log('starting game...');
+
     }
 
     return (

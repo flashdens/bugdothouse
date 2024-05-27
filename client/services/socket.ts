@@ -1,5 +1,3 @@
-import SERVER_URL from "@/config";
-
 let socket: WebSocket | null = null;
 
 const initializeWebSocket = (code: string) => {
@@ -8,10 +6,6 @@ const initializeWebSocket = (code: string) => {
 
         socket.onopen = () => {
             console.log('WebSocket connected');
-        };
-
-        socket.onmessage = (event) => {
-            console.log('Received message:', event.data);
         };
 
         socket.onclose = () => {
