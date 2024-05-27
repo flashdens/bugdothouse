@@ -8,15 +8,18 @@ import PlayerHeaderButton from "@/components/lobby/PlayerHeaderButton";
 import SpectatorList from "@/components/lobby/SpectatorList";
 import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 import StartGameButton from "@/components/lobby/StartGameButton";
+import SERVER_URL from "@/config";
+import {router} from "next/client";
 
 interface LobbyProps {
     gameData: GameContextData;
+    rerenderParent: () => void
 }
 
-const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
+const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const { gameContextData, updateGameContext, fetchGameData } = useContext(GameContext);
-    const {authTokens} = useContext(authContext);
-    const socket: WebSocket | null = getWebSocket(gameData.code);
+    const {user, authTokens} = useContext(authContext);
+    const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
     useEffect(() => {
         updateGameContext(gameData);
@@ -25,8 +28,6 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
             socket.onopen = () => {
                 socket.send(JSON.stringify({ type: 'connect' }));
             }
-
-
         }
 
         return () => {
@@ -40,7 +41,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
         return (<h3>Loading...</h3>);
     }
 
-    const { code, whitePlayer, blackPlayer, spectators } = gameContextData;
+    const { gameCode, whitePlayer, blackPlayer, spectators, host } = gameContextData;
 
     const sendWSLobbyEvent = (switchTo: string) => {
         if (socket) {
@@ -62,12 +63,29 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
     };
 
     const startGame = () => {
+        fetch(`${SERVER_URL}/api/${gameCode}/start/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + String(authTokens.access)
+            },
+        })
+            .then(response => {
+                if (!response.ok)
+                    throw new Error('upsi');
+                else return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    rerenderParent();
+                }
+            })
         console.log('starting game...');
     }
 
     return (
         <>
-            <h1>This is a lobby page. Lobby ID: {code}</h1>
+            <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
             <div className="flex flex-col items-center h-screen">
                 <PlayerHeaderButton
                     player={blackPlayer}
@@ -87,7 +105,10 @@ const Lobby: React.FC<LobbyProps> = ({ gameData }) => {
                />
                 <SpectatorList spectators={spectators}/>
                 <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent}/>
-                <StartGameButton startGame={startGame}/>
+                { host.id === user?.user_id
+                    ? <StartGameButton startGame={startGame}/>
+                    : <p>Waiting for start...</p>
+                }
             </div>
         </>
     );

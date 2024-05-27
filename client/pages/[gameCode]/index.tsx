@@ -1,20 +1,36 @@
 import { useRouter } from 'next/router'
 import Lobby from "@/components/Lobby";
-import {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import SERVER_URL from "@/config";
-import GameContext, {GameProvider, GameContextData} from "@/context/GameContext";
-import Game from "@/pages/game";
+import {GameProvider, GameContextData} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
-const GameIndex = ({ gameCode }) => {
+import Game from "@/components/game/Game";
+
+interface GameIndexProps {
+    gameCode: string
+}
+
+const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
     const [game, setGame] = useState<GameContextData | null>(null);
     const router = useRouter();
     const {authTokens, user, loginUser} = useContext(AuthContext);
+    const [shouldRerender, setShouldRerender] = useState(false);
 
+    const handleRerender = () => {
+        console.log(shouldRerender);
+        setShouldRerender(prev => !prev);
+        getGameInfo(gameCode);
+    }
 
     useEffect(() => {
         if (!gameCode) return;
+        joinGame(gameCode);
+        getGameInfo(gameCode)
+    }, [gameCode, router, authTokens, loginUser]);
 
-        fetch(`${SERVER_URL}/api/join/${gameCode}/`, {
+
+    const joinGame = (gameCode: string) => {
+        fetch(`${SERVER_URL}/api/${gameCode}/join/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -24,20 +40,26 @@ const GameIndex = ({ gameCode }) => {
             })
         })
             .then(response => {
-                if (!response.ok)
-                    throw new Error('upsi');
+                if (!response.ok) throw new Error('upsi');
                 return response.json();
             })
             .then(data => {
-                if (data.error)
-                    throw new Error(data.error);
-                if (data.guestToken)
-                    loginUser(undefined, data.guestToken);
-
-                return fetch(`${SERVER_URL}/api/game/${gameCode}/`, {
-                    method: 'GET',
-                });
+                if (data.error) throw new Error(data.error);
+                if (data.guestToken) loginUser(undefined, data.guestToken);
             })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    };
+
+
+    const getGameInfo = (gameCode: string) => {
+        fetch(`${SERVER_URL}/api/${gameCode}/info/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
             .then(response => {
                 if (!response.ok) {
                     void router.push('/404');
@@ -51,16 +73,17 @@ const GameIndex = ({ gameCode }) => {
             .catch(error => {
                 console.error('Error fetching game:', error);
             });
-    }, [gameCode, router, authTokens, loginUser]);
+    };
 
     return (
         <>
             {game != null ? (
                 <GameProvider>
                     {game.status === 'waiting_for_start' ? (
-                        <Lobby gameData={game} />
+                        <Lobby gameData={game} rerenderParent={handleRerender}
+                        />
                     ) : game.status === 'ongoing' ? (
-                        <Game />
+                        <Game gameData={game}/>
                     ) : (
                         <div>this will be a match history</div>
                     )}
@@ -70,10 +93,9 @@ const GameIndex = ({ gameCode }) => {
             )}
         </>
     );
-
 }
 
-export default GameIndex;
+export default Index;
 
 export async function getServerSideProps(context: any) {
     const gameCode: string = context.params.gameCode;

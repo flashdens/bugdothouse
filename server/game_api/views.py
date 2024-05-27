@@ -53,7 +53,8 @@ class GameInfoView(APIView):
             "status": game.status,
             "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
             # count each piece in the pocket string, then return as a dict
-            "code": game.code,
+            "gameCode": game.code,
+            "host": UserSerializer(game.host).data,
             "spectators": UserSerializer(game.spectators, many=True).data,
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
             "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
@@ -167,3 +168,43 @@ class NewGameView(APIView):
 
         game.save()
         return Response({'code': game.code}, status=status.HTTP_200_OK)
+
+
+def can_start_game(game, user):
+    if game.host != user:
+        return Response({"error": "Only game hosts can start games"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    if game.status != 'waiting_for_start':
+        return Response({"error": "Game was already started"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    if game.white_player is None or game.black_player is None:
+        return Response({"error": "Sides have not been taken"},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    return True
+
+
+class StartGameView(APIView):
+
+    def post(self, request, game_code):
+        token = request.headers.get('Authorization').split(" ")[1]
+        try:
+            token = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+
+        except jwt.ExpiredSignatureError:
+            return Response({"error": "Token has expired"}, status=status.HTTP_403_FORBIDDEN)
+        except jwt.InvalidTokenError:
+            return Response({"error": "Invalid token"}, status=status.HTTP_403_FORBIDDEN)
+
+        game = get_object_or_404(Game, code=game_code)
+        user = get_object_or_404(User, pk=token.get('user_id'))
+
+        if can_start_game(game, user):
+            game.status = 'ongoing'
+            game.save()
+            return Response({
+                "success": True,
+                "info": f"Game {game_code} started"
+            })

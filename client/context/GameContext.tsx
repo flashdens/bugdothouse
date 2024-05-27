@@ -18,12 +18,13 @@ export interface GameContextData {
     status: "waiting_for_start" | "ongoing" | "finished";
     fen: string;
     spectators: any[],
-    code: string;
-    sideToMove: boolean;
-    whitePlayer: Player;
-    blackPlayer: Player;
-    whitePocket: {[key: string]: number};
-    blackPocket: {[key: string]: number};
+    gameCode: string,
+    sideToMove: boolean,
+    whitePlayer: Player,
+    blackPlayer: Player,
+    host: Player,
+    whitePocket: {[key: string]: number},
+    blackPocket: {[key: string]: number},
     localPlayerIs: PlayerRoles
 }
 
@@ -72,7 +73,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchGameData = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${SERVER_URL}/api/game/${contextData?.code}/`);
+            const response = await fetch(
+                `${SERVER_URL}/api/${contextData?.gameCode}/info/`);
             if (!response.ok) {
                 new Error("Failed to fetch game info");
             }

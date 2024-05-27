@@ -4,7 +4,7 @@ import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
-import game, {Player} from "@/pages/game";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import GameContext from "@/context/GameContext";
 import socket from "@/services/socket";
 import {retry} from "next/dist/compiled/@next/font/dist/google/retry";
@@ -41,9 +41,9 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     const {gameContextData, updateGameContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
     if (!gameContextData) return(<div>gowno</div>);
-    const {fen, sideToMove} = gameContextData;
+    const {fen, sideToMove, gameCode} = gameContextData;
 
-    let socket = getWebSocket();
+    let socket = getWebSocket(gameCode);
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
@@ -143,6 +143,7 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                     <Chessboard
                         position={gameContextData.fen}
                         onPieceDrop={onDrop}
+                        customDndBackend={HTML5Backend}
                         arePremovesAllowed={true}
                         boardOrientation={side.toLowerCase() as BoardOrientation}
                         isDraggablePiece={({ piece }) => piece[0] === (side === 'WHITE' ? 'w' : 'b')}
