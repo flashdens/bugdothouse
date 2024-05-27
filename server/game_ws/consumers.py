@@ -67,7 +67,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             return None
         '''
 
-    async def process_move_in_db(self, data):
+    async def process_move(self, data):
         try:
             token = data.get('token')
             from_sq = data.get('fromSq')
@@ -90,15 +90,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             game = await sync_to_async(get_object_or_404)(Game, code=code)
 
+            if game.status != 'ongoing':
+                return False, {'type': 'error', 'error': "Game is not going on"}
+
             board = chess.variant.CrazyhouseBoard(fen=game.fen)
 
             player = await sync_to_async(
                 lambda: game.white_player if board.turn == chess.WHITE else game.black_player)()
 
-            if game.status != 'ongoing':
-                return False, {'type': 'error', 'error': "Game is not going on"}
-
-            # Check if the authenticated user is the player to move
             if user != player:
                 return False, {'type': 'error', 'error': "You're not the player to move"}
 
@@ -142,7 +141,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False, {'type': 'error', 'error': str(e)}
 
     async def handle_move(self, data):
-        success, response_data = await self.process_move_in_db(data)
+        success, response_data = await self.process_move(data)
         if success:
             await self.channel_layer.group_send(
                 self.room_group_name, {'type': 'game.move', 'message': response_data})
