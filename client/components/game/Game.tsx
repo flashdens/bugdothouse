@@ -1,7 +1,7 @@
 import TestChessboard from "@/components/test/TestChessboard";
 import TestPocket from "@/components/test/TestPocket";
 import React, { useContext, useEffect, useState } from "react";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import HTML5Backend from "@/services/CustomHTML5Backend";
 import { DndProvider } from "react-dnd";
 import GameContext, {GameContextData} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
@@ -37,7 +37,8 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     }
 
     return (
-        <DndProvider backend={HTML5Backend}>
+        // context=window fixes two backends error?
+        <DndProvider backend={HTML5Backend} context={window}>
             {side && (
                 <>
                     <TestPocket pocketOf={side === "WHITE" ? "BLACK" : "WHITE"} side={side} />

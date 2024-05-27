@@ -3,7 +3,7 @@
 
 **client**
 - token refresh returns 403 forbidden
-- 'cannot have two html5 backends at the same time' after game start
+- (possibly fixed) 'cannot have two html5 backends at the same time' after game start 
 - players get logged in as guests after server reset (should simply get logged out)
 - lobby: ws events not working
 

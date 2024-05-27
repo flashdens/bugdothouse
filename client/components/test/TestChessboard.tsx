@@ -1,13 +1,11 @@
-import React, {useCallback, useContext, useEffect, useState} from 'react';
+import React, {useCallback, useContext, useEffect} from 'react';
 import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
-import { HTML5Backend } from "react-dnd-html5-backend";
+import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext from "@/context/GameContext";
-import socket from "@/services/socket";
-import {retry} from "next/dist/compiled/@next/font/dist/google/retry";
 import AuthContext from "@/context/AuthContext";
 
 const WHITE: boolean = false;
