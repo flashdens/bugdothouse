@@ -1,7 +1,6 @@
 let socket: WebSocket | null = null;
 
 const initializeWebSocket = (code: string) => {
-    if (!socket) {
         socket = new WebSocket(`ws://localhost/ws/${code}/`);
 
         socket.onopen = () => {
@@ -17,7 +16,12 @@ const initializeWebSocket = (code: string) => {
         socket.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
-    }
+
+         return () => {
+            if (socket && socket.readyState === 1) { // <-- This is important
+                socket.close();
+            }
+        }
 };
 
 export const getWebSocket = (code: string) => {

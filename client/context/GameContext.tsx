@@ -33,7 +33,7 @@ interface GameContextValue {
     loading: boolean;
     error: string | null;
     updateGameContext: (data: Partial<GameContextData>) => void;
-    fetchGameData: () => void;
+    fetchGameData: (gameCode: string) => void;
 }
 
 const GameContext = createContext<GameContextValue>({
@@ -41,7 +41,7 @@ const GameContext = createContext<GameContextValue>({
     loading: false,
     error: null,
     updateGameContext: () => {},
-    fetchGameData: () => {},
+    fetchGameData: (gameCode: string) => {},
 });
 export default GameContext;
 
@@ -70,11 +70,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     }, []);
 
-    const fetchGameData = async () => {
+    const fetchGameData = async (gameCode: string) => {
         try {
             setLoading(true);
+            console.log(gameCode);
             const response = await fetch(
-                `${SERVER_URL}/api/${contextData?.gameCode}/info/`);
+                `${SERVER_URL}/api/${gameCode}/info/`);
             if (!response.ok) {
                 new Error("Failed to fetch game info");
             }

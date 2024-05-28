@@ -33,19 +33,20 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 console.log('Received WebSocket message:', event.data);
                 const data = JSON.parse(event.data);
                 if (data.type === 'lobbySwitch' || data.type === 'connect') {
-                    fetchGameData();
+                    fetchGameData(gameData.gameCode);
                 }
                 else if (data.type == 'gameStart') {
+                    fetchGameData(gameData.gameCode);
                     rerenderParent();
                 }
             }
         }
 
-        return () => {
-            if (socket) {
-                socket.close();
-            }
-        };
+        // return () => {
+        //     if (socket?.readyState === 1)
+        //         socket?.close();
+        // };
+
     }, [socket]);
 
     if (!gameContextData) {
@@ -110,7 +111,9 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 <SpectatorList spectators={spectators}/>
                 <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent}/>
                 { host.id === user?.user_id
-                    ? <StartGameButton startGame={startGame}/>
+                    ? <StartGameButton
+                        startGame={startGame}
+                        isDisabled={!whitePlayer || !blackPlayer}/>
                     : <p>Waiting for start...</p>
                 }
             </div>

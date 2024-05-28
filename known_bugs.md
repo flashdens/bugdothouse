@@ -5,7 +5,10 @@
 - token refresh returns 403 forbidden
 - (possibly fixed) 'cannot have two html5 backends at the same time' after game start 
 - players get logged in as guests after server reset (should simply get logged out)
-- lobby: client's nickname disappears after failed request
+- lobby: client app renders unusable after failed request
+- lobby: sometimes websocket connection does not work on enter
+
+- game: after some time game ws stops working (caused by premoves)?
 **stockfish container**
 - no clue how to communicate
 - sometimes exits with 137?

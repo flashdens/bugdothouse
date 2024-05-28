@@ -26,7 +26,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
         if (!gameCode) return;
         joinGame(gameCode);
         getGameInfo(gameCode)
-    }, [gameCode, router, authTokens, loginUser]);
+    }, [gameCode]);
 
 
     const joinGame = (gameCode: string) => {

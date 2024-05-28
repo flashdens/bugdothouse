@@ -97,8 +97,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
     };
 
     const makeMove = (moveData: MoveData): boolean => {
-        if (!socket)
+        if (!socket) {
+            console.log('where is my motherfucking socket');
             return false;
+        }
         else {
             socket.send(JSON.stringify({
                 type: 'move',
@@ -141,7 +143,6 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {side} ) => {
                         position={gameContextData.fen}
                         onPieceDrop={onDrop}
                         customDndBackend={HTML5Backend}
-                        arePremovesAllowed={true}
                         boardOrientation={side.toLowerCase() as BoardOrientation}
                         isDraggablePiece={({ piece }) => piece[0] === (side === 'WHITE' ? 'w' : 'b')}
                         onPromotionCheck={isPromotion}

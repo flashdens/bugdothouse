@@ -24,6 +24,7 @@ class Game(models.Model):
     host = models.ForeignKey(User, related_name='host', on_delete=models.SET_NULL, null=True)
     fen = models.CharField(
         max_length=128,
+
         null=True
     )
     side_to_move = models.CharField(max_length=10, default="WHITE", null=True)

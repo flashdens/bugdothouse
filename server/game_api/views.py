@@ -47,9 +47,9 @@ class GameInfoView(APIView):
         if game.fen:
             pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
             no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
-        else:  # initializing to avoid errors
-            pockets = []
-            no_pocket_fen = []
+        else:  # initializing to avoid null reference errors
+            pockets = ""
+            no_pocket_fen = ""
         # print(pockets)
         # print(no_pocket_fen)
 
@@ -206,7 +206,7 @@ class StartGameView(APIView):
         user = get_object_or_404(User, pk=token.get('user_id'))
 
         if can_start_game(game, user):
-            game.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            game.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1"
             game.status = 'ongoing'
             game.save()
             return Response({
