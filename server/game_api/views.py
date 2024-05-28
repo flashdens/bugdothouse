@@ -36,107 +36,6 @@ class ResetGameView(APIView):
         return Response(response_data)
 
 
-class GameInfoView(APIView):
-
-    def get(self, request, game_code):
-        games = list(Game.objects.filter(code=game_code))
-        response_data = {}
-
-        # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
-        for i, game in enumerate(games):
-            if game.fen:
-                pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
-                no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
-            else:  # initializing to avoid null reference errors
-                pockets = ""
-                no_pocket_fen = ""
-            # print(pockets)
-            # print(no_pocket_fen)
-
-            response_data[i] = {
-                "status": game.status,
-                "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
-                "gameCode": game.code,
-                "host": UserSerializer(game.host).data,
-                "spectators": UserSerializer(game.spectators, many=True).data,
-                # count each piece in the pocket string, then return as a dict
-                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
-                "sideToMove": game.side_to_move,
-                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
-                # todo more elegant way
-                "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
-                "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
-            }
-
-        return Response(response_data)
-
-
-class JoinGameView(APIView):
-    # permission_classes = [IsAuthenticated]  # Ensure the user is authenticated
-
-    def generate_guest_username(self):
-        while True:  # roll till nonexistent
-            random_sequence = random.randint(100000, 999999)
-            if not User.objects.filter(username=random_sequence).exists():
-                return str(random_sequence)
-
-    def post(self, request, game_code):
-        if not game_code:
-            return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        auth_tokens = request.data.get('authTokens')
-        game = Game.objects.filter(code=game_code)[0]  # joining from first game joins to second as well
-
-        if auth_tokens:
-            guest_token = None
-            try:
-                token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
-                user = get_object_or_404(User, pk=token.get('user_id'))
-
-            except jwt.ExpiredSignatureError:
-                return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
-            except jwt.InvalidTokenError:
-                return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
-
-        else:  # create a guest account
-            guest_username = 'guest-' + self.generate_guest_username()
-            user = User(username=guest_username, email=guest_username + '@bug.house')
-            user.save()
-
-            # Create a token for the guest user
-            access = AccessToken.for_user(user)
-            refresh = RefreshToken.for_user(user)
-            guest_token = {
-                'refresh': str(refresh),
-                'access': str(access),
-            }
-
-        # if not game.white_player or (game.black_player != user and game.white_player == user):
-        #     game.white_player = user
-        # elif not game.black_player or (game.white_player != user and game.black_player == user):
-        #     game.black_player = user
-        # else:
-        #     return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
-        print(game.spectators.all())
-        if (user not in game.spectators.all()
-                and user != game.white_player
-                and user != game.black_player):
-            game.spectators.add(user)
-
-        game.save()
-
-        response_data = {
-            'message': 'Successfully joined the game',
-            'gameId': game.id,
-        }
-
-        if guest_token:
-            response_data['guestToken'] = guest_token
-
-        return Response(response_data, status=status.HTTP_200_OK)
-
-
 def generate_game_code():
     while True:  # roll till nonexistent
         code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
@@ -179,14 +78,121 @@ class NewGameView(APIView):
                          gamemode=gamemode,
                          is_private=True if room_type == 'private' else False,
                          code=game_code,
-                         brother_game=game1)
+                         brother_game=game1,
+                         subgame_id=2)
 
             game2.save()
             game1.brother_game = game2
+            game1.subgame_id = 1
             game1.save()
 
-
         return Response({'code': game_code}, status=status.HTTP_200_OK)
+
+
+class GameInfoView(APIView):
+
+    def get(self, request, game_code):
+        games = list(Game.objects.filter(code=game_code))
+        game_data = {}
+
+        # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
+        for i, game in enumerate(games):
+            if game.fen:
+                pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
+                no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+            else:  # initializing to avoid null reference errors
+                pockets = ""
+                no_pocket_fen = ""
+            # print(pockets)
+            # print(no_pocket_fen)
+
+            game_data[game.subgame_id] = {
+                "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
+                # count each piece in the pocket string, then return as a dict
+                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
+                "sideToMove": game.side_to_move,
+                "gameOver": "Checkmate" if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
+                # todo more elegant way
+                "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
+                "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
+            }
+
+        return Response(
+            {
+                "status": game.status,
+                "gameCode": game.code,
+                "spectators": UserSerializer(game.spectators, many=True).data,
+                "host": UserSerializer(game.host).data,
+                "boards": game_data
+            }
+        )
+
+
+def generate_guest_username():
+    while True:  # roll till nonexistent
+        random_sequence = random.randint(100000, 999999)
+        if not User.objects.filter(username=random_sequence).exists():
+            return str(random_sequence)
+
+
+class JoinGameView(APIView):
+
+    def post(self, request, game_code):
+        if not game_code:
+            return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        auth_tokens = request.data.get('authTokens')
+        # spectators are shared between games, so joining to first one joins to second as well
+        game = Game.objects.filter(code=game_code).first()
+
+        if auth_tokens:
+            guest_token = None
+            try:
+                token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
+                user = get_object_or_404(User, pk=token.get('user_id'))
+
+            except jwt.ExpiredSignatureError:
+                return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
+            except jwt.InvalidTokenError:
+                return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
+
+        else:  # create a guest account
+            guest_username = 'guest-' + generate_guest_username()
+            user = User(username=guest_username, email=guest_username + '@bug.house')
+            user.save()
+
+            # Create a token for the guest user
+            access = AccessToken.for_user(user)
+            refresh = RefreshToken.for_user(user)
+            guest_token = {
+                'refresh': str(refresh),
+                'access': str(access),
+            }
+
+        # if not game.white_player or (game.black_player != user and game.white_player == user):
+        #     game.white_player = user
+        # elif not game.black_player or (game.white_player != user and game.black_player == user):
+        #     game.black_player = user
+        # else:
+        #     return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
+        print(game.spectators.all())
+        if (user not in game.spectators.all()
+                and user != game.white_player
+                and user != game.black_player):
+            game.spectators.add(user)
+
+        game.save()
+
+        response_data = {
+            'message': 'Successfully joined the game',
+            'gameId': game.id,
+        }
+
+        if guest_token:
+            response_data['guestToken'] = guest_token
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 def can_start_game(game, user):

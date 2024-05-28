@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import GameContext, { GameContextData, PlayerRoles } from "@/context/GameContext";
+import GameContext, { GameData, PlayerRoles } from "@/context/GameContext";
 import chessboard from '@/public/chessboard.png';
 import Image from 'next/image';
 import getWebSocket from "@/services/socket";
@@ -10,9 +10,10 @@ import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 import StartGameButton from "@/components/lobby/StartGameButton";
 import SERVER_URL from "@/config";
 import {router} from "next/client";
+import SubLobby from "@/components/lobby/SubLobby";
 
 interface LobbyProps {
-    gameData: GameContextData;
+    gameData: GameData;
     rerenderParent: () => void
 }
 
@@ -55,15 +56,15 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     const { gameCode, whitePlayer, blackPlayer, spectators, host } = gameContextData;
 
-    const sendWSLobbyEvent = (switchTo: string) => {
+    const sendWSLobbyEvent = (switchTo: string, toSubgame: number = 1) => {
         if (socket) {
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
+                toSubgame: toSubgame,
                 switchFrom: gameContextData.localPlayerIs,
                 switchTo: PlayerRoles[switchTo as keyof typeof PlayerRoles],
                 token: authTokens.access,
             }));
-            ;
         }
 
     };
@@ -92,22 +93,15 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         <>
             <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
             <div className="flex flex-col items-center h-screen">
-                <PlayerHeaderButton
-                    player={blackPlayer}
-                    wsSendCallback={sendWSLobbyEvent}
-                    switchTo={'blackPlayer'}
-                    color={'black'}
-               />
-                <Image
-                    src={chessboard}
-                    alt="chessboard"
-                    className="w-64 h-64 my-3" />
-                   <PlayerHeaderButton
-                       player={whitePlayer}
-                       wsSendCallback={sendWSLobbyEvent}
-                       switchTo={'whitePlayer'}
-                       color={'white'}
-               />
+            <SubLobby whitePlayer={gameContextData[0].whitePlayer}
+                      blackPlayer={gameContextData[0].blackPlayer}
+                      sendWSLobbyEvent={sendWSLobbyEvent}
+            />
+                <SubLobby whitePlayer={gameContextData[1].whitePlayer}
+                      blackPlayer={gameContextData[1].blackPlayer}
+                      sendWSLobbyEvent={sendWSLobbyEvent}
+
+                />
                 <SpectatorList spectators={spectators}/>
                 <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent}/>
                 { host.id === user?.user_id
