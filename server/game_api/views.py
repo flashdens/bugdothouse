@@ -1,11 +1,9 @@
-import json
 import re
 import secrets
 from collections import Counter
 import random
 
 import jwt
-from jwt import InvalidTokenError, ExpiredSignatureError
 from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
@@ -41,33 +39,35 @@ class ResetGameView(APIView):
 class GameInfoView(APIView):
 
     def get(self, request, game_code):
-        game = get_object_or_404(Game, code=game_code)
+        games = list(Game.objects.filter(code=game_code))
+        response_data = {}
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
-        if game.fen:
-            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
-            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
-        else:  # initializing to avoid null reference errors
-            pockets = ""
-            no_pocket_fen = ""
-        # print(pockets)
-        # print(no_pocket_fen)
+        for i, game in enumerate(games):
+            if game.fen:
+                pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
+                no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+            else:  # initializing to avoid null reference errors
+                pockets = ""
+                no_pocket_fen = ""
+            # print(pockets)
+            # print(no_pocket_fen)
 
-        response_data = {
-            "status": game.status,
-            "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
-            # count each piece in the pocket string, then return as a dict
-            "gameCode": game.code,
-            "host": UserSerializer(game.host).data,
-            "spectators": UserSerializer(game.spectators, many=True).data,
-            "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-            "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
-            "sideToMove": game.side_to_move,
-            "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
-            # todo more elegant way
-            "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
-            "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
-        }
+            response_data[i] = {
+                "status": game.status,
+                "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
+                "gameCode": game.code,
+                "host": UserSerializer(game.host).data,
+                "spectators": UserSerializer(game.spectators, many=True).data,
+                # count each piece in the pocket string, then return as a dict
+                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
+                "sideToMove": game.side_to_move,
+                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
+                # todo more elegant way
+                "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
+                "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
+            }
 
         return Response(response_data)
 
@@ -86,7 +86,7 @@ class JoinGameView(APIView):
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         auth_tokens = request.data.get('authTokens')
-        game = get_object_or_404(Game, code=game_code)
+        game = Game.objects.filter(code=game_code)[0]  # joining from first game joins to second as well
 
         if auth_tokens:
             guest_token = None
@@ -137,13 +137,14 @@ class JoinGameView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-class NewGameView(APIView):
+def generate_game_code():
+    while True:  # roll till nonexistent
+        code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
+        if not Game.objects.filter(code=code).exists():
+            return code
 
-    def generate_game_code(self):
-        while True:  # roll till nonexistent
-            code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
-            if not Game.objects.filter(code=code).exists():
-                return code
+
+class NewGameView(APIView):
 
     def post(self, request):
         gamemode = request.data.get('gamemode')
@@ -164,14 +165,28 @@ class NewGameView(APIView):
             return Response("Invalid or expired token", status=status.HTTP_401_UNAUTHORIZED)
 
         user = get_object_or_404(User, pk=user_id)
+        game_code = generate_game_code()
 
-        game = Game(host=user,
-                    gamemode=gamemode,
-                    is_private=True if room_type == 'private' else False,
-                    code=self.generate_game_code())
+        game1 = Game(host=user,
+                     gamemode=gamemode,
+                     is_private=True if room_type == 'private' else False,
+                     code=game_code)
 
-        game.save()
-        return Response({'code': game.code}, status=status.HTTP_200_OK)
+        game1.save()
+
+        if gamemode == 'bughouse':
+            game2 = Game(host=user,
+                         gamemode=gamemode,
+                         is_private=True if room_type == 'private' else False,
+                         code=game_code,
+                         brother_game=game1)
+
+            game2.save()
+            game1.brother_game = game2
+            game1.save()
+
+
+        return Response({'code': game_code}, status=status.HTTP_200_OK)
 
 
 def can_start_game(game, user):
