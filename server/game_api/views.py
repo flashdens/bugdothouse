@@ -93,7 +93,7 @@ class GameInfoView(APIView):
 
     def get(self, request, game_code):
         games = list(Game.objects.filter(code=game_code))
-        game_data = {}
+        game_boards = {}
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for i, game in enumerate(games):
@@ -106,7 +106,7 @@ class GameInfoView(APIView):
             # print(pockets)
             # print(no_pocket_fen)
 
-            game_data[game.subgame_id] = {
+            game_boards[game.subgame_id] = {
                 "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
                 # count each piece in the pocket string, then return as a dict
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
@@ -124,7 +124,8 @@ class GameInfoView(APIView):
                 "gameCode": game.code,
                 "spectators": UserSerializer(game.spectators, many=True).data,
                 "host": UserSerializer(game.host).data,
-                "boards": game_data
+                "result": game.result,
+                "boards": game_boards,
             }
         )
 

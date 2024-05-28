@@ -8,6 +8,14 @@ export enum PlayerRoles {
     'spectator'
 }
 
+export enum GameOutcomes {
+    WHITE_WIN = 0,
+    BLACK_WIN = 1,
+    TEAM_1_WIN = 2,
+    TEAM_2_WIN = 3,
+    DRAW = 4
+}
+
 export interface Player {
     id: number,
     username: string
@@ -19,28 +27,26 @@ export interface BoardData{
     whitePocket: {[key: string]: number},
     blackPocket: {[key: string]: number},
     sideToMove: boolean
-    whitePlayer: Player,
-    blackPlayer: Player
+    whitePlayer: Player | null,
+    blackPlayer: Player | null,
+    localPlayerIs: PlayerRoles,
 }
 
 export interface GameData {
-    status: "waiting_for_start" | "ongoing" | "finished";
-    fen: string;
-    spectators: any[],
+    status: "waiting_for_start" | "ongoing" | "finished",
     gameCode: string,
-    sideToMove: boolean,
-    whitePlayer: Player,
-    blackPlayer: Player,
+    spectators: Player[] | null,
     host: Player,
-    localPlayerIs: PlayerRoles
+    result: GameOutcomes,
+    boards: { [subgameId: string]: BoardData };
 }
 
 interface GameContextValue {
-    gameContextData: GameData[] | null;
-    loading: boolean;
-    error: string | null;
-    updateGameContext: (data: Partial<GameData>, id: number) => void;
-    fetchGameData: (gameCode: string, id: number) => void;
+    gameContextData: GameData | null,
+    loading: boolean,
+    error: string | null,
+    updateGameContext: (data: Partial<GameData>) => void;
+    fetchGameData: (gameCode: string) => void;
 }
 
 const GameContext = createContext<GameContextValue>({
@@ -58,24 +64,27 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [error, setError] = useState<string | null>(null);
     const {user} = useContext(authContext);
 
-    const updateGameContext = useCallback((data: Partial<GameData>) => {
+    const updateGameContext = (data: Partial<GameData>) => {
         if (!data) return;
         console.log("updating with", data);
-        let localPlayerIs: PlayerRoles| null = null
-        if (data.blackPlayer && data.blackPlayer.id === user?.user_id) {
-            localPlayerIs = PlayerRoles.blackPlayer;
-        } else if (data.whitePlayer && data.whitePlayer.id === user?.user_id) {
-            localPlayerIs = PlayerRoles.whitePlayer;
-        } else {
-            localPlayerIs = PlayerRoles.spectator;
+        for (const subgameId in data.boards) {
+            const board = data.boards[subgameId];
+            let localPlayerIs: PlayerRoles| null = null;
+            if (board.blackPlayer && board.blackPlayer.id === user?.user_id) {
+                localPlayerIs = PlayerRoles.blackPlayer;
+            } else if (board.whitePlayer && board.whitePlayer.id === user?.user_id) {
+                localPlayerIs = PlayerRoles.whitePlayer;
+            } else {
+                localPlayerIs = PlayerRoles.spectator;
+            }
+                board.localPlayerIs = localPlayerIs;
         }
 
         setContextData((prevData) => ({
             ...prevData,
             ...data,
-            localPlayerIs: localPlayerIs
         }));
-    }, []);
+    }
 
     const fetchGameData = async (gameCode: string) => {
         try {
