@@ -7,8 +7,8 @@
 - players get logged in as guests after server reset (should simply get logged out)
 - lobby: client app renders unusable after failed request
 - lobby: sometimes websocket connection does not work on enter
-
 - game: after some time game ws stops working (caused by premoves)?
+
 **stockfish container**
 - no clue how to communicate
 - sometimes exits with 137?

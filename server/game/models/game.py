@@ -24,13 +24,13 @@ class Game(models.Model):
     host = models.ForeignKey(User, related_name='host', on_delete=models.SET_NULL, null=True)
     fen = models.CharField(
         max_length=128,
-
         null=True
     )
     side_to_move = models.CharField(max_length=10, default="WHITE", null=True)
     white_player = models.ForeignKey(User, related_name='white_games', on_delete=models.SET_NULL, null=True)
     black_player = models.ForeignKey(User, related_name='black_games', on_delete=models.SET_NULL, null=True)
     spectators = models.ManyToManyField(User, related_name='spectators', blank=True)
+    brother_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
         return f"Game {self.code} - {self.status}"
