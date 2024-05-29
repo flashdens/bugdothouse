@@ -1,6 +1,7 @@
 import json
 import re
 import traceback
+from enum import Enum
 from collections import Counter
 
 import jwt
@@ -67,6 +68,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             return None
         '''
 
+    async def parse_jwt_token_async(self, token):
+        try:
+            decoded_token = await sync_to_async(jwt.decode)(token, settings.SECRET_KEY, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return False, {'type': 'error', 'error': 'Token has expired'}
+        except jwt.InvalidTokenError:
+            return False, {'type': 'error', 'error': 'Invalid token'}
+
+        return decoded_token
+
     async def process_move(self, data):
         try:
             token = data.get('token')
@@ -75,15 +86,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             piece = data.get('piece')
             code = data.get('code')
             promotion = data.get('promotion')
-
-            # Decode JWT token
-            try:
-                decoded_token = await sync_to_async(jwt.decode)(token, settings.SECRET_KEY, algorithms=["HS256"])
-                user_id = decoded_token['user_id']
-            except jwt.ExpiredSignatureError:
-                return False, {'type': 'error', 'error': 'Token has expired'}
-            except jwt.InvalidTokenError:
-                return False, {'type': 'error', 'error': 'Invalid token'}
+            decoded_token = await self.parse_jwt_token_async(token)
+            user_id = decoded_token['user_id']
 
             # Authenticate the user
             user = await sync_to_async(get_object_or_404)(User, id=user_id)
@@ -148,48 +152,47 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             await self.send(json.dumps(response_data))
 
-    from enum import Enum
-
     class PlayerRoles(Enum):
         WHITE_PLAYER = 0
         BLACK_PLAYER = 1
         SPECTATOR = 2
 
-    @database_sync_to_async
-    def get_game(self, room_name, subgame):
-        return get_object_or_404(Game, code=room_name, subgame_id=subgame)
+    async def get_game(self, room_name, subgame):
+        return await database_sync_to_async(get_object_or_404)(Game, code=room_name, subgame_id=subgame)
 
-    @database_sync_to_async
-    def get_user(self, user_id):
-        return get_object_or_404(User, id=user_id)
+    async def get_user(self, user_id):
+        return await database_sync_to_async(get_object_or_404)(User, id=user_id)
 
-    @database_sync_to_async
-    def check_user_in_game(self, game, user):
+    @sync_to_async
+    def check_user_in_game_sync(self, game, user):
         return user in game.spectators.all() or game.white_player == user or game.black_player == user
 
-    @database_sync_to_async
-    def remove_user_from_game(self, user, game, from_side):
-        if (game.white_player is not None
-                and game.white_player.pk == user.pk
-                and from_side == self.PlayerRoles.WHITE_PLAYER.value):
+    async def check_user_in_game(self, game, user):
+        return await self.check_user_in_game_sync(game, user)
+
+    @sync_to_async
+    def remove_user_from_game_sync(self, user, game, from_side):
+        if game.white_player is not None and game.white_player.pk == user.pk and from_side == self.PlayerRoles.WHITE_PLAYER.value:
             game.white_player = None
 
-        elif (game.black_player is not None
-              and game.black_player.pk == user.pk
-              and from_side == self.PlayerRoles.BLACK_PLAYER.value):
+        elif game.black_player is not None and game.black_player.pk == user.pk and from_side == self.PlayerRoles.BLACK_PLAYER.value:
             game.black_player = None
 
-        elif (user in game.spectators.all()
-              and from_side == self.PlayerRoles.SPECTATOR.value):
+        elif user in game.spectators.all() and from_side == self.PlayerRoles.SPECTATOR.value:
             game.spectators.remove(user)
 
+        game.save()
+
+    async def remove_user_from_game(self, user, game, from_side):
+        await self.remove_user_from_game_sync(user, game, from_side)
+
     async def add_user_to_game(self, user, game, to_side):
-        if game.white_player is None and to_side == self.PlayerRoles.WHITE_PLAYER.value:
-            game.white_player = user
-        elif game.black_player is None and to_side == self.PlayerRoles.BLACK_PLAYER.value:
-            game.black_player = user
+        if await sync_to_async(lambda: game.white_player is None)() and to_side == self.PlayerRoles.WHITE_PLAYER.value:
+            await sync_to_async(setattr)(game, 'white_player', user)
+        elif await sync_to_async(lambda: game.black_player is None)() and to_side == self.PlayerRoles.BLACK_PLAYER.value:
+            await sync_to_async(setattr)(game, 'black_player', user)
         elif to_side == self.PlayerRoles.SPECTATOR.value:
-            game.spectators.add(user)
+            await sync_to_async(game.spectators.add)(user)
 
     async def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
         if src_game.pk == dest_game.pk:
@@ -215,16 +218,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         if src_game.status != GameStatus.WAITING_FOR_START.value:
             return False, {'type': 'error', 'error': 'Game has already started'}
 
-        try:
-            decoded_token = await sync_to_async(jwt.decode)(token, settings.SECRET_KEY, algorithms=["HS256"])
-            user_id = decoded_token['user_id']
-        except jwt.ExpiredSignatureError:
-            return False, {'type': 'error', 'error': 'Token has expired'}
-        except jwt.InvalidTokenError:
-            return False, {'type': 'error', 'error': 'Invalid token'}
+        decoded_token = await self.parse_jwt_token_async(token)
+        user_id = decoded_token['user_id']
 
         user = await self.get_user(user_id)
-
         user_in_game = await self.check_user_in_game(src_game, user)
 
         if not user_in_game:
@@ -233,6 +230,31 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.switch_user_positions(user, src_game, dest_game, from_side, to_side)
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.switch', 'message': {'success': True}})
+
+    async def handle_ai_player_join(self, data):
+        to_subgame = data['toSubgame']
+        to_side = data['toSide']
+        token = data['token']
+
+        decoded_token = await self.parse_jwt_token_async(token)
+        user_id = decoded_token['user_id']
+
+        user = await self.get_user(user_id)
+        game = await self.get_game(self.room_name, to_subgame)
+        host = await database_sync_to_async(getattr)(game, 'host')
+        host = await self.get_user(host.pk)
+
+        if user.pk != host.pk:
+            return False, {'type': 'error', 'error': 'Only hosts can add AI players!'}
+
+        ai_player = await database_sync_to_async(get_object_or_404)(User, username='bugdothouse_ai')
+        await self.add_user_to_game(ai_player, game, to_side)
+        await game.asave()
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'lobby.connect'})
+
+        return True
 
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
@@ -243,6 +265,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.handle_move(data)
             elif event_type == 'lobbySwitch':
                 await self.handle_user_switch(data)
+            elif event_type == 'aiAdd':
+                await self.handle_ai_player_join(data)
             elif event_type == 'connect':
                 print('click')
                 await self.channel_layer.group_send(

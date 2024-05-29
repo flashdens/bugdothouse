@@ -108,8 +108,8 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         if (socket && user) {
             socket.send(JSON.stringify({
                 type: msgType,
-                subgame: toSubgame,
-                side: PlayerRole[toSide as keyof typeof PlayerRole],
+                toSubgame: toSubgame,
+                toSide: PlayerRole[toSide as keyof typeof PlayerRole],
                 token: authTokens.access,
             }));
         }
@@ -162,7 +162,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                             ? <StartGameButton
                                 startGame={startGame}
                                 isDisabled={
-                                    Object.values(gameContextData.boards).every(
+                                    !Object.values(gameContextData.boards).every(
                                         board =>
                                             board.whitePlayer !== null && board.blackPlayer !== null
                                     )
