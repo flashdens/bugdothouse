@@ -1,4 +1,4 @@
-import React, {useContext} from "react";
+import React, {useContext, useState} from "react";
 import GameContext, {Player} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
@@ -11,6 +11,7 @@ interface Props {
 }
 
 const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv, switchTo, subgameId }) => {
+    const [isAIPlayerSet, setIsAIPlayerSet] = useState<boolean>(false);
     const playerColor = switchTo.slice(0, switchTo.indexOf("Player"));
     const {user} = useContext(AuthContext);
     const {gameContextData} = useContext(GameContext);
@@ -30,22 +31,27 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
                     {user?.user_id == gameContextData?.host.id
                     &&
                         <>
+                            {!isAIPlayerSet ? (
                             <button
                                 className={"bg-transparent hover:bg-green-500 text-green-700 font-semibold hover:text-white py-2 px-4 border border-green-500 hover:border-transparent rounded"}
                                 onClick={() => {
+                                    setIsAIPlayerSet(prevState => !prevState);
                                     sendWSAIEv(switchTo, subgameId, 'aiAdd');
                                 }}
                             >
                                 Add AI
                             </button>
+                            ) : (
                             <button
                                 className={"bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded"}
                                 onClick={() => {
+                                    setIsAIPlayerSet(prevState => !prevState);
                                     sendWSAIEv(switchTo, subgameId, 'aiRemove');
                                 }}
                             >
                                 Remove AI
                             </button>
+                            )}
                         </>
                     }
                 </>
