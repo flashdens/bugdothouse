@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import GameContext, { GameContextData, PlayerRole } from "@/context/GameContext";
+import GameContext, {GameContextData, Player, PlayerRole} from "@/context/GameContext";
 import chessboard from '@/public/chessboard.png';
 import Image from 'next/image';
 import getWebSocket from "@/services/socket";
@@ -11,6 +11,7 @@ import StartGameButton from "@/components/lobby/StartGameButton";
 import SERVER_URL from "@/config";
 import { router } from "next/client";
 import SubLobby from "@/components/lobby/SubLobby";
+import {bold} from "next/dist/lib/picocolors";
 
 interface LobbyProps {
     gameData: GameContextData;
@@ -54,14 +55,50 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     }
 
     const { gameCode, spectators, host } = gameContextData;
+    const fromSide = user?.user_id;
 
-    const sendWSLobbyEvent = (switchTo: string, toSubgame: number = 1) => {
-        if (socket) {
+    const findPlayerBoardNRole = (userId: number): null | {board: number, playerRole: PlayerRole} => {
+
+        for (const boardId in gameContextData.boards) {
+            const board = gameContextData.boards[boardId];
+            if (board.whitePlayer && board.whitePlayer.id == userId) {
+                return ({
+                    board: Number(boardId),
+                    playerRole: PlayerRole.whitePlayer
+                })
+            }
+            else if (board.blackPlayer && board.blackPlayer.id == userId) {
+                return ({
+                    board: Number(boardId),
+                    playerRole: PlayerRole.blackPlayer
+                })
+            }
+        }
+
+        // finally search spectators
+        if (gameContextData.spectators) {
+            for (const spectator of gameContextData.spectators) {
+                if (spectator.id == userId) {
+                    return ({
+                    board: 1, // spectators are shared, so w/e
+                    playerRole: PlayerRole.spectator
+                })
+                }
+            }
+        }
+
+        return null;
+    }
+
+    const sendWSLobbyEvent = (toSide: string, toSubgame: number = 1) => {
+        if (socket && user) {
+            const { board, playerRole} = findPlayerBoardNRole(user.user_id)
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
+                fromSubgame: board, // remember that this one can be null
+                fromSide: playerRole,
                 toSubgame: toSubgame,
-                // switchFrom: gameContextData.localPlayerIs,
-                switchTo: PlayerRole[switchTo as keyof typeof PlayerRole],
+                toSide: PlayerRole[toSide as keyof typeof PlayerRole],
                 token: authTokens.access,
             }));
         }
@@ -92,17 +129,21 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 <>
                     <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
                     <div className="flex flex-row md:flex-row justify-center items-center gap-10">
-                        <SubLobby whitePlayer={gameContextData.boards[1].whitePlayer}
-                                  blackPlayer={gameContextData.boards[1].blackPlayer}
-                                  sendWSLobbyEvent={sendWSLobbyEvent}
 
-                        />
-                        {gameContextData.boards[2] &&
-                        <SubLobby whitePlayer={gameContextData.boards[2].whitePlayer}
-                                  blackPlayer={gameContextData.boards[2].blackPlayer}
-                                  sendWSLobbyEvent={sendWSLobbyEvent}
-                        />
-                        }
+                        {Object.keys(gameContextData.boards).map((subgameId) => {
+                            // @ts-ignore
+                            const board = gameContextData.boards[subgameId]
+                            return (
+                                <SubLobby
+                                    key={subgameId}
+                                    whitePlayer={board.whitePlayer}
+                                    blackPlayer={board.blackPlayer}
+                                    sendWSLobbyEvent={sendWSLobbyEvent}
+                                    subgameId={Number(subgameId)}
+                                />
+                            );
+                        })
+}
                         <SpectatorList spectators={spectators} />
                         <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent} />
                         {host.id === user?.user_id

@@ -8,18 +8,19 @@ interface SubLobbyProps {
     blackPlayer: Player | null,
     whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
+    subgameId: number
 }
 
-const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobbyEvent}) => {
+const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobbyEvent, subgameId}) => {
 
     return(
         <div>
-            <h2>Game 1:</h2>
+            <h2>Game {subgameId}:</h2>
             <PlayerHeaderButton
                 player={blackPlayer}
                 wsSendCallback={sendWSLobbyEvent}
                 switchTo={'blackPlayer'}
-                color={'black'}
+                subgameId={subgameId}
            />
             <Image
                 src={chessboard}
@@ -29,7 +30,7 @@ const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobb
                 player={whitePlayer}
                 wsSendCallback={sendWSLobbyEvent}
                 switchTo={'whitePlayer'}
-                color={'white'}
+                subgameId={subgameId}
            />
         </div>
     );

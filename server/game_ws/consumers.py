@@ -14,7 +14,7 @@ import chess.variant
 from django.shortcuts import get_object_or_404
 
 from bugdothouse_server import settings
-from game.models import Game, Move
+from game.models import Game, Move, GameStatus
 from authorization.models import User
 
 
@@ -156,8 +156,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         SPECTATOR = 2
 
     @database_sync_to_async
-    def get_game(self, room_name):
-        return get_object_or_404(Game, code=room_name)
+    def get_game(self, room_name, subgame):
+        return get_object_or_404(Game, code=room_name, subgame_id=subgame)
 
     @database_sync_to_async
     def get_user(self, user_id):
@@ -168,37 +168,42 @@ class GameConsumer(AsyncWebsocketConsumer):
         return user in game.spectators.all() or game.white_player == user or game.black_player == user
 
     @database_sync_to_async
-    def switch_user_positions(self, game, user, switch_from, switch_to):
-        if (game.white_player is not None
-                and game.white_player.pk == user.pk
-                and switch_from == self.PlayerRoles.WHITE_PLAYER.value):
-            game.white_player = None
+    def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
+        if (src_game.white_player is not None
+                and src_game.white_player.pk == user.pk
+                and from_side == self.PlayerRoles.WHITE_PLAYER.value):
+            src_game.white_player = None
 
-        elif (game.black_player is not None
-              and game.black_player.pk == user.pk
-              and switch_from == self.PlayerRoles.BLACK_PLAYER.value):
-            game.black_player = None
+        elif (src_game.black_player is not None
+              and src_game.black_player.pk == user.pk
+              and from_side == self.PlayerRoles.BLACK_PLAYER.value):
+            src_game.black_player = None
 
-        elif (user in game.spectators.all()
-              and switch_from == self.PlayerRoles.SPECTATOR.value):
-            game.spectators.remove(user)
+        elif (user in src_game.spectators.all()
+              and from_side == self.PlayerRoles.SPECTATOR.value):
+            src_game.spectators.remove(user)
 
-        if game.white_player is None and switch_to == self.PlayerRoles.WHITE_PLAYER.value:
-            game.white_player = user
-        elif game.black_player is None and switch_to == self.PlayerRoles.BLACK_PLAYER.value:
-            game.black_player = user
-        elif switch_to == self.PlayerRoles.SPECTATOR.value:
-            game.spectators.add(user)
+        if dest_game.white_player is None and to_side == self.PlayerRoles.WHITE_PLAYER.value:
+            dest_game.white_player = user
+        elif dest_game.black_player is None and to_side == self.PlayerRoles.BLACK_PLAYER.value:
+            dest_game.black_player = user
+        elif to_side == self.PlayerRoles.SPECTATOR.value:
+            dest_game.spectators.add(user)
 
-        game.save()
+        src_game.save()
+        dest_game.save()
 
     async def handle_user_switch(self, data):
-        game = await self.get_game(self.room_name)
-        switch_from = data['switchFrom']
-        switch_to = data['switchTo']
+        from_subgame = data['fromSubgame']
+        from_side = data['fromSide']
+        to_subgame = data['toSubgame']
+        to_side = data['toSide']
         token = data['token']
 
-        if game.status != 'waiting_for_start':
+        src_game = await self.get_game(self.room_name, from_subgame)
+        dest_game = await self.get_game(self.room_name, to_subgame)
+
+        if src_game.status != GameStatus.WAITING_FOR_START.value:
             return False, {'type': 'error', 'error': 'Game has already started'}
 
         try:
@@ -211,12 +216,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         user = await self.get_user(user_id)
 
-        user_in_game = await self.check_user_in_game(game, user)
+        user_in_game = await self.check_user_in_game(src_game, user)
 
         if not user_in_game:
             return False, 'co ty tutaj robisz'
 
-        await self.switch_user_positions(game, user, switch_from, switch_to)
+        await self.switch_user_positions(user, src_game, dest_game, from_side, to_side)
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.switch', 'message': {'success': True}})
 

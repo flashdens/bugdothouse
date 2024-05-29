@@ -51,7 +51,7 @@ export interface GameContextData {
     spectators: Player[] | null,
     host: Player,
     result: GameOutcome,
-    boards: { [subgameId: string]: BoardData };
+    boards: { [subgameId: number]: BoardData };
 }
 
 interface GameContextValue {
