@@ -18,9 +18,22 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
     return (
         <>
             <h3>{playerColor} player:</h3>
-            {player
-                ? player.username
-                :
+            {player ? (
+                <>
+                    <h1>player.username</h1>
+                    {isAIPlayerSet && (
+                            <button
+                                className={"bg-transparent hover:bg-green-500 text-green-700 font-semibold hover:text-white py-2 px-4 border border-green-500 hover:border-transparent rounded"}
+                                onClick={() => {
+                                    setIsAIPlayerSet(prevState => !prevState);
+                                    sendWSAIEv(switchTo, subgameId, 'aiAdd');
+                                }}
+                            >
+                                Add AI
+                            </button>
+                            )}
+                    </>
+                ) :
                 <>
                     <button
                         onClick={() => sendWSLobbyEv(switchTo, subgameId)}
@@ -31,7 +44,7 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
                     {user?.user_id == gameContextData?.host.id
                     &&
                         <>
-                            {!isAIPlayerSet ? (
+                            {!isAIPlayerSet && (
                             <button
                                 className={"bg-transparent hover:bg-green-500 text-green-700 font-semibold hover:text-white py-2 px-4 border border-green-500 hover:border-transparent rounded"}
                                 onClick={() => {
@@ -40,16 +53,6 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
                                 }}
                             >
                                 Add AI
-                            </button>
-                            ) : (
-                            <button
-                                className={"bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded"}
-                                onClick={() => {
-                                    setIsAIPlayerSet(prevState => !prevState);
-                                    sendWSAIEv(switchTo, subgameId, 'aiRemove');
-                                }}
-                            >
-                                Remove AI
                             </button>
                             )}
                         </>
