@@ -168,30 +168,39 @@ class GameConsumer(AsyncWebsocketConsumer):
         return user in game.spectators.all() or game.white_player == user or game.black_player == user
 
     @database_sync_to_async
-    def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
-        if (src_game.white_player is not None
-                and src_game.white_player.pk == user.pk
+    def remove_user_from_game(self, user, game, from_side):
+        if (game.white_player is not None
+                and game.white_player.pk == user.pk
                 and from_side == self.PlayerRoles.WHITE_PLAYER.value):
-            src_game.white_player = None
+            game.white_player = None
 
-        elif (src_game.black_player is not None
-              and src_game.black_player.pk == user.pk
+        elif (game.black_player is not None
+              and game.black_player.pk == user.pk
               and from_side == self.PlayerRoles.BLACK_PLAYER.value):
-            src_game.black_player = None
+            game.black_player = None
 
-        elif (user in src_game.spectators.all()
+        elif (user in game.spectators.all()
               and from_side == self.PlayerRoles.SPECTATOR.value):
-            src_game.spectators.remove(user)
+            game.spectators.remove(user)
 
-        if dest_game.white_player is None and to_side == self.PlayerRoles.WHITE_PLAYER.value:
-            dest_game.white_player = user
-        elif dest_game.black_player is None and to_side == self.PlayerRoles.BLACK_PLAYER.value:
-            dest_game.black_player = user
+    async def add_user_to_game(self, user, game, to_side):
+        if game.white_player is None and to_side == self.PlayerRoles.WHITE_PLAYER.value:
+            game.white_player = user
+        elif game.black_player is None and to_side == self.PlayerRoles.BLACK_PLAYER.value:
+            game.black_player = user
         elif to_side == self.PlayerRoles.SPECTATOR.value:
-            dest_game.spectators.add(user)
+            game.spectators.add(user)
 
-        src_game.save()
-        dest_game.save()
+    async def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
+        if src_game.pk == dest_game.pk:
+            dest_game = src_game
+
+        await self.remove_user_from_game(user, src_game, from_side)
+        await self.add_user_to_game(user, dest_game, to_side)
+
+        await sync_to_async(src_game.save)()
+        if src_game.pk != dest_game.pk:
+            await sync_to_async(dest_game.save)()
 
     async def handle_user_switch(self, data):
         from_subgame = data['fromSubgame']
