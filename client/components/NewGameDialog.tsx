@@ -4,6 +4,7 @@ import Dialog from "@/components/Dialog";
 import SERVER_URL from "@/config";
 import AuthContext from "@/context/AuthContext";
 import {useRouter} from 'next/router'
+import {GameMode} from "@/context/GameContext";
 
 interface NewGameDialogProps {
     isOpen: boolean;
@@ -11,25 +12,26 @@ interface NewGameDialogProps {
 }
 
 const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
-    const [gamemode, setGamemode] = useState("");
+    const [gamemode, setGamemode] = useState<GameMode | undefined>(undefined);
     const [roomType, setRoomType] = useState("");
 
     const {user, authTokens} = useContext(AuthContext);
 
     const router = useRouter();
-    const gamemodeSpans: Record<string, string> = {
-        bughouse: '4 Players',
-        crazyhouse: '2 Players',
-        classical: '2 Players',
+    const gamemodeSpans: Record<GameMode, string> = {
+        [GameMode.BUGHOUSE]: '4 Players',
+        [GameMode.CRAZYHOUSE]: '2 Players',
+        [GameMode.CLASSICAL]: '2 Players',
     }
 
     const roomTypeSpans: Record<string, string> = {
         public: 'Visible on the room list',
         private: 'Only can join with link',
     }
+
     const onCreateGame = () => {
         console.log('creating...', gamemode, roomType);
-        if (!user || !gamemode || !roomType) return;
+        if (!user || gamemode === undefined || !roomType) return;
         fetch(`${SERVER_URL}/api/new_game/`, {
             method: 'POST',
             headers: {
@@ -53,7 +55,8 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
     }
 
     const handleGamemodeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setGamemode(event.target.value);
+        console.log(gamemode)
+        setGamemode(Number(event.target.value));
     }
 
     const handleRoomTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -72,12 +75,12 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
                     className={"mb-2"}
                 >
                     <option value="">--Select--</option>
-                    <option value="bughouse">Bughouse</option>
-                    <option value="crazyhouse">Crazyhouse</option>
-                    <option value="classical">Classical</option>
+                    <option value={GameMode.BUGHOUSE}>Bughouse</option>
+                    <option value={GameMode.CRAZYHOUSE}>Crazyhouse</option>
+                    <option value={GameMode.CLASSICAL}>Classical</option>
                 </select>
-                {gamemode && (
-                    <span className="mb-2 text-xs">{gamemodeSpans[gamemode]}</span>
+                {gamemode != null && (
+                        <span className="mb-2 text-xs">{gamemodeSpans[gamemode]}</span>
                 )}
 
                 <label className="mb-2">Room type:</label>

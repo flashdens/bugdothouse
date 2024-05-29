@@ -13,8 +13,8 @@ class GameStatus(models.IntegerChoices):
 
 
 class GameMode(models.IntegerChoices):
-    CRAZYHOUSE = (0, 'Crazyhouse')
-    BUGHOUSE = (1, 'Bughouse')
+    BUGHOUSE = (0, 'Bughouse')
+    CRAZYHOUSE = (1, 'Crazyhouse')
     CLASSICAL = (2, 'Classical')
 
 

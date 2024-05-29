@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
-from game.models import Game
+from game.models import Game, GameMode
 from game_api.serializers import UserSerializer
 
 
@@ -73,7 +73,12 @@ class NewGameView(APIView):
 
         game1.save()
 
-        if gamemode == 'bughouse':
+        print(gamemode)
+        print(GameMode.BUGHOUSE.value)
+        print(type(gamemode))  # Check the type of gamemode
+        print(GameMode.BUGHOUSE)  # Verify the type and value of GameMode.BUGHOUSE
+        if gamemode == GameMode.BUGHOUSE.value:
+            print('wchodze tu')
             game2 = Game(host=user,
                          gamemode=gamemode,
                          is_private=True if room_type == 'private' else False,
@@ -96,7 +101,7 @@ class GameInfoView(APIView):
         game_boards = {}
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
-        for i, game in enumerate(games):
+        for game in games:
             if game.fen:
                 pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
                 no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
@@ -117,7 +122,7 @@ class GameInfoView(APIView):
                 "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
                 "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
             }
-            
+
         game = games[0]
 
         return Response(

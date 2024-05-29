@@ -1,8 +1,8 @@
-import { useRouter } from 'next/router'
+import {useRouter} from 'next/router'
 import Lobby from "@/components/Lobby";
 import React, {useContext, useEffect, useState} from "react";
 import SERVER_URL from "@/config";
-import {GameProvider, GameContextData} from "@/context/GameContext";
+import {GameContextData, GameProvider, GameStatus} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
 
@@ -79,10 +79,10 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
         <>
             {game != null ? (
                 <GameProvider>
-                    {game.status === 'waiting_for_start' ? (
+                    {game.status === GameStatus.WAITING_FOR_START ? (
                         <Lobby gameData={game} rerenderParent={handleRerender}
                         />
-                    ) : game.status === 'ongoing' ? (
+                    ) : game.status === GameStatus.ONGOING ? (
                         <Game gameData={game}/>
                     ) : (
                         <div>this will be a match history</div>

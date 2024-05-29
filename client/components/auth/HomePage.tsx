@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react'
 import AuthContext from '@/context/AuthContext';
-import SERVER_URL from "@/config";
-import {toast} from "react-toastify";
-import {Simulate} from "react-dom/test-utils";
-import Dialog from "@/components/Dialog";
+import SERVER_URL from "@/config";;
 import {useRouter} from "next/router";
 import NewGameDialog from "@/components/NewGameDialog";
 
@@ -17,7 +14,7 @@ const HomePage = () => {
     const router = useRouter();
 
     const {authTokens, loginUser, logoutUser} = authContext;
-       const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
+   const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
     let [profile, setProfile] = useState<Profile | null>(null);
 
 
@@ -67,11 +64,6 @@ const HomePage = () => {
                 console.error('Error:', error);
             });
     }
-
-    const createNewGame = () => {
-        console.log('creating...');
-    }
-
 
     useEffect(() => {
         void getProfile()

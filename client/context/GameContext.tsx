@@ -16,15 +16,15 @@ export enum GameOutcome {
     DRAW = 4
 }
 
-enum GameStatus {
+export enum GameStatus {
     WAITING_FOR_START = 0,
     ONGOING = 1,
     FINISHED = 2,
 }
 
-enum GameMode {
-    CRAZYHOUSE = 0,
-    BUGHOUSE = 1,
+export enum GameMode {
+    BUGHOUSE = 0,
+    CRAZYHOUSE = 1,
     CLASSICAL = 2,
 }
 

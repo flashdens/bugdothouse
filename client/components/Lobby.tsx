@@ -97,10 +97,12 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                                   sendWSLobbyEvent={sendWSLobbyEvent}
 
                         />
+                        {gameContextData.boards[2] &&
                         <SubLobby whitePlayer={gameContextData.boards[2].whitePlayer}
                                   blackPlayer={gameContextData.boards[2].blackPlayer}
                                   sendWSLobbyEvent={sendWSLobbyEvent}
                         />
+                        }
                         <SpectatorList spectators={spectators} />
                         <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent} />
                         {host.id === user?.user_id
