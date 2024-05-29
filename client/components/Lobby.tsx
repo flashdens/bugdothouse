@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import GameContext, { GameContextData, PlayerRoles } from "@/context/GameContext";
+import GameContext, { GameContextData, PlayerRole } from "@/context/GameContext";
 import chessboard from '@/public/chessboard.png';
 import Image from 'next/image';
 import getWebSocket from "@/services/socket";
@@ -61,7 +61,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 type: 'lobbySwitch',
                 toSubgame: toSubgame,
                 // switchFrom: gameContextData.localPlayerIs,
-                switchTo: PlayerRoles[switchTo as keyof typeof PlayerRoles],
+                switchTo: PlayerRole[switchTo as keyof typeof PlayerRole],
                 token: authTokens.access,
             }));
         }

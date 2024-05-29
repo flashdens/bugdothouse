@@ -2,18 +2,30 @@ import React, {createContext, ReactNode, useEffect, useState, useCallback, useCo
 import SERVER_URL from "@/config";
 import authContext from "@/context/AuthContext";
 
-export enum PlayerRoles {
+export enum PlayerRole {
     'whitePlayer',
     'blackPlayer',
     'spectator'
 }
 
-export enum GameOutcomes {
+export enum GameOutcome {
     WHITE_WIN = 0,
     BLACK_WIN = 1,
     TEAM_1_WIN = 2,
     TEAM_2_WIN = 3,
     DRAW = 4
+}
+
+enum GameStatus {
+    WAITING_FOR_START = 0,
+    ONGOING = 1,
+    FINISHED = 2,
+}
+
+enum GameMode {
+    CRAZYHOUSE = 0,
+    BUGHOUSE = 1,
+    CLASSICAL = 2,
 }
 
 export interface Player {
@@ -29,15 +41,16 @@ export interface BoardData{
     sideToMove: boolean
     whitePlayer: Player | null,
     blackPlayer: Player | null,
-    localPlayerIs: PlayerRoles,
+    localPlayerIs: PlayerRole,
 }
 
 export interface GameContextData {
-    status: "waiting_for_start" | "ongoing" | "finished",
+    status: GameStatus,
+    gameMode: GameMode,
     gameCode: string,
     spectators: Player[] | null,
     host: Player,
-    result: GameOutcomes,
+    result: GameOutcome,
     boards: { [subgameId: string]: BoardData };
 }
 
@@ -69,13 +82,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log("updating with", data);
         for (const subgameId in data.boards) {
             const board = data.boards[subgameId];
-            let localPlayerIs: PlayerRoles| null = null;
+            let localPlayerIs: PlayerRole| null = null;
             if (board.blackPlayer && board.blackPlayer.id === user?.user_id) {
-                localPlayerIs = PlayerRoles.blackPlayer;
+                localPlayerIs = PlayerRole.blackPlayer;
             } else if (board.whitePlayer && board.whitePlayer.id === user?.user_id) {
-                localPlayerIs = PlayerRoles.whitePlayer;
+                localPlayerIs = PlayerRole.whitePlayer;
             } else {
-                localPlayerIs = PlayerRoles.spectator;
+                localPlayerIs = PlayerRole.spectator;
             }
                 board.localPlayerIs = localPlayerIs;
         }

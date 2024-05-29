@@ -12,13 +12,13 @@ class GameStatus(models.IntegerChoices):
     FINISHED = (2, 'Finished')
 
 
-class GameModes(models.IntegerChoices):
+class GameMode(models.IntegerChoices):
     CRAZYHOUSE = (0, 'Crazyhouse')
     BUGHOUSE = (1, 'Bughouse')
     CLASSICAL = (2, 'Classical')
 
 
-class GameOutcomes(models.IntegerChoices):
+class GameOutcome(models.IntegerChoices):
     WHITE_WIN = (0, 'White Wins')
     BLACK_WIN = (1, 'Black Wins')
     TEAM_1_WIN = (2, 'Team 1 Wins')
@@ -38,8 +38,8 @@ class Game(models.Model):
         default=GameStatus.WAITING_FOR_START
     )
     gamemode = models.IntegerField(
-        choices=GameModes.choices,
-        default=GameModes.CRAZYHOUSE
+        choices=GameMode.choices,
+        default=GameMode.CRAZYHOUSE
     )
     code = models.CharField(max_length=6, null=True, unique=False)
     is_private = models.BooleanField(null=False)
@@ -54,7 +54,7 @@ class Game(models.Model):
     spectators = models.ManyToManyField(User, related_name='spectators', blank=True)
     brother_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     subgame_id = models.IntegerField(choices=SUBGAME_ID_CHOICES, null=False, default=1)
-    result = models.IntegerField(null=True, choices=GameOutcomes.choices)  # null -> result undetermined
+    result = models.IntegerField(null=True, choices=GameOutcome.choices)  # null -> result undetermined
 
     def __str__(self):
         return f"Game {self.code} - {self.status}"

@@ -117,10 +117,13 @@ class GameInfoView(APIView):
                 "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
                 "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
             }
+            
+        game = games[0]
 
         return Response(
             {
                 "status": game.status,
+                "gameMode": game.gamemode,
                 "gameCode": game.code,
                 "spectators": UserSerializer(game.spectators, many=True).data,
                 "host": UserSerializer(game.host).data,
