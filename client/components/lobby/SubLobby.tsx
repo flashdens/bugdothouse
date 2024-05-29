@@ -8,17 +8,19 @@ interface SubLobbyProps {
     blackPlayer: Player | null,
     whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
+    sendWSAIEvent: (toSide: string, toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
     subgameId: number
 }
 
-const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobbyEvent, subgameId}) => {
+const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer,blackPlayer, sendWSLobbyEvent, sendWSAIEvent, subgameId,}) => {
 
     return(
         <div>
             <h2>Game {subgameId}:</h2>
             <PlayerHeaderButton
                 player={blackPlayer}
-                wsSendCallback={sendWSLobbyEvent}
+                sendWSLobbyEv={sendWSLobbyEvent}
+                sendWSAIEv={sendWSAIEvent}
                 switchTo={'blackPlayer'}
                 subgameId={subgameId}
            />
@@ -28,7 +30,8 @@ const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobb
                 className="w-64 h-64 my-3" />
             <PlayerHeaderButton
                 player={whitePlayer}
-                wsSendCallback={sendWSLobbyEvent}
+                sendWSLobbyEv={sendWSLobbyEvent}
+                sendWSAIEv={sendWSAIEvent}
                 switchTo={'whitePlayer'}
                 subgameId={subgameId}
            />

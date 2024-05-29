@@ -103,6 +103,17 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             }));
         }
     };
+    
+   const sendWSAIAddEvent = (toSide: string, toSubgame: number = 1, msgType: 'aiAdd' | 'aiRemove') => {
+        if (socket && user) {
+            socket.send(JSON.stringify({
+                type: msgType,
+                subgame: toSubgame,
+                side: PlayerRole[toSide as keyof typeof PlayerRole],
+                token: authTokens.access,
+            }));
+        }
+    };
 
     const startGame = () => {
         fetch(`${SERVER_URL}/api/${gameCode}/start/`, {
@@ -139,6 +150,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                                     whitePlayer={board.whitePlayer}
                                     blackPlayer={board.blackPlayer}
                                     sendWSLobbyEvent={sendWSLobbyEvent}
+                                    sendWSAIEvent={sendWSAIAddEvent}
                                     subgameId={Number(subgameId)}
                                 />
                             );
