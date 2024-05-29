@@ -3,11 +3,11 @@ import TestPocket from "@/components/test/TestPocket";
 import React, { useContext, useEffect, useState } from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import { DndProvider } from "react-dnd";
-import GameContext, {GameData} from "@/context/GameContext";
+import GameContext, {GameContextData} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
 interface GameProps {
-    gameData: GameData
+    gameData: GameContextData
 }
 
 const Game: React.FC<GameProps> = ({ gameData }) => {

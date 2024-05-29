@@ -2,7 +2,7 @@ import React from 'react';
 import { Player } from '@/context/GameContext';
 
 interface Props {
-    spectators: Player[];
+    spectators: Player[] | null;
 }
 
 const SpectatorList: React.FC<Props> = ({ spectators }) => {
@@ -10,7 +10,7 @@ const SpectatorList: React.FC<Props> = ({ spectators }) => {
         <div>
             <h3>Spectators:</h3>
             <ul>
-                {spectators.map((spectator, index) => (
+                {spectators?.map((spectator, index) => (
                     <li key={index}>{spectator.username}</li>
                 ))}
             </ul>

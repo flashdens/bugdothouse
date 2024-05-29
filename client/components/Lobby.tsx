@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import GameContext, { GameData, PlayerRoles } from "@/context/GameContext";
+import GameContext, { GameContextData, PlayerRoles } from "@/context/GameContext";
 import chessboard from '@/public/chessboard.png';
 import Image from 'next/image';
 import getWebSocket from "@/services/socket";
@@ -9,17 +9,17 @@ import SpectatorList from "@/components/lobby/SpectatorList";
 import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 import StartGameButton from "@/components/lobby/StartGameButton";
 import SERVER_URL from "@/config";
-import {router} from "next/client";
+import { router } from "next/client";
 import SubLobby from "@/components/lobby/SubLobby";
 
 interface LobbyProps {
-    gameData: GameData;
-    rerenderParent: () => void
+    gameData: GameContextData;
+    rerenderParent: () => void;
 }
 
 const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const { gameContextData, updateGameContext, fetchGameData } = useContext(GameContext);
-    const {user, authTokens} = useContext(authContext);
+    const { user, authTokens } = useContext(authContext);
     const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
     useEffect(() => {
@@ -35,8 +35,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 const data = JSON.parse(event.data);
                 if (data.type === 'lobbySwitch' || data.type === 'connect') {
                     fetchGameData(gameData.gameCode);
-                }
-                else if (data.type == 'gameStart') {
+                } else if (data.type == 'gameStart') {
                     fetchGameData(gameData.gameCode);
                     rerenderParent();
                 }
@@ -54,19 +53,18 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         return (<h3>Loading...</h3>);
     }
 
-    const { gameCode, whitePlayer, blackPlayer, spectators, host } = gameContextData;
+    const { gameCode, spectators, host } = gameContextData;
 
     const sendWSLobbyEvent = (switchTo: string, toSubgame: number = 1) => {
         if (socket) {
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
                 toSubgame: toSubgame,
-                switchFrom: gameContextData.localPlayerIs,
+                // switchFrom: gameContextData.localPlayerIs,
                 switchTo: PlayerRoles[switchTo as keyof typeof PlayerRoles],
                 token: authTokens.access,
             }));
         }
-
     };
 
     const startGame = () => {
@@ -86,33 +84,45 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                     return response.json();
                 }
             })
-
     }
 
     return (
         <>
-            <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
-            <div className="flex flex-col items-center h-screen">
-            <SubLobby whitePlayer={gameContextData[0].whitePlayer}
-                      blackPlayer={gameContextData[0].blackPlayer}
-                      sendWSLobbyEvent={sendWSLobbyEvent}
-            />
-                <SubLobby whitePlayer={gameContextData[1].whitePlayer}
-                      blackPlayer={gameContextData[1].blackPlayer}
-                      sendWSLobbyEvent={sendWSLobbyEvent}
+            {gameContextData ? (
+                <>
+                    <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
+                    <div className="flex flex-row md:flex-row justify-center items-center gap-10">
+                        <SubLobby whitePlayer={gameContextData.boards[1].whitePlayer}
+                                  blackPlayer={gameContextData.boards[1].blackPlayer}
+                                  sendWSLobbyEvent={sendWSLobbyEvent}
 
-                />
-                <SpectatorList spectators={spectators}/>
-                <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent}/>
-                { host.id === user?.user_id
-                    ? <StartGameButton
-                        startGame={startGame}
-                        isDisabled={!whitePlayer || !blackPlayer}/>
-                    : <p>Waiting for start...</p>
-                }
-            </div>
+                        />
+                        <SubLobby whitePlayer={gameContextData.boards[2].whitePlayer}
+                                  blackPlayer={gameContextData.boards[2].blackPlayer}
+                                  sendWSLobbyEvent={sendWSLobbyEvent}
+                        />
+                        <SpectatorList spectators={spectators} />
+                        <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent} />
+                        {host.id === user?.user_id
+                            ? <StartGameButton
+                                startGame={startGame}
+                                isDisabled={
+                                    Object.values(gameContextData.boards).every(
+                                        board =>
+                                            board.whitePlayer !== null && board.blackPlayer !== null
+                                    )
+                                }
+                            />
+                            : <p>Waiting for start...</p>
+                        }
+                    </div>
+                </>
+            ) : (
+                <h3>Loading...</h3>
+            )}
         </>
     );
+
 };
 
 export default Lobby;

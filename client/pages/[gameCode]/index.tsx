@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import Lobby from "@/components/Lobby";
 import React, {useContext, useEffect, useState} from "react";
 import SERVER_URL from "@/config";
-import {GameProvider, GameData} from "@/context/GameContext";
+import {GameProvider, GameContextData} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
 
@@ -11,7 +11,7 @@ interface GameIndexProps {
 }
 
 const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
-    const [game, setGame] = useState<GameData | null>(null);
+    const [game, setGame] = useState<GameContextData | null>(null);
     const router = useRouter();
     const {authTokens, user, loginUser} = useContext(AuthContext);
     const [shouldRerender, setShouldRerender] = useState(false);

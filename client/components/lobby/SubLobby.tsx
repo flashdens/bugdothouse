@@ -5,8 +5,8 @@ import React from "react";
 import {Player} from "@/context/GameContext";
 
 interface SubLobbyProps {
-    blackPlayer: Player,
-    whitePlayer: Player,
+    blackPlayer: Player | null,
+    whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
 }
 
@@ -14,6 +14,7 @@ const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer, blackPlayer, sendWSLobb
 
     return(
         <div>
+            <h2>Game 1:</h2>
             <PlayerHeaderButton
                 player={blackPlayer}
                 wsSendCallback={sendWSLobbyEvent}

@@ -32,7 +32,7 @@ export interface BoardData{
     localPlayerIs: PlayerRoles,
 }
 
-export interface GameData {
+export interface GameContextData {
     status: "waiting_for_start" | "ongoing" | "finished",
     gameCode: string,
     spectators: Player[] | null,
@@ -42,10 +42,10 @@ export interface GameData {
 }
 
 interface GameContextValue {
-    gameContextData: GameData | null,
+    gameContextData: GameContextData | null,
     loading: boolean,
     error: string | null,
-    updateGameContext: (data: Partial<GameData>) => void;
+    updateGameContext: (data: Partial<GameContextData>) => void;
     fetchGameData: (gameCode: string) => void;
 }
 
@@ -59,12 +59,12 @@ const GameContext = createContext<GameContextValue>({
 export default GameContext;
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [contextData, setContextData] = useState<GameData | null>(null);
+    const [contextData, setContextData] = useState<GameContextData | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const {user} = useContext(authContext);
 
-    const updateGameContext = (data: Partial<GameData>) => {
+    const updateGameContext = (data: Partial<GameContextData>) => {
         if (!data) return;
         console.log("updating with", data);
         for (const subgameId in data.boards) {
@@ -79,6 +79,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
                 board.localPlayerIs = localPlayerIs;
         }
+
 
         setContextData((prevData) => ({
             ...prevData,
@@ -95,7 +96,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (!response.ok) {
                 new Error("Failed to fetch game info");
             }
-            const data: GameData = await response.json();
+            const data: GameContextData = await response.json();
             updateGameContext(data);
         } catch (error: any) {
             setError(error.message);
