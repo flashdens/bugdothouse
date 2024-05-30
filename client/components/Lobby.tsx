@@ -92,7 +92,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     const sendWSLobbyEvent = (toSide: string, toSubgame: number = 1) => {
         if (socket && user) {
-            const { board, playerRole} = findPlayerBoardNRole(user.user_id)
+            const { board, playerRole } = findPlayerBoardNRole(user.user_id)
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
                 fromSubgame: board, // remember that this one can be null

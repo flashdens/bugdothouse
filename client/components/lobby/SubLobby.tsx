@@ -8,7 +8,7 @@ interface SubLobbyProps {
     blackPlayer: Player | null,
     whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
-    sendWSAIEvent: (toSide: PlayerRole , toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
+    sendWSAIEvent: (toSide: string , toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
     subgameId: number
 }
 

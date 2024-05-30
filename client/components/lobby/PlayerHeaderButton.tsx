@@ -16,6 +16,7 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
     const playerColor = switchTo.slice(0, switchTo.indexOf("Player"));
     const {user} = useContext(AuthContext);
     const {gameContextData} = useContext(GameContext);
+    console.log(isAIPlayerSet)
     return (
         <>
             <h3>{playerColor} player:</h3>

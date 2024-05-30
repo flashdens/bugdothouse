@@ -15,7 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
-from game.models import Game, GameMode
+from game.models import Game, GameMode, GameStatus
 from game_api.serializers import UserSerializer
 
 
@@ -209,7 +209,7 @@ def can_start_game(game, user):
         return Response({"error": "Only game hosts can start games"},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    if game.status != 'waiting_for_start':
+    if game.status != GameStatus.WAITING_FOR_START.value:
         return Response({"error": "Game was already started"},
                         status=status.HTTP_400_BAD_REQUEST)
 
@@ -232,14 +232,16 @@ class StartGameView(APIView):
         except jwt.InvalidTokenError:
             return Response({"error": "Invalid token"}, status=status.HTTP_403_FORBIDDEN)
 
-        game = get_object_or_404(Game, code=game_code)
+        games = Game.objects.filter(code=game_code)
         user = get_object_or_404(User, pk=token.get('user_id'))
 
-        if can_start_game(game, user):
-            game.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1"
-            game.status = 'ongoing'
-            game.save()
-            return Response({
-                "success": True,
-                "info": f"Game {game_code} started"
+        for game in games:
+            if can_start_game(game, user):
+                game.fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1"
+                game.status = GameStatus.ONGOING
+                game.save()
+
+        return Response({
+            "success": True,
+            "info": f"Game {game_code} started"
             })

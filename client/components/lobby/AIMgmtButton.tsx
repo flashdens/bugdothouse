@@ -11,7 +11,6 @@ interface AiMgmtButtonProps {
 
 const AIMgmtButton:React.FC<AiMgmtButtonProps> = ( {setIsAIPlayerSet, sendWSAIEv, subgameId, switchTo, msgType}) => {
     const color = (msgType == 'aiAdd' ? 'green' : 'red')
-    console.log(color);
     return(
         <>
             <button
