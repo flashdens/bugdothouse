@@ -2,11 +2,12 @@ import React, {useCallback, useContext, useEffect, useRef} from 'react';
 import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
-import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
+import {BoardOrientation, Piece, Square} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
+import assert from "assert";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -141,6 +142,17 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
         return makeMove(moveData);
     }
 
+    const isDraggablePiece = (piece: Piece, sq: Square) => {
+        switch (playerSide) {
+            case "WHITE":
+                return (piece[0] === 'w');
+            case "BLACK":
+                return (piece[0] === 'b');
+            case "SPECTATOR":
+                return false;
+        }
+    }
+
     return (
         <>
            <button
@@ -154,7 +166,11 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
                         onPieceDrop={onDrop}
                         customDndBackend={HTML5Backend}
                         boardOrientation={playerSide.toLowerCase() as BoardOrientation}
-                        isDraggablePiece={({ piece }) => piece[0] === (playerSide === 'WHITE' ? 'w' : 'b')}
+                        isDraggablePiece={({ piece }) => {
+                            return (playerSide === "WHITE" && piece[0] === 'w')
+                                || (playerSide === "BLACK" && piece[0] === 'b')
+                                || (playerSide !== "SPECTATOR");
+                        }}
                         onPromotionCheck={isPromotion}
                     />
                 </div>
