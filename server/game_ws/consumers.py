@@ -94,7 +94,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             user = await sync_to_async(get_object_or_404)(User, id=user_id)
 
             game = await sync_to_async(get_object_or_404)(Game, code=code, subgame_id=subgame)
-
+            print(game.subgame_id) # move is fetched to the wrong board!!
             if game.status != GameStatus.ONGOING.value:
                 return False, {'type': 'error', 'error': "Game is not going on"}
 
@@ -130,6 +130,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             response_data = {
                 'type': 'move',
+                'subgame': str(game.subgame_id),
                 "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
@@ -145,11 +146,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             traceback.print_exc()
             return False, {'type': 'error', 'error': str(e)}
 
+    async def handle_ai_move(self, data):
+        code = data.get('code')
+        subgame = data.get('subgame')
+
+        # auth can be skipped, was checked eariler
+        # todo game redundadnt query
+        game = self.get_game()
+
+
     async def handle_move(self, data):
         success, response_data = await self.process_move(data)
         if success:
             await self.channel_layer.group_send(
-                self.room_group_name, {'type': 'game.move', 'message': response_data})
+                self.room_grooup_name, {'type': 'game.move', 'message': response_data})
+            await self.handle_ai_move(data)
         else:
             await self.send(json.dumps(response_data))
 

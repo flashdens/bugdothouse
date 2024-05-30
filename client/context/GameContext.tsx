@@ -82,7 +82,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const updateGameContext = (data: Partial<GameContextData>) => {
         if (!data) return;
-        console.log("updating with", data);
         for (const subgameId in data.boards) {
             const board = data.boards[subgameId];
             let localPlayerIs: PlayerRole| null = null;
@@ -106,7 +105,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateBoardContext = (subgameId: string, data: Partial<BoardData>) => {
         setContextData((prevData: GameContextData | null) => {
             if (!prevData) return null;
-
+            console.log('updating', subgameId);
             return {
                 ...prevData,
                 boards: {
@@ -123,7 +122,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchGameData = async (gameCode: string) => {
         try {
             setLoading(true);
-            console.log(gameCode);
             const response = await fetch(
                 `${SERVER_URL}/api/${gameCode}/info/`);
             if (!response.ok) {

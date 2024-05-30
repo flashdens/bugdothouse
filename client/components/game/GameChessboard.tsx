@@ -26,6 +26,7 @@ interface WSMoveResponse {
     error?: string,
     fen: string,
     gameOver?: string,
+    subgame: string,
     sideToMove: boolean,
     type: 'move',
     whitePocket: {[key: string]: number},
@@ -48,13 +49,13 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !cbId) return;
 
         socket.onmessage = (e) => {
             const data: WSMoveResponse = JSON.parse(e.data)
-            console.log(data);
             if (data.type === 'move') {
-                updateBoardContext(cbId, {
+                console.log('updating', data.subgame);
+                updateBoardContext(data.subgame, {
                             fen: data.fen,
                             sideToMove: data.sideToMove,
                             whitePocket: data.whitePocket,
@@ -74,34 +75,9 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                 }
             }
         }
+    }, []);
 
-       return () => {
-            socket.close();
-        };
-    });
 
-    const resetGame = () => {
-        fetch(`${SERVER_URL}/api/test/new_game/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-            .then(response => response.json())
-            .then(data => {
-                updateBoardContext(cbId, {
-                        fen: data.fen,
-                        sideToMove: data.sideToMove,
-                        whitePocket: data.whitePocket,
-                        blackPocket: data.blackPocket,
-                    }
-                );
-
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    };
 
     const makeMove = (moveData: MoveData): boolean => {
         if (!socket) {
@@ -109,6 +85,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
             return false;
         }
         else {
+            console.log(cbId);
             socket.send(JSON.stringify({
                 type: 'move',
                 token: authTokens.access,
@@ -142,10 +119,6 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
 
     return (
         <>
-           <button
-               onClick={resetGame} type="button" className="text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-               reset game
-           </button>
             {gameContextData && (
                 <div style={{width: '70dvh'}}>
                     <Chessboard

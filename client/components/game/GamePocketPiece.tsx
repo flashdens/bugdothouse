@@ -23,8 +23,6 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
         }
     });
 
-    console.log(piece, count);
-
     return (
         <div
             style={{

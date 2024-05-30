@@ -17,8 +17,6 @@ const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
     const {gameContextData} = useContext(GameContext);
     if (!gameContextData) return;
 
-    console.log(gameContextData);
-    console.log(subgameId)
     const {whitePocket, blackPocket} = gameContextData.boards[subgameId];
 
     return (

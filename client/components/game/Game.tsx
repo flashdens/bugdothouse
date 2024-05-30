@@ -33,9 +33,8 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                         if (gameContextData.boards[subgameId] && user) {
                             let localPlayerIs: PlayerRole =
                                 gameContextData.boards[subgameId].localPlayerIs
-
                             let playerSide: PlayerSide;
-
+                            console.log(gameContextData);
                             if (localPlayerIs == PlayerRole.whitePlayer) {
                                 playerSide = 'WHITE';
                             } else if (localPlayerIs == PlayerRole.blackPlayer) {
@@ -66,8 +65,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 </div>
                             );
                         }
-                        // Return null if condition doesn't match to avoid rendering anything
-                        return null;
                     })}
                 </>
             )}
