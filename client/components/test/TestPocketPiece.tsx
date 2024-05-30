@@ -1,11 +1,12 @@
 import React, { ReactNode } from 'react';
 import { useDrag } from 'react-dnd';
+import {PlayerSide} from "@/components/test/TestChessboard";
 
 interface ChessPieceProps {
     piece: "wP" | "wB" | "wN" | "wR" | "wQ" | "wK" | "bP" | "bB" | "bN" | "bR" | "bQ" | "bK";
     svg: ReactNode;
     count: number;
-    side: "WHITE" | "BLACK";
+    side: PlayerSide
     pocketOf: "WHITE" | "BLACK";
 }
 

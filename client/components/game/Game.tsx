@@ -1,10 +1,11 @@
-import TestChessboard from "@/components/test/TestChessboard";
+import TestChessboard, {PlayerSide} from "@/components/test/TestChessboard";
 import TestPocket from "@/components/test/TestPocket";
-import React, { useContext, useEffect, useState } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
-import { DndProvider } from "react-dnd";
-import GameContext, {GameContextData} from "@/context/GameContext";
+import {DndProvider} from "react-dnd";
+import GameContext, {GameContextData, PlayerRole} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
+import assert from "assert";
 
 interface GameProps {
     gameData: GameContextData
@@ -13,38 +14,64 @@ interface GameProps {
 const Game: React.FC<GameProps> = ({ gameData }) => {
     const { gameContextData, updateGameContext } = useContext(GameContext);
     const { user } = useContext(AuthContext);
-    const [side, setSide] = useState<'WHITE' | 'BLACK' | null>(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.log(user);
-        if (!gameContextData)
-            updateGameContext(gameData);
+        updateGameContext(gameData);
+    }, []);
 
-        if (gameContextData && user) {
-            if (gameContextData.whitePlayer.id === user.user_id) {
-                setSide('WHITE');
-            } else if (gameContextData.blackPlayer.id === user.user_id) {
-                setSide('BLACK');
-            }
-            setLoading(false);
-        }
-    }, [gameContextData, user, loading]);
-
-    if (loading) {
+    if (!gameContextData) {
         return <div>Loading...</div>;
     }
 
     return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            {side && (
+            <div className={"flex flex-row gap-20 justify-around"}>
+            {gameContextData && (
                 <>
-                    <TestPocket pocketOf={side === "WHITE" ? "BLACK" : "WHITE"} side={side} />
-                    <TestChessboard side={side} />
-                    <TestPocket pocketOf={side} side={side} />
+                    {Object.keys(gameContextData.boards).map((subgameId) => {
+                        if (gameContextData.boards[subgameId] && user) {
+                            let localPlayerIs: PlayerRole =
+                                gameContextData.boards[subgameId].localPlayerIs
+
+                            let playerSide: PlayerSide;
+
+                            if (localPlayerIs == PlayerRole.whitePlayer) {
+                                playerSide = 'WHITE';
+                            } else if (localPlayerIs == PlayerRole.blackPlayer) {
+                                playerSide = 'BLACK';
+                            } else if (localPlayerIs == PlayerRole.spectator) {
+                                playerSide = 'SPECTATOR'
+                            }
+                            else {
+                                assert(false);
+                            }
+
+                            return (
+                                <div className={"chessboard"} key={subgameId}>
+                                    <TestPocket
+                                        pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
+                                        playerSide={playerSide}
+                                        subgameId={subgameId}
+                                    />
+                                    <TestChessboard
+                                        cbId={subgameId}
+                                        playerSide={playerSide}
+                                    />
+                                    <TestPocket
+                                        pocketOf={playerSide === "BLACK" ? "BLACK" : "WHITE"}
+                                        playerSide={playerSide}
+                                        subgameId={subgameId}
+                                    />
+                                </div>
+                            );
+                        }
+                        // Return null if condition doesn't match to avoid rendering anything
+                        return null;
+                    })}
                 </>
             )}
+            </div>
         </DndProvider>
     );
 };

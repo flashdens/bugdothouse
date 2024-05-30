@@ -51,24 +51,27 @@ export interface GameContextData {
     spectators: Player[] | null,
     host: Player,
     result: GameOutcome,
-    boards: { [subgameId: number]: BoardData };
+    boards: { [subgameId: string]: BoardData };
 }
 
 interface GameContextValue {
     gameContextData: GameContextData | null,
     loading: boolean,
     error: string | null,
-    updateGameContext: (data: Partial<GameContextData>) => void;
-    fetchGameData: (gameCode: string) => void;
+    updateGameContext: (data: Partial<GameContextData>) => void,
+    updateBoardContext: (subgameId: string, data: Partial<BoardData>) => void,
+    fetchGameData: (gameCode: string) => void,
 }
 
 const GameContext = createContext<GameContextValue>({
     gameContextData: null,
     loading: false,
     error: null,
-    updateGameContext: () => {},
+    updateGameContext: (data: Partial<GameContextData>) => {},
+    updateBoardContext: (subgameId: string, data: Partial<BoardData>) => {},
     fetchGameData: (gameCode: string) => {},
 });
+
 export default GameContext;
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -100,6 +103,23 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     }
 
+    const updateBoardContext = (subgameId: string, data: Partial<BoardData>) => {
+        setContextData((prevData: GameContextData | null) => {
+            if (!prevData) return null;
+
+            return {
+                ...prevData,
+                boards: {
+                    ...prevData.boards,
+                    [subgameId]: {
+                        ...prevData.boards[subgameId],
+                        ...data
+                    }
+                }
+            };
+        });
+    }
+
     const fetchGameData = async (gameCode: string) => {
         try {
             setLoading(true);
@@ -119,7 +139,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <GameContext.Provider value={{ gameContextData: contextData, loading, error, updateGameContext, fetchGameData }}>
+        <GameContext.Provider value={{  gameContextData: contextData,
+                                        loading,
+                                        error,
+                                        updateGameContext,
+                                        updateBoardContext,
+                                        fetchGameData }}>
             {children}
         </GameContext.Provider>
     );
