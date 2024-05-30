@@ -18,5 +18,11 @@ const config: Config = {
       require('@tailwindcss/forms'),
       require('tailwindcss-animate')
   ],
+  safelist: [
+      'bg-red-500', 'text-red-700', 'border-red-500',
+      'bg-blue-500', 'text-blue-700', 'border-blue-500',
+      'bg-green-500', 'text-green-700', 'border-green-500',
+
+    ],
 }
 export default config

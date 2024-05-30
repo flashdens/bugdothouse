@@ -2,13 +2,13 @@ import PlayerHeaderButton from "@/components/lobby/PlayerHeaderButton";
 import Image from "next/image";
 import chessboard from "@/public/chessboard.png";
 import React from "react";
-import {Player} from "@/context/GameContext";
+import {Player, PlayerRole} from "@/context/GameContext";
 
 interface SubLobbyProps {
     blackPlayer: Player | null,
     whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
-    sendWSAIEvent: (toSide: string, toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
+    sendWSAIEvent: (toSide: PlayerRole , toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
     subgameId: number
 }
 
