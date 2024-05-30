@@ -142,17 +142,6 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
         return makeMove(moveData);
     }
 
-    const isDraggablePiece = (piece: Piece, sq: Square) => {
-        switch (playerSide) {
-            case "WHITE":
-                return (piece[0] === 'w');
-            case "BLACK":
-                return (piece[0] === 'b');
-            case "SPECTATOR":
-                return false;
-        }
-    }
-
     return (
         <>
            <button
@@ -165,7 +154,10 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
                         position={fen}
                         onPieceDrop={onDrop}
                         customDndBackend={HTML5Backend}
-                        boardOrientation={playerSide.toLowerCase() as BoardOrientation}
+                        // todo bad solution, not working for spectators only
+                        boardOrientation={playerSide !== "SPECTATOR"
+                            ? playerSide.toLowerCase() as BoardOrientation
+                            : 'black'}
                         isDraggablePiece={({ piece }) => {
                             return (playerSide === "WHITE" && piece[0] === 'w')
                                 || (playerSide === "BLACK" && piece[0] === 'b')
