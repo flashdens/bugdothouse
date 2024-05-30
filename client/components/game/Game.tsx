@@ -1,5 +1,5 @@
-import TestChessboard, {PlayerSide} from "@/components/test/TestChessboard";
-import TestPocket from "@/components/test/TestPocket";
+import GameChessboard, {PlayerSide} from "@/components/game/GameChessboard";
+import GamePocket from "@/components/game/GamePocket";
 import React, {useContext, useEffect, useState} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import {DndProvider} from "react-dnd";
@@ -49,16 +49,16 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
 
                             return (
                                 <div className={"chessboard"} key={subgameId}>
-                                    <TestPocket
+                                    <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
-                                    <TestChessboard
+                                    <GameChessboard
                                         cbId={subgameId}
                                         playerSide={playerSide}
                                     />
-                                    <TestPocket
+                                    <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "BLACK" : "WHITE"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}

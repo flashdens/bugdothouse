@@ -2,12 +2,11 @@ import React, {useCallback, useContext, useEffect, useRef} from 'react';
 import {Chessboard} from "react-chessboard";
 import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
-import {BoardOrientation, Piece, Square} from "react-chessboard/dist/chessboard/types";
+import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
-import assert from "assert";
 
 const WHITE: boolean = false;
 const BLACK: boolean = true;
@@ -15,32 +14,30 @@ const BLACK: boolean = true;
 export type PlayerSide = 'WHITE' | 'BLACK' | 'SPECTATOR';
 
 interface MoveData {
-    fromSq?: string;
-    toSq: string;
-    sideToMove?: boolean;
-    code: string;
-    piece: string;
-    promotion: 'n' | 'b' | 'r' | 'q' | '';
+    fromSq?: string,
+    toSq: string,
+    sideToMove?: boolean,
+    piece: string,
+    promotion: 'n' | 'b' | 'r' | 'q' | ''
 }
 
 
 interface WSMoveResponse {
-    error?: string;
-    fen: string;
-    gameOver?: string;
-    sideToMove: boolean;
-    type: 'move';
-    whitePocket: {[key: string]: number};
-    blackPocket: {[key: string]: number};
+    error?: string,
+    fen: string,
+    gameOver?: string,
+    sideToMove: boolean,
+    type: 'move',
+    whitePocket: {[key: string]: number},
+    blackPocket: {[key: string]: number},
 }
 
 interface TestChessboardProps {
-    cbId: string
-    playerSide: PlayerSide;
+    cbId: string,
+    playerSide: PlayerSide
 }
 
-const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => {
-    // @ts-ignore
+const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
     const {gameContextData, updateGameContext, updateBoardContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
     if (!gameContextData)
@@ -108,13 +105,15 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
 
     const makeMove = (moveData: MoveData): boolean => {
         if (!socket) {
-            console.log('where is my motherfucking socket');
+            console.log('no sockets?');
             return false;
         }
         else {
             socket.send(JSON.stringify({
                 type: 'move',
                 token: authTokens.access,
+                subgame: Number(cbId),
+                code: gameCode,
                 ...moveData
             }));
             return true;
@@ -135,7 +134,6 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            code: gameCode,
             piece: piece.slice(1).toLowerCase(), // server only needs lower case piece type
             promotion: isPromotion(from, to, piece) ? "q" : ''
         };
@@ -177,4 +175,4 @@ const TestChessboard: React.FC<TestChessboardProps> = ( {cbId, playerSide} ) => 
 );
 }
 
-export default TestChessboard;
+export default GameChessboard;

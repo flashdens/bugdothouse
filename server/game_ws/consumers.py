@@ -86,15 +86,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             piece = data.get('piece')
             code = data.get('code')
             promotion = data.get('promotion')
+            subgame = data.get('subgame')
             decoded_token = await self.parse_jwt_token_async(token)
             user_id = decoded_token['user_id']
 
             # Authenticate the user
             user = await sync_to_async(get_object_or_404)(User, id=user_id)
 
-            game = await sync_to_async(get_object_or_404)(Game, code=code)
+            game = await sync_to_async(get_object_or_404)(Game, code=code, subgame_id=subgame)
 
-            if game.status != 'ongoing':
+            if game.status != GameStatus.ONGOING.value:
                 return False, {'type': 'error', 'error': "Game is not going on"}
 
             board = chess.variant.CrazyhouseBoard(fen=game.fen)

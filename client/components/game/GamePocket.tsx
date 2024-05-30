@@ -1,9 +1,9 @@
 import React, {useContext} from 'react';
 
-import TestPocketPiece from './TestPocketPiece';
+import TestPocketPiece from './GamePocketPiece';
 import defaultPieces from "@/public/pieces/pieces";
 import GameContext from "@/context/GameContext";
-import {PlayerSide} from "@/components/test/TestChessboard";
+import {PlayerSide} from "@/components/game/GameChessboard";
 
 interface TestPocketProps {
     playerSide: PlayerSide,
@@ -12,7 +12,7 @@ interface TestPocketProps {
 }
 
 
-const TestPocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}) => {
+const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}) => {
 
     const {gameContextData} = useContext(GameContext);
     if (!gameContextData) return;
@@ -51,4 +51,4 @@ const TestPocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
     );
 };
 
-export default TestPocket;
+export default GamePocket;

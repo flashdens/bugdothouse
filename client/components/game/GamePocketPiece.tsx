@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 import { useDrag } from 'react-dnd';
-import {PlayerSide} from "@/components/test/TestChessboard";
+import {PlayerSide} from "@/components/game/GameChessboard";
 
 interface ChessPieceProps {
     piece: "wP" | "wB" | "wN" | "wR" | "wQ" | "wK" | "bP" | "bB" | "bN" | "bR" | "bQ" | "bK";
@@ -10,7 +10,7 @@ interface ChessPieceProps {
     pocketOf: "WHITE" | "BLACK";
 }
 
-const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, pocketOf }) => {
+const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, pocketOf }) => {
     const [{ isDragging }, drag] = useDrag({
         type: 'piece',
         item: () => ({ piece }),
@@ -64,4 +64,4 @@ const TestPocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
 };
 
 
-export default TestPocketPiece;
+export default GamePocketPiece;
