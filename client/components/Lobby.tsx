@@ -107,7 +107,8 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
    const sendWSAIAddEvent = (toSide: string, toSubgame: number = 1, msgType: 'aiAdd' | 'aiRemove') => {
         if (socket && user) {
             socket.send(JSON.stringify({
-                type: msgType,
+                type: 'lobbyAI',
+                event: msgType,
                 toSubgame: toSubgame,
                 toSide: PlayerRole[toSide as keyof typeof PlayerRole],
                 token: authTokens.access,

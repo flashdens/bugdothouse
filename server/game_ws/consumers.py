@@ -231,16 +231,17 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.switch', 'message': {'success': True}})
 
-    async def handle_ai_player_join(self, data):
-        to_subgame = data['toSubgame']
-        to_side = data['toSide']
+    async def handle_ai_player_action(self, data):
+        event = data['event']
+        subgame = data['toSubgame']
+        side = data['toSide']
         token = data['token']
 
         decoded_token = await self.parse_jwt_token_async(token)
         user_id = decoded_token['user_id']
 
         user = await self.get_user(user_id)
-        game = await self.get_game(self.room_name, to_subgame)
+        game = await self.get_game(self.room_name, subgame)
         host = await database_sync_to_async(getattr)(game, 'host')
         host = await self.get_user(host.pk)
 
@@ -248,7 +249,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False, {'type': 'error', 'error': 'Only hosts can add AI players!'}
 
         ai_player = await database_sync_to_async(get_object_or_404)(User, username='bugdothouse_ai')
-        await self.add_user_to_game(ai_player, game, to_side)
+        if event == 'aiAdd':
+            await self.add_user_to_game(ai_player, game, side)
+        elif event == 'aiRemove':
+            await self.remove_user_from_game(ai_player, game, side)
         await game.asave()
 
         await self.channel_layer.group_send(
@@ -265,8 +269,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.handle_move(data)
             elif event_type == 'lobbySwitch':
                 await self.handle_user_switch(data)
-            elif event_type == 'aiAdd':
-                await self.handle_ai_player_join(data)
+            elif event_type == 'lobbyAI':
+                await self.handle_ai_player_action(data)
             elif event_type == 'connect':
                 print('click')
                 await self.channel_layer.group_send(
