@@ -49,8 +49,8 @@ class Game(models.Model):
         null=True
     )
     side_to_move = models.BooleanField(default=True, null=True)
-    white_player = models.ForeignKey(User, related_name='white_games', on_delete=models.SET_NULL, null=True)
-    black_player = models.ForeignKey(User, related_name='black_games', on_delete=models.SET_NULL, null=True)
+    white_player = models.ForeignKey(User, related_name='white_player', on_delete=models.SET_NULL, null=True)
+    black_player = models.ForeignKey(User, related_name='black_player', on_delete=models.SET_NULL, null=True)
     spectators = models.ManyToManyField(User, related_name='spectators', blank=True)
     brother_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     subgame_id = models.IntegerField(choices=SUBGAME_ID_CHOICES, null=False, default=1)

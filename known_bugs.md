@@ -23,4 +23,6 @@
 **solved:**
 - lobby: ws events not working, work only after refresh?
 
-
+**game**
+- promotions not working
+- ai checkmate
