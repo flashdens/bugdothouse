@@ -16,6 +16,6 @@ RUN apk update && \
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy project files
-COPY . /opt/bugdothouse
+COPY * /opt/bugdothouse
 
 CMD ["python3", "manage.py", "migrate"]

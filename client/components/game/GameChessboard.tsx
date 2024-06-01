@@ -5,7 +5,7 @@ import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
-import GameContext from "@/context/GameContext";
+import GameContext, {GameResult, GameResultStrings} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
 const WHITE: boolean = false;
@@ -65,7 +65,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
 
                 const gameOverElement = document.getElementById("gameOver");
                 if (gameOverElement && data.gameOver) {
-                    gameOverElement.innerText = data.gameOver as string;
+                    gameOverElement.innerText = GameResultStrings[data.gameOver];
                 }
             }
             else if (data.type === 'error') {
@@ -125,7 +125,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                         position={fen}
                         onPieceDrop={onDrop}
                         customDndBackend={HTML5Backend}
-                        // todo bad solution, not working for spectators only
+                        // todo bad solution, not working for spectators only, implement reverse board for spectators only?
                         boardOrientation={playerSide !== "SPECTATOR"
                             ? playerSide.toLowerCase() as BoardOrientation
                             : 'black'}

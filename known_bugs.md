@@ -26,3 +26,4 @@
 **game**
 - promotions not working
 - ai checkmate
+- ai starting 

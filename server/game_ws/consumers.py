@@ -17,7 +17,7 @@ import chess.variant
 from django.shortcuts import get_object_or_404
 
 from bugdothouse_server import settings
-from game.models import Game, Move, GameStatus, GameMode
+from game.models import Game, Move, GameStatus, GameMode, GameResult
 from authorization.models import User
 
 
@@ -58,22 +58,19 @@ class GameConsumer(AsyncWebsocketConsumer):
             print("spectator")  # todo
             return None
 
-    # is nesting async functions even a good idea?
-    '''
-    def handle_game_ending_move(self, board):
-        if board.is_stalemate():
-            return 'Stalemate'
-        elif board.is_checkmate():
-            return 'Win by checkmate!'
-        elif board.is_insufficient_material():
-            return 'Draw by insufficient material'
-        elif board.is_seventyfive_moves():
-            return 'Draw by seventy-five moves rule'
-        elif board.is_fivefold_repetition():
-            return 'Draw by fivefold repetition'
+    def determine_game_outcome(self, board):
+        if board.is_checkmate():
+            if board.turn == chess.BLACK:  # black was mated
+                return GameResult.WHITE_WIN
+            elif board.turn == chess.WHITE:  # black was mated
+                return GameResult.BLACK_WIN
+        elif self.is_game_draw(board):
+            return GameResult.DRAW
         else:
             return None
-        '''
+
+    def is_game_draw(self, board):
+        return board.is_stalemate() or board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition()
 
     async def parse_jwt_token_async(self, token):
         try:
@@ -235,8 +232,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 board = chess.variant.CrazyhouseBoard(fen=game.fen)
             board.turn = game.side_to_move
             legal_moves = list(board.legal_moves)
-            board.push(random.choice(legal_moves))
-            print('ai move made')
+            if len(legal_moves) > 0:
+                board.push(random.choice(legal_moves))
+
+            result = self.determine_game_outcome(board)
+            if result:
+                result = result.value
+            game.result = result
+            if game.result is not None:
+                game.status = GameStatus.FINISHED
             game.fen = board.fen()
             await game.asave()
 
@@ -250,7 +254,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
-                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
+                "gameOver": game.result
             }
 
             # await asyncio.sleep(1)

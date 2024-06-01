@@ -18,11 +18,11 @@ class GameMode(models.IntegerChoices):
     CLASSICAL = (2, 'Classical')
 
 
-class GameOutcome(models.IntegerChoices):
-    WHITE_WIN = (0, 'White Wins')
-    BLACK_WIN = (1, 'Black Wins')
-    TEAM_1_WIN = (2, 'Team 1 Wins')
-    TEAM_2_WIN = (3, 'Team 2 Wins')
+class GameResult(models.IntegerChoices):
+    WHITE_WIN = (0, 'White wins')
+    BLACK_WIN = (1, 'Black wins')
+    TEAM_1_WIN = (2, 'Team 1 wins')
+    TEAM_2_WIN = (3, 'Team 2 wins')
     DRAW = (4, 'Draw')
 
 
@@ -54,7 +54,7 @@ class Game(models.Model):
     spectators = models.ManyToManyField(User, related_name='spectators', blank=True)
     brother_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     subgame_id = models.IntegerField(choices=SUBGAME_ID_CHOICES, null=False, default=1)
-    result = models.IntegerField(null=True, choices=GameOutcome.choices)  # null -> result undetermined
+    result = models.IntegerField(null=True, choices=GameResult.choices)  # null -> result undetermined
 
     def __str__(self):
         return f"Game {self.code} - {self.status}"

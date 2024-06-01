@@ -1,6 +1,7 @@
 import React, {createContext, ReactNode, useEffect, useState, useCallback, useContext} from "react";
 import SERVER_URL from "@/config";
 import authContext from "@/context/AuthContext";
+import Game from "@/components/game/Game";
 
 export enum PlayerRole {
     'whitePlayer',
@@ -8,13 +9,21 @@ export enum PlayerRole {
     'spectator'
 }
 
-export enum GameOutcome {
+export enum GameResult {
     WHITE_WIN = 0,
     BLACK_WIN = 1,
     TEAM_1_WIN = 2,
     TEAM_2_WIN = 3,
     DRAW = 4
 }
+
+export const GameResultStrings: Record<GameResult, string> = {
+    [GameResult.WHITE_WIN]: 'White wins',
+    [GameResult.BLACK_WIN]: 'Black wins',
+    [GameResult.TEAM_1_WIN]: 'Team 1 wins',
+    [GameResult.TEAM_2_WIN]: 'Team 2 wins',
+    [GameResult.DRAW]: 'Draw'
+};
 
 export enum GameStatus {
     WAITING_FOR_START = 0,
@@ -50,7 +59,7 @@ export interface GameContextData {
     gameCode: string,
     spectators: Player[] | null,
     host: Player,
-    result: GameOutcome,
+    result: GameResult,
     boards: { [subgameId: string]: BoardData };
 }
 
