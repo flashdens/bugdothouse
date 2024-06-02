@@ -46,31 +46,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_group_name, self.channel_name
         )
 
-    @sync_to_async
-    def determine_side(self, game, user):
-        if game.white_player is None or game.white_player.pk == user.pk:
-            game.white_player = user
-            return 'WHITE'
-        elif game.black_player is None or game.black_player.pk == user.pk:
-            game.black_player = user
-            return 'BLACK'
-        else:
-            print("spectator")  # todo
-            return None
-
     def determine_game_outcome(self, board):
-        if board.is_checkmate():
-            if board.turn == chess.BLACK:  # black was mated
-                return GameResult.WHITE_WIN
-            elif board.turn == chess.WHITE:  # black was mated
-                return GameResult.BLACK_WIN
+        if board.turn == chess.BLACK:  # black was mated
+            return GameResult.WHITE_WIN
+        elif board.turn == chess.WHITE:  # white was mated
+            return GameResult.BLACK_WIN
         elif self.is_game_draw(board):
             return GameResult.DRAW
         else:
-            return None
+            assert False
 
     def is_game_draw(self, board):
-        return board.is_stalemate() or board.is_insufficient_material() or board.is_seventyfive_moves() or board.is_fivefold_repetition()
+        return (board.is_stalemate()
+                or board.is_insufficient_material()
+                or board.is_seventyfive_moves()
+                or board.is_fivefold_repetition())
 
     async def parse_jwt_token_async(self, token):
         try:
@@ -82,27 +72,78 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return decoded_token
 
-    async def make_move_on_board(self, board, from_sq, to_sq, piece, promotion=None):
-        if from_sq:  # move from board
-            move = chess.Move.from_uci(from_sq + to_sq + (promotion if promotion else ''))
-            is_move_valid = move in board.legal_moves
-        else:  # move from pocket
-            move = chess.Move.from_uci((piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
-            is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
+    async def make_move_on_board(self, board, from_sq=None, to_sq=None, piece=None, promotion=None, is_ai_move=False):
+        if is_ai_move:
+            legal_moves = list(board.legal_moves)
+            move = random.choice(legal_moves)
 
-        if is_move_valid:
-            board.push(move)
-            return move
         else:
-            return None
+            if from_sq:  # move from board
+                move = chess.Move.from_uci(from_sq + to_sq + (promotion if promotion else ''))
+                is_move_valid = move in board.legal_moves
+            else:  # move from pocket
+                move = chess.Move.from_uci((piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
+                is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
-    async def get_game(self, room_name, subgame):
+            if not is_move_valid:
+                return None  # todo better returns
+
+        board.push(move)
+        return move
+
+    async def get_game_async(self, room_name, subgame):
         return await database_sync_to_async(get_object_or_404)(Game, code=room_name, subgame_id=subgame)
 
-    async def get_user(self, user_id):
+    async def get_user_async(self, user_id):
         return await database_sync_to_async(get_object_or_404)(User, id=user_id)
 
-    async def process_move(self, data):
+    def is_ai_turn_in_game(self, game):
+        return (game.side_to_move == SideToMove.WHITE.value
+                and game.white_player.username == 'bugdothouse_ai'
+                or
+                game.side_to_move == SideToMove.BLACK.value
+                and game.black_player.username == 'bugdothouse_ai')
+
+    async def send_move_to_client(self, game):
+        pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
+        no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove the pockets from the FEN string
+
+        response_data = {
+            'type': 'move',
+            'subgame': str(game.subgame_id),
+            "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
+            "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+            "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
+            "sideToMove": game.side_to_move,
+            "gameOver": game.result,
+        }
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'game.move', 'message': response_data})
+
+    async def process_move(self, game, board, move_maker=None, move_data=None, is_ai_move=False):
+        if not board.is_checkmate() or self.is_game_draw(board):
+            if not is_ai_move:
+                move = await self.make_move_on_board(board,
+                                                     move_data['from_sq'],
+                                                     move_data['to_sq'],
+                                                     move_data['piece'],
+                                                     move_data['promotion'])
+            else:
+                move = await self.make_move_on_board(board,
+                                                     is_ai_move=True)
+
+            game.side_to_move = board.turn
+            game.fen = board.fen()
+            move_instance = Move(game=game,
+                                 player=move_maker,
+                                 move=move)
+            await move_instance.asave()
+        else:
+            game.result = self.determine_game_outcome(board).value
+            game.status = GameStatus.FINISHED.value
+
+    async def handle_move(self, data):
         try:
             token = data.get('token')
             from_sq = data.get('fromSq')
@@ -111,64 +152,52 @@ class GameConsumer(AsyncWebsocketConsumer):
             code = data.get('code')
             promotion = data.get('promotion')
             subgame = data.get('subgame')
-            decoded_token = await self.parse_jwt_token_async(token)
-            user_id = decoded_token['user_id']
-
-            # Authenticate the user
-            user = await self.get_user(user_id)
-
-            game = await self.get_game(code, subgame)
-
-            if game.status != GameStatus.ONGOING.value:
-                return False, {'type': 'error', 'error': "Game is not going on"}
-
-            if game.gamemode == GameMode.CLASSICAL.value:
-                if from_sq is None:
-                    return False, {"type": "error", "error": "Piece drops are not allowed in classical games!"}
-                board = chess.Board(fen=game.fen)
-            else:
-                board = chess.variant.CrazyhouseBoard(fen=game.fen)
-
-            player = await sync_to_async(
-                lambda: game.white_player if board.turn == chess.WHITE else game.black_player)()
-
-            if user != player:
-                return False, {'type': 'error', 'error': "You're not the player to move"}
-
-            move = await self.make_move_on_board(board, from_sq, to_sq, piece, promotion)
-
-            game.side_to_move = board.turn
-            game.fen = board.fen()
-            await sync_to_async(game.save)()
-
-            db_move = Move(game=game, player=player, move=move)
-            await sync_to_async(db_move.save)()
-
-            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
-            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove the pockets from the FEN string
-
-            response_data = {
-                'type': 'move',
-                'subgame': str(game.subgame_id),
-                "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
-                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
-                "sideToMove": game.side_to_move,
-                "gameOver": 'Checkmate' if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
-            }
-            return True, response_data
-
         except json.JSONDecodeError:
             return False, {'type': 'error', 'error': 'Invalid JSON'}
 
-    async def handle_move(self, data):
-        success, response_data = await self.process_move(data)
-        if success:
-            await self.channel_layer.group_send(
-                self.room_group_name, {'type': 'game.move', 'message': response_data})
-            await self.handle_ai_move(data)
+        decoded_token = await self.parse_jwt_token_async(token)
+        user_id = decoded_token['user_id']
+
+        user = await self.get_user_async(user_id)
+
+        game = await Game.objects.select_related('white_player', 'black_player').aget(code=code, subgame_id=subgame)
+
+        if game.status != GameStatus.ONGOING.value:
+            return False, {'type': 'error', 'error': "Game is not going on"}
+
+        if game.gamemode == GameMode.CLASSICAL.value:
+            if from_sq is None:
+                return False, {"type": "error", "error": "Piece drops are not allowed in classical games!"}
+            board = chess.Board(fen=game.fen)
         else:
-            await self.send(json.dumps(response_data))
+            board = chess.variant.CrazyhouseBoard(fen=game.fen)
+
+        board.turn = game.side_to_move
+        player = game.white_player if board.turn == chess.WHITE else game.black_player
+
+        if user != player:
+            return False, {'type': 'error', 'error': "You're not the player to move"}
+
+        move_data = {
+            'from_sq': from_sq,
+            'to_sq': to_sq,
+            'piece': piece,
+            'promotion': promotion
+        }
+
+        await self.process_move(game, board, player, move_data)
+
+        await self.send_move_to_client(game)
+
+        is_ai_turn = self.is_ai_turn_in_game(game)
+        if not is_ai_turn:
+            ai_player = await User.objects.aget(username='bugdothouse_ai')
+            await self.process_move(game,
+                                    board,
+                                    ai_player,
+                                    is_ai_move=True)
+
+        await self.send_move_to_client(game)
 
     class PlayerRoles(Enum):
         WHITE_PLAYER = 0
@@ -184,10 +213,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
     def remove_user_from_game_sync(self, user, game, from_side):
-        if game.white_player is not None and game.white_player.pk == user.pk and from_side == self.PlayerRoles.WHITE_PLAYER.value:
+        if (game.white_player is not None
+                and game.white_player.pk == user.pk
+                and from_side == self.PlayerRoles.WHITE_PLAYER.value):
             game.white_player = None
 
-        elif game.black_player is not None and game.black_player.pk == user.pk and from_side == self.PlayerRoles.BLACK_PLAYER.value:
+        elif (game.black_player is not None
+              and game.black_player.pk == user.pk
+              and from_side == self.PlayerRoles.BLACK_PLAYER.value):
             game.black_player = None
 
         elif user in game.spectators.all() and from_side == self.PlayerRoles.SPECTATOR.value:
@@ -218,49 +251,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         if src_game.pk != dest_game.pk:
             await sync_to_async(dest_game.save)()
 
-    async def handle_ai_move(self, data):
-        code = data.get('code')
-        subgame = data.get('subgame')
-        # auth can be skipped, was checked eariler
-        # todo game redundadnt query
-        game = await Game.objects.select_related('white_player', 'black_player').aget(code=code, subgame_id=subgame)
-        if (game.side_to_move == SideToMove.WHITE.value and game.white_player.username == 'bugdothouse_ai'
-                or game.side_to_move == SideToMove.BLACK.value and game.black_player.username == 'bugdothouse_ai'):
-            if game.gamemode == GameMode.CLASSICAL:
-                board = chess.Board(fen=game.fen)
-            else:
-                board = chess.variant.CrazyhouseBoard(fen=game.fen)
-            board.turn = game.side_to_move
-            legal_moves = list(board.legal_moves)
-            if len(legal_moves) > 0:
-                board.push(random.choice(legal_moves))
-
-            result = self.determine_game_outcome(board)
-            if result:
-                result = result.value
-            game.result = result
-            if game.result is not None:
-                game.status = GameStatus.FINISHED
-            game.fen = board.fen()
-            await game.asave()
-
-            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # extract pockets from fen
-            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out pockets from fen
-
-            response_data = {
-                'type': 'move',
-                'subgame': str(game.subgame_id),
-                "fen": no_pocket_fen.replace('~', ''),  # remove tildes from Crazyhouse string
-                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
-                "sideToMove": game.side_to_move,
-                "gameOver": game.result
-            }
-
-            # await asyncio.sleep(1)
-            await self.channel_layer.group_send(
-                self.room_group_name, {'type': 'game.move', 'message': response_data})
-
     async def handle_user_switch(self, data):
         from_subgame = data['fromSubgame']
         from_side = data['fromSide']
@@ -268,8 +258,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         to_side = data['toSide']
         token = data['token']
 
-        src_game = await self.get_game(self.room_name, from_subgame)
-        dest_game = await self.get_game(self.room_name, to_subgame)
+        src_game = await self.get_game_async(self.room_name, from_subgame)
+        dest_game = await self.get_game_async(self.room_name, to_subgame)
 
         if src_game.status != GameStatus.WAITING_FOR_START.value:
             return False, {'type': 'error', 'error': 'Game has already started'}
@@ -277,7 +267,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         decoded_token = await self.parse_jwt_token_async(token)
         user_id = decoded_token['user_id']
 
-        user = await self.get_user(user_id)
+        user = await self.get_user_async(user_id)
         user_in_game = await self.check_user_in_game(src_game, user)
 
         if not user_in_game:
@@ -296,10 +286,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         decoded_token = await self.parse_jwt_token_async(token)
         user_id = decoded_token['user_id']
 
-        user = await self.get_user(user_id)
-        game = await self.get_game(self.room_name, subgame)
+        user = await self.get_user_async(user_id)
+        game = await self.get_game_async(self.room_name, subgame)
         host = await database_sync_to_async(getattr)(game, 'host')
-        host = await self.get_user(host.pk)
+        host = await self.get_user_async(host.pk)
 
         if user.pk != host.pk:
             return False, {'type': 'error', 'error': 'Only hosts can manage AI players!'}
@@ -316,6 +306,21 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return True
 
+    async def handle_game_start(self):
+        started_games = await Game.objects.aget(self.room_name)
+
+        for game in started_games:
+            if self.is_ai_turn_in_game(game):
+                ai_player = await User.objects.aget(username='bugdothouse_ai')
+                if game.gamemode == GameMode.CLASSICAL.value:
+                    board = chess.Board(fen=game.fen)
+                else:
+                    board = chess.variant.CrazyhouseBoard(fen=game.fen)
+                await self.process_move(game, board, ai_player, is_ai_move=True)
+                await self.send_move_to_client(game)
+                await self.channel_layer.group_send(
+                    self.room_group_name, {'type': 'game.start'})
+
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
         try:
@@ -328,15 +333,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             elif event_type == 'lobbyAI':
                 await self.handle_ai_lobby_action(data)
             elif event_type == 'connect':
-                print('click')
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'lobby.connect'})
             elif event_type == 'gameStart':
+                await self.handle_game_start()
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'game.start'})
             else:
                 await self.send(text_data=json.dumps({'message': 'invalid request received'}))
-                pass
 
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({'message': 'invalid json'}))
