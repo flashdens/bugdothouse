@@ -12,6 +12,7 @@ import SERVER_URL from "@/config";
 import { router } from "next/client";
 import SubLobby from "@/components/lobby/SubLobby";
 import {bold} from "next/dist/lib/picocolors";
+import assert from "assert";
 
 interface LobbyProps {
     gameData: GameContextData;
@@ -57,7 +58,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const { gameCode, spectators, host } = gameContextData;
     const fromSide = user?.user_id;
 
-    const findPlayerBoardNRole = (userId: number): null | {board: number, playerRole: PlayerRole} => {
+    const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
 
         for (const boardId in gameContextData.boards) {
             const board = gameContextData.boards[boardId];
@@ -87,7 +88,8 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             }
         }
 
-        return null;
+        // if it reaches this far, something has gone terribly wrong
+        assert(false);
     }
 
     const sendWSLobbyEvent = (toSide: string, toSubgame: number = 1) => {

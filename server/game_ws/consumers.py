@@ -74,7 +74,21 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return decoded_token
 
-    async def make_move_on_board(self, board, from_sq=None, to_sq=None, piece=None, promotion=None, is_ai_move=False):
+    async def get_game_async(self, room_name, subgame):
+        return await database_sync_to_async(get_object_or_404)(Game, code=room_name, subgame_id=subgame)
+
+    async def get_user_async(self, user_id):
+        return await database_sync_to_async(get_object_or_404)(User, id=user_id)
+
+    def is_ai_turn_in_game(self, game):
+        return ((game.side_to_move == SideToMove.WHITE.value
+                 and game.white_player.username == 'bugdothouse_ai')
+                or
+                (game.side_to_move == SideToMove.BLACK.value
+                 and game.black_player.username == 'bugdothouse_ai'))
+
+    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, piece=None, promotion=None,
+                                 is_ai_move=False):
         if is_ai_move:
             legal_moves = list(board.legal_moves)
             move = random.choice(legal_moves)
@@ -90,21 +104,42 @@ class GameConsumer(AsyncWebsocketConsumer):
             if not is_move_valid:
                 return None  # todo better returns
 
-        board.push(move)
+        # if we're playing bughouse, we need to perform some shenanigans
+        print(board.is_capture(move))
+        print(game.gamemode)
+        print(GameMode.BUGHOUSE.value)
+        if board.is_capture(move) and game.gamemode == GameMode.BUGHOUSE.value:
+            brother_game = await self.get_game_async(room_name=self.room_name,
+                                                     subgame=2 if game.subgame_id == 1 else 1)
+
+            # add piece to brother game
+            captured_piece = board.piece_at(move.to_square)
+            prev_pocket_match = re.search(r'\[(.*?)\]', brother_game.fen)
+            brother_game.fen = re.sub(r'\[(.*?)\]',
+                                      '[' + prev_pocket_match.group(1) + captured_piece.symbol() + ']',
+                                      game.fen)
+
+            await brother_game.asave()
+
+            # make move on game board
+            board.push(move)
+
+            # remove freshly captured piece from current crazyhouse pocket
+            print(captured_piece.symbol())
+            piece_to_pop = chess.Piece.from_symbol(
+                captured_piece.symbol().upper()
+                if captured_piece.symbol().islower()
+                else captured_piece.symbol().lower()
+            )
+
+            print(piece_to_pop.piece_type)
+            prev_side = not board.turn
+            board.pockets[prev_side].remove(piece_to_pop.piece_type)
+
+        else:
+            board.push(move)
+
         return move
-
-    async def get_game_async(self, room_name, subgame):
-        return await database_sync_to_async(get_object_or_404)(Game, code=room_name, subgame_id=subgame)
-
-    async def get_user_async(self, user_id):
-        return await database_sync_to_async(get_object_or_404)(User, id=user_id)
-
-    def is_ai_turn_in_game(self, game):
-        return ((game.side_to_move == SideToMove.WHITE.value
-                 and game.white_player.username == 'bugdothouse_ai')
-                or
-                (game.side_to_move == SideToMove.BLACK.value
-                 and game.black_player.username == 'bugdothouse_ai'))
 
     async def send_move_to_client(self, game, is_ai_move=False):
         pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
@@ -127,12 +162,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not board.is_checkmate() or self.is_game_draw(board):
             if not is_ai_move:
                 move = await self.make_move_on_board(board,
+                                                     game,
                                                      move_data['from_sq'],
                                                      move_data['to_sq'],
                                                      move_data['piece'],
                                                      move_data['promotion'])
             else:
                 move = await self.make_move_on_board(board,
+                                                     game,
                                                      is_ai_move=True)
             game.side_to_move = board.turn
             game.fen = board.fen()
