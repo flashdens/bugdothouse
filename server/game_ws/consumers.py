@@ -98,11 +98,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await database_sync_to_async(get_object_or_404)(User, id=user_id)
 
     def is_ai_turn_in_game(self, game):
-        return (game.side_to_move == SideToMove.WHITE.value
-                and game.white_player.username == 'bugdothouse_ai'
+        return ((game.side_to_move == SideToMove.WHITE.value
+                and game.white_player.username == 'bugdothouse_ai')
                 or
-                game.side_to_move == SideToMove.BLACK.value
-                and game.black_player.username == 'bugdothouse_ai')
+                (game.side_to_move == SideToMove.BLACK.value
+                and game.black_player.username == 'bugdothouse_ai'))
 
     async def send_move_to_client(self, game):
         pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
@@ -132,7 +132,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 move = await self.make_move_on_board(board,
                                                      is_ai_move=True)
-
             game.side_to_move = board.turn
             game.fen = board.fen()
             move_instance = Move(game=game,
@@ -142,6 +141,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         else:
             game.result = self.determine_game_outcome(board).value
             game.status = GameStatus.FINISHED.value
+
+        await game.asave()
 
     async def handle_move(self, data):
         try:
@@ -186,11 +187,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         }
 
         await self.process_move(game, board, player, move_data)
-
         await self.send_move_to_client(game)
 
         is_ai_turn = self.is_ai_turn_in_game(game)
-        if not is_ai_turn:
+        if is_ai_turn:
             ai_player = await User.objects.aget(username='bugdothouse_ai')
             await self.process_move(game,
                                     board,
@@ -307,7 +307,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         return True
 
     async def handle_game_start(self):
-        started_games = await Game.objects.aget(self.room_name)
+        started_games = await sync_to_async(list)(Game.objects
+                                                  .select_related('white_player', 'black_player')
+                                                  .filter(code=self.room_name))  # todo make this async
 
         for game in started_games:
             if self.is_ai_turn_in_game(game):

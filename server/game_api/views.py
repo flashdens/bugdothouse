@@ -73,12 +73,7 @@ class NewGameView(APIView):
 
         game1.save()
 
-        print(gamemode)
-        print(GameMode.BUGHOUSE.value)
-        print(type(gamemode))  # Check the type of gamemode
-        print(GameMode.BUGHOUSE)  # Verify the type and value of GameMode.BUGHOUSE
         if gamemode == GameMode.BUGHOUSE.value:
-            print('wchodze tu')
             game2 = Game(host=user,
                          gamemode=gamemode,
                          is_private=True if room_type == 'private' else False,
@@ -108,8 +103,6 @@ class GameInfoView(APIView):
             else:  # initializing to avoid null reference errors
                 pockets = ""
                 no_pocket_fen = ""
-            # print(pockets)
-            # print(no_pocket_fen)
 
             game_boards[game.subgame_id] = {
                 "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
@@ -185,7 +178,6 @@ class JoinGameView(APIView):
         #     game.black_player = user
         # else:
         #     return Response({'error': 'Game already full'}, status=status.HTTP_400_BAD_REQUEST)
-        print(game.spectators.all())
         if (user not in game.spectators.all()
                 and user != game.white_player
                 and user != game.black_player):

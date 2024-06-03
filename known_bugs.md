@@ -7,7 +7,7 @@
 - players get logged in as guests after server reset (should simply get logged out)
 - lobby: cleaner 404 handling
 - lobby: client app renders unusable after failed request
-- lobby: sometimes websocket connection does not work on enter
+- lobby:feature let player move back to specs by clicking on current role - now: move AI
 - game: after some time game ws stops working (caused by premoves)?
 
 **stockfish container**
