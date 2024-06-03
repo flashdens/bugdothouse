@@ -16,8 +16,14 @@ from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game, GameMode, GameStatus
-from game_api.serializers import UserSerializer
+from game_api.serializers import UserSerializer, ProfileSerializer
 
+
+class GetAuthenticatedUserView(APIView):
+    def get(self, request):
+        user = request.user
+        serializer = ProfileSerializer(user, many=False)
+        return Response(serializer.data)
 
 class ResetGameView(APIView):
     def post(self, request):

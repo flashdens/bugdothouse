@@ -9,6 +9,7 @@
 - lobby: client app renders unusable after failed request
 - lobby:feature let player move back to specs by clicking on current role - now: move AI
 - game: after some time game ws stops working (caused by premoves)?
+- game: bad board orientation
 
 **stockfish container**
 - no clue how to communicate
@@ -22,7 +23,6 @@
 
 **game**
 - promotions not working
-- ai checkmate
 - ai starting 
 
 **solved:**

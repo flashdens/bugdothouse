@@ -20,7 +20,7 @@ const HomePage = () => {
 
     const getProfile = async () => {
         if (!authTokens) return;
-        let response = await fetch(`${SERVER_URL}/social/profile`, {
+        let response = await fetch(`${SERVER_URL}/api/user_profile`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

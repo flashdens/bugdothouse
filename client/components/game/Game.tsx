@@ -23,6 +23,8 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return <div>Loading...</div>;
     }
 
+
+
     return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>

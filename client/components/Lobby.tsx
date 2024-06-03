@@ -44,11 +44,6 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             }
         }
 
-        // return () => {
-        //     if (socket?.readyState === 1)
-        //         socket?.close();
-        // };
-
     }, [socket]);
 
     if (!gameContextData) {

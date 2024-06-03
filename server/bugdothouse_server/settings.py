@@ -34,7 +34,6 @@ INSTALLED_APPS = [
     'game',
     'game_api',
     'game_ws',
-    'social',
     'authorization',
     'corsheaders',
     'django_extensions',
