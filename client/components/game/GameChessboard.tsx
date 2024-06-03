@@ -52,16 +52,9 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
         if (!socket || !cbId) return;
 
         socket.onmessage = (e) => {
-            const data: WSMoveResponse = JSON.parse(e.data)
+            const data = JSON.parse(e.data)
             if (data.type === 'move') {
-                console.log('updating', data.subgame);
-                updateBoardContext(data.subgame, {
-                            fen: data.fen,
-                            sideToMove: data.sideToMove,
-                            whitePocket: data.whitePocket,
-                            blackPocket: data.blackPocket,
-                        }
-                );
+                updateGameContext(data);
 
                 const gameOverElement = document.getElementById("gameOver");
                 if (gameOverElement && data.gameOver) {

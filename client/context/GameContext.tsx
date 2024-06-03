@@ -91,19 +91,24 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const updateGameContext = (data: Partial<GameContextData>) => {
         if (!data) return;
-        for (const subgameId in data.boards) {
-            const board = data.boards[subgameId];
-            let localPlayerIs: PlayerRole| null = null;
-            if (board.blackPlayer && board.blackPlayer.id === user?.user_id) {
-                localPlayerIs = PlayerRole.blackPlayer;
-            } else if (board.whitePlayer && board.whitePlayer.id === user?.user_id) {
-                localPlayerIs = PlayerRole.whitePlayer;
-            } else {
-                localPlayerIs = PlayerRole.spectator;
+        console.log('updating with', data);
+            for (const subgameId in data.boards) {
+                const board = data.boards[subgameId];
+                if (data.spectators) { // todo you know...
+                    let localPlayerIs: PlayerRole | null = null;
+                    if (board.blackPlayer && board.blackPlayer.id === user?.user_id) {
+                        localPlayerIs = PlayerRole.blackPlayer;
+                    } else if (board.whitePlayer && board.whitePlayer.id === user?.user_id) {
+                        localPlayerIs = PlayerRole.whitePlayer;
+                    } else {
+                        localPlayerIs = PlayerRole.spectator;
+                    }
+                    board.localPlayerIs = localPlayerIs;
+                }
+                else {
+                    board.localPlayerIs = contextData?.boards[subgameId].localPlayerIs;
+                }
             }
-                board.localPlayerIs = localPlayerIs;
-        }
-
 
         setContextData((prevData) => ({
             ...prevData,

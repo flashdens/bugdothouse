@@ -104,18 +104,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             if not is_move_valid:
                 return None  # todo better returns
 
-        # if we're playing bughouse, we need to perform some shenanigans
-        print(board.is_capture(move))
-        print(game.gamemode)
-        print(GameMode.BUGHOUSE.value)
+        # it's a bughouse capture, we need to make some shenanigans
         if board.is_capture(move) and game.gamemode == GameMode.BUGHOUSE.value:
             brother_game = await self.get_game_async(room_name=self.room_name,
                                                      subgame=2 if game.subgame_id == 1 else 1)
 
             # add piece to brother game
             captured_piece = board.piece_at(move.to_square)
-            prev_pocket_match = re.search(r'\[(.*?)\]', brother_game.fen)
-            brother_game.fen = re.sub(r'\[(.*?)\]',
+            prev_pocket_match = re.search(r'\[(.*?)]', brother_game.fen)
+            brother_game.fen = re.sub(r'\[(.*?)]',
                                       '[' + prev_pocket_match.group(1) + captured_piece.symbol() + ']',
                                       game.fen)
 
@@ -124,7 +121,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             # make move on game board
             board.push(move)
 
-            # remove freshly captured piece from current crazyhouse pocket
+            # remove the captured piece from current board's pocket
             print(captured_piece.symbol())
             piece_to_pop = chess.Piece.from_symbol(
                 captured_piece.symbol().upper()
@@ -132,27 +129,42 @@ class GameConsumer(AsyncWebsocketConsumer):
                 else captured_piece.symbol().lower()
             )
 
-            print(piece_to_pop.piece_type)
             prev_side = not board.turn
             board.pockets[prev_side].remove(piece_to_pop.piece_type)
 
-        else:
+        else:  # if it's not bughouse, just make the move :)
             board.push(move)
 
         return move
 
-    async def send_move_to_client(self, game, is_ai_move=False):
-        pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
-        no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove the pockets from the FEN string
+    async def send_move_to_client(self, game):
+        # since pockets can update inbetween turns, all boards need to be fetched
+        games = await sync_to_async(list)(Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
+        game_boards = {}
 
+        # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
+        for game in games:
+            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
+            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+
+            print(type(game.subgame_id), game.subgame_id)
+
+            # casting to str to dodge the strict_map_key=True error
+            game_boards[str(game.subgame_id)] = {
+                "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
+                # count each piece in the pocket string, then return as a dict
+                "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
+                "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
+                "sideToMove": game.side_to_move,
+                "gameOver": game.result,
+            }
+
+        # remember that status and result can also get changed!
         response_data = {
             "type": "move",
-            "subgame": str(game.subgame_id),
-            "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
-            "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
-            "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
-            "sideToMove": game.side_to_move,
-            "gameOver": game.result,
+            "status": game.status,
+            "result": game.result,
+            "boards": game_boards,
         }
 
         await self.channel_layer.group_send(
@@ -170,7 +182,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             else:
                 move = await self.make_move_on_board(board,
                                                      game,
-                                                     is_ai_move=True)
+                                                     is_ai_move=True
+                                                     )
+            if move is None:
+                return 'invalid move'
+
             game.side_to_move = board.turn
             game.fen = board.fen()
             move_instance = Move(game=game,
@@ -234,8 +250,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                                     board,
                                     ai_player,
                                     is_ai_move=True)
-
-        await self.send_move_to_client(game, is_ai_move=True)
+            await self.send_move_to_client(game)
 
     class PlayerRoles(Enum):
         WHITE_PLAYER = 0
@@ -398,6 +413,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_move(self, event):
         move = event['message']
+        print(move)
         await self.send(json.dumps(move))
 
     async def lobby_switch(self, event):

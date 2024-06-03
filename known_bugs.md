@@ -20,10 +20,11 @@
 **asgi**
 - hot reload not working (not configured)
 
-**solved:**
-- lobby: ws events not working, work only after refresh?
-
 **game**
 - promotions not working
 - ai checkmate
 - ai starting 
+
+**solved:**
+- lobby: ws events not working, work only after refresh?
+

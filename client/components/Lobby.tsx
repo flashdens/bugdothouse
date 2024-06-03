@@ -59,7 +59,6 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const fromSide = user?.user_id;
 
     const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
-
         for (const boardId in gameContextData.boards) {
             const board = gameContextData.boards[boardId];
             if (board.whitePlayer && board.whitePlayer.id == userId) {
@@ -97,7 +96,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             const { board, playerRole } = findPlayerBoardNRole(user.user_id)
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
-                fromSubgame: board, // remember that this one can be null
+                fromSubgame: board,
                 fromSide: playerRole,
                 toSubgame: toSubgame,
                 toSide: PlayerRole[toSide as keyof typeof PlayerRole],
