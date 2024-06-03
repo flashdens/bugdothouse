@@ -110,7 +110,7 @@ class GameInfoView(APIView):
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
-                "gameOver": "Checkmate" if chess.variant.CrazyhouseBoard(fen=game.fen).is_checkmate() else None,
+                "gameOver": game.result,
                 # todo more elegant way
                 "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
                 "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None

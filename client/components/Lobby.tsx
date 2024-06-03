@@ -33,6 +33,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
+                console.log(data);
                 if (data.type === 'lobbySwitch' || data.type === 'connect') {
                     fetchGameData(gameData.gameCode);
                 } else if (data.type == 'gameStart') {

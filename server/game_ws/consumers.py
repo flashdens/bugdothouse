@@ -2,12 +2,14 @@ import asyncio
 import json
 import random
 import re
+import time
 import traceback
 from enum import Enum
 from collections import Counter
 
 import jwt
 from asgiref.sync import sync_to_async
+from asyncio import sleep
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -99,18 +101,18 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     def is_ai_turn_in_game(self, game):
         return ((game.side_to_move == SideToMove.WHITE.value
-                and game.white_player.username == 'bugdothouse_ai')
+                 and game.white_player.username == 'bugdothouse_ai')
                 or
                 (game.side_to_move == SideToMove.BLACK.value
-                and game.black_player.username == 'bugdothouse_ai'))
+                 and game.black_player.username == 'bugdothouse_ai'))
 
-    async def send_move_to_client(self, game):
+    async def send_move_to_client(self, game, is_ai_move=False):
         pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract the pocket information
         no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove the pockets from the FEN string
 
         response_data = {
-            'type': 'move',
-            'subgame': str(game.subgame_id),
+            "type": "move",
+            "subgame": str(game.subgame_id),
             "fen": no_pocket_fen.replace('~', ''),  # Remove tildes from Crazyhouse string
             "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
             "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
@@ -144,7 +146,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         await game.asave()
 
-    async def handle_move(self, data):
+    async def handle_player_move(self, data):
         try:
             token = data.get('token')
             from_sq = data.get('fromSq')
@@ -189,15 +191,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.process_move(game, board, player, move_data)
         await self.send_move_to_client(game)
 
-        is_ai_turn = self.is_ai_turn_in_game(game)
-        if is_ai_turn:
+        while self.is_ai_turn_in_game(game):
             ai_player = await User.objects.aget(username='bugdothouse_ai')
             await self.process_move(game,
                                     board,
                                     ai_player,
                                     is_ai_move=True)
 
-        await self.send_move_to_client(game)
+        await self.send_move_to_client(game, is_ai_move=True)
 
     class PlayerRoles(Enum):
         WHITE_PLAYER = 0
@@ -289,7 +290,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         user = await self.get_user_async(user_id)
         game = await self.get_game_async(self.room_name, subgame)
         host = await database_sync_to_async(getattr)(game, 'host')
-        host = await self.get_user_async(host.pk)
+        # host = await self.get_user_async(host.pk)
 
         if user.pk != host.pk:
             return False, {'type': 'error', 'error': 'Only hosts can manage AI players!'}
@@ -306,6 +307,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return True
 
+    async def handle_ai_turn(self, game, board):
+        while self.is_ai_turn_in_game(game):
+            ai_player = await User.objects.aget(username='bugdothouse_ai')
+            await self.process_move(game,
+                                    board,
+                                    ai_player,
+                                    is_ai_move=True)
+
     async def handle_game_start(self):
         started_games = await sync_to_async(list)(Game.objects
                                                   .select_related('white_player', 'black_player')
@@ -319,9 +328,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                 else:
                     board = chess.variant.CrazyhouseBoard(fen=game.fen)
                 await self.process_move(game, board, ai_player, is_ai_move=True)
-                await self.send_move_to_client(game)
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'game.start'})
+                # while self.is_ai_turn_in_game(game):
+                #     await self.handle_ai_turn(game, board)
+                #     await self.send_move_to_client(game)
+                # TODO WAIT 1 SECOND BETWEEN MOVES
 
     async def receive(self, text_data=None, bytes_data=None):
         print(text_data)
@@ -329,7 +341,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             data = json.loads(text_data)
             event_type = data['type']
             if event_type == 'move':
-                await self.handle_move(data)
+                await self.handle_player_move(data)
             elif event_type == 'lobbySwitch':
                 await self.handle_user_switch(data)
             elif event_type == 'lobbyAI':
@@ -352,7 +364,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.send(json.dumps(move))
 
     async def lobby_switch(self, event):
-        message = event["message"]
         await self.send(text_data=json.dumps({"type": "lobbySwitch",
                                               "success": True}))
 
