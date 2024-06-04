@@ -1,6 +1,6 @@
 import GameChessboard, {PlayerSide} from "@/components/game/GameChessboard";
 import GamePocket from "@/components/game/GamePocket";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import {DndProvider} from "react-dnd";
 import GameContext, {GameContextData, PlayerRole} from "@/context/GameContext";
@@ -23,16 +23,20 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return <div>Loading...</div>;
     }
 
+    const flexOrder =
+        !gameContextData.boards[1].primaryGame // first board is NOT where we are playing?
+            ? 'flex-row-reverse' // simply switch the boards' places
+            : 'flex-row'
+        // TODO above is broken for spectators only
 
-
-    return (
+        return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            <div className={"flex flex-row gap-20 justify-around"}>
+            <div className={`flex ${flexOrder} gap-20 justify-around`}>
             {gameContextData && (
                 <>
                     {Object.keys(gameContextData.boards).map((subgameId) => {
-                        if (gameContextData.boards[subgameId] && user) {
+                        if (user) {
                             let localPlayerIs: PlayerRole =
                                 gameContextData.boards[subgameId].localPlayerIs
                             let playerSide: PlayerSide;

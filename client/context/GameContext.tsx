@@ -51,6 +51,7 @@ export interface BoardData{
     whitePlayer: Player | null,
     blackPlayer: Player | null,
     localPlayerIs: PlayerRole,
+    primaryGame: boolean,
 }
 
 export interface GameContextData {
@@ -94,19 +95,21 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.log('updating with', data);
             for (const subgameId in data.boards) {
                 const board = data.boards[subgameId];
-                if (data.spectators) { // todo you know...
-                    let localPlayerIs: PlayerRole | null = null;
+                if (data.spectators) { // if spectators are fetched, then it's the initial data fetch
                     if (board.blackPlayer && board.blackPlayer.id === user?.user_id) {
-                        localPlayerIs = PlayerRole.blackPlayer;
+                        board.localPlayerIs = PlayerRole.blackPlayer;
+                        board.primaryGame = true;
                     } else if (board.whitePlayer && board.whitePlayer.id === user?.user_id) {
-                        localPlayerIs = PlayerRole.whitePlayer;
+                        board.localPlayerIs = PlayerRole.whitePlayer;
+                        board.primaryGame = true;
                     } else {
-                        localPlayerIs = PlayerRole.spectator;
+                        board.localPlayerIs = PlayerRole.spectator;
                     }
-                    board.localPlayerIs = localPlayerIs;
                 }
                 else {
+                    // todo i think such copying is stupid
                     board.localPlayerIs = contextData?.boards[subgameId].localPlayerIs;
+                    board.primaryGame = contextData?.boards[subgameId].primaryGame;
                 }
             }
 
