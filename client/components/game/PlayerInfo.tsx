@@ -20,8 +20,9 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove}
     return(
     <div className={'flex'}>
         <span
+            // todo really ugly
             className={`place-self-center 
-            ${ isPlayerTurn ? 'bg-green-500' : ''}
+            ${ isPlayerTurn ? 'bg-green-500' : ''}  
             `}>
             {player.username}
         </span>

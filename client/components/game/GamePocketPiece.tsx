@@ -55,9 +55,9 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
                     top: -5,
                     right: -5,
                     background: 'white',
-                    borderRadius: '50%',
+                    borderRadius: '70%',
                     padding: '2px 5px',
-                    fontSize: '12px',
+                    fontSize: '1rem',
                     fontWeight: 'bold',
                     border: '1px solid black',
                 }}
