@@ -6,6 +6,7 @@ import {DndProvider} from "react-dnd";
 import GameContext, {GameContextData, PlayerRole} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 import assert from "assert";
+import PlayerInfo from "@/components/game/PlayerInfo";
 
 interface GameProps {
     gameData: GameContextData
@@ -32,7 +33,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            <div className={`flex flex-col md:flex-row gap-20 justify-around`}>
+            <div className={`flex flex-col md:flex-row justify-around`}>
             {gameContextData && (
                 <>
                     {Object.keys(gameContextData.boards).map((subgameId) => {
@@ -52,16 +53,32 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 assert(false);
                             }
 
+                            let board = gameContextData.boards[subgameId];
+
                             return (
-                                <div className={"game"} key={subgameId}>
+                                <div className={"space-y-2"} key={subgameId}>
                                     <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
+                                    <PlayerInfo
+                                        player={playerSide === "BLACK"
+                                            ? board.whitePlayer
+                                            : board.blackPlayer }
+                                        playerColor = {playerSide === "BLACK" ? "WHITE" : "BLACK"}
+                                        sideToMove={board.sideToMove}
+                                    />
                                     <GameChessboard
                                         cbId={subgameId}
                                         playerSide={playerSide}
+                                    />
+                                    <PlayerInfo
+                                        player={playerSide === "BLACK"
+                                            ? board.blackPlayer
+                                            : board.whitePlayer }
+                                        playerColor = {playerSide === "BLACK" ? "BLACK" : "WHITE"}
+                                        sideToMove={board.sideToMove}
                                     />
                                     <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "BLACK" : "WHITE"}

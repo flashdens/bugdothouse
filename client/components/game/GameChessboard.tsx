@@ -113,7 +113,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
     return (
         <>
             {gameContextData && (
-                <div style={{width: '70dvh'}}>
+                <div style={{width: '65dvh'}}>
                     <Chessboard
                         position={fen}
                         onPieceDrop={onDrop}
@@ -132,11 +132,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                 </div>
             )}
 
-            <h2>Hello {user?.username}</h2>
-            <h2>{"Side to move: " + (sideToMove ? "WHITE" : "BLACK")}</h2>
-            <h2>{playerSide ? "You're playing as " + playerSide : "You're spectating the game"}</h2>
-            <h2 id={"feedback"}></h2>
-            <h2 id={"gameOver"}></h2>
+
     </>
 );
 }

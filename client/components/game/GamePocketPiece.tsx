@@ -39,7 +39,14 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
                     fontWeight: 'bold',
                     cursor: (side === pocketOf && count) ? 'move' : 'not-allowed',
                 }}>
-                {svg}
+                    <svg
+          viewBox={"1 1 43 43"}
+          width={`calc(65dvh / 8)`}
+          height={`calc(65dvh / 8)`}
+          style={{ display: "block" }}
+        >
+          <g>{svg}</g>
+        </svg>
             </div>
             <div
                 className={"piece-count"}
