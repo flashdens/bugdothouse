@@ -20,22 +20,15 @@ const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
     const {whitePocket, blackPocket} = gameContextData.boards[subgameId];
 
     return (
-        <div
-        style={{
-            width: '260px',
-            border: '1px solid black',
-            display: 'flex',
-            justifyContent: 'space-between',
-        }}
-    >
+        <div className={'border flex flex-row border-black w-1/2'}>
         {pocketOf === 'WHITE' ? (
-            <div>
+            <>
                 <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} side={playerSide} pocketOf={pocketOf} count={whitePocket["P"]} />
                 <TestPocketPiece svg={defaultPieces.wN} piece={"wN"} side={playerSide}  pocketOf={pocketOf} count={whitePocket["N"]}/>
                 <TestPocketPiece svg={defaultPieces.wB} piece={"wB"} side={playerSide}  pocketOf={pocketOf} count={whitePocket["B"]} />
                 <TestPocketPiece svg={defaultPieces.wR} piece={"wR"} side={playerSide}  pocketOf={pocketOf} count={whitePocket["R"]} />
                 <TestPocketPiece svg={defaultPieces.wQ} piece={"wQ"} side={playerSide}  pocketOf={pocketOf}  count={whitePocket["Q"]}/>
-            </div>
+            </>
         ) : (
             <div>
                 <TestPocketPiece svg={defaultPieces.bP} piece={"bP"} side={playerSide}  pocketOf={pocketOf} count={blackPocket["p"]} />
@@ -46,7 +39,6 @@ const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
             </div>
         )}
         </div>
-    );
-};
+    )};
 
 export default GamePocket;

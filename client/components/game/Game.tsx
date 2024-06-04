@@ -32,7 +32,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            <div className={`flex ${flexOrder} gap-20 justify-around`}>
+            <div className={`flex flex-col md:flex-row gap-20 justify-around`}>
             {gameContextData && (
                 <>
                     {Object.keys(gameContextData.boards).map((subgameId) => {
@@ -53,7 +53,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                             }
 
                             return (
-                                <div className={"chessboard"} key={subgameId}>
+                                <div className={"game"} key={subgameId}>
                                     <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
