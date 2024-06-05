@@ -18,7 +18,7 @@ interface MoveData {
     toSq: string,
     sideToMove?: boolean,
     piece: string,
-    promotion: 'n' | 'b' | 'r' | 'q' | ''
+    promotion: ('n' | 'b' | 'r' | 'q') | null
 }
 
 
@@ -95,8 +95,8 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
         if (!sourceSquare)
             return false;
 
-        return (piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
-            (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1") &&
+        return ((piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
+            (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1")) &&
             (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
     }
 
@@ -104,10 +104,15 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            piece: piece.slice(1).toLowerCase(), // server only needs lower case piece type
-            promotion: isPromotion(from, to, piece) ? "q" : ''
+            promotion: piece[1].toLowerCase()
         };
+        console.log(moveData);
+        console.log(isPromotion(from, to, piece));
         return makeMove(moveData);
+    }
+
+    const handlePromotion = () => {
+
     }
 
     return (

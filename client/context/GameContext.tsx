@@ -107,9 +107,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
                 else {
-                    // todo i think such copying is stupid
+                    // todo update doesn't keep these values?
                     board.localPlayerIs = contextData?.boards[subgameId].localPlayerIs;
                     board.primaryGame = contextData?.boards[subgameId].primaryGame;
+                    board.whitePlayer = contextData?.boards[subgameId].whitePlayer;
+                    board.blackPlayer = contextData?.boards[subgameId].blackPlayer;
                 }
             }
 

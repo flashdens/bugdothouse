@@ -56,7 +56,11 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                             let board = gameContextData.boards[subgameId];
 
                             return (
-                                <div className={"space-y-2"} key={subgameId}>
+                                /* todo - in the future i would like the second game to be expanded from the side.
+                                but it's a different story...
+                                */
+
+                                <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
                                     <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}

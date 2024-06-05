@@ -87,17 +87,30 @@ class GameConsumer(AsyncWebsocketConsumer):
                 (game.side_to_move == SideToMove.BLACK.value
                  and game.black_player.username == 'bugdothouse_ai'))
 
-    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, piece=None, promotion=None,
-                                 is_ai_move=False):
+    def is_promotion_move(self, board, from_sq, to_sq):
+        from_sq = chess.parse_square(from_sq)
+        to_sq = chess.parse_square(to_sq)
+        piece = board.piece_at(from_sq)
+
+        if piece.piece_type != chess.PAWN:
+            return False
+
+        if (piece.color == chess.WHITE and chess.square_rank(to_sq) == 7) or \
+                (piece.color == chess.BLACK and chess.square_rank(to_sq) == 0):
+            return True
+
+    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, promotion=None,is_ai_move=False):
         if is_ai_move:
             legal_moves = list(board.legal_moves)
             move = random.choice(legal_moves)
-
         else:
             if from_sq:  # move from board
-                move = chess.Move.from_uci(from_sq + to_sq + (promotion if promotion else ''))
+                move = chess.Move.from_uci(from_sq + to_sq + (promotion if self.is_promotion_move(board,
+                                                                                                  from_sq,
+                                                                                                  to_sq) else ''))
                 is_move_valid = move in board.legal_moves
             else:  # move from pocket
+                piece = board.piece_at(from_sq)
                 move = chess.Move.from_uci((piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
                 is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
@@ -122,7 +135,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             board.push(move)
 
             # remove the captured piece from current board's pocket
-            print(captured_piece.symbol())
             piece_to_pop = chess.Piece.from_symbol(
                 captured_piece.symbol().upper()
                 if captured_piece.symbol().islower()
@@ -137,17 +149,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return move
 
-    async def send_move_to_client(self, game):
+    async def send_move_to_clients(self, game):
         # since pockets can update inbetween turns, all boards need to be fetched
-        games = await sync_to_async(list)(Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
+        games = await sync_to_async(list)(
+            Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
         game_boards = {}
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for game in games:
             pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
             no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
-
-            print(type(game.subgame_id), game.subgame_id)
 
             # casting to str to dodge the strict_map_key=True error
             game_boards[str(game.subgame_id)] = {
@@ -170,6 +181,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'game.move', 'message': response_data})
 
+    async def send_error_to_client(self, error_data):
+        await self.send(text_data=json.dumps(error_data))
+
     async def process_move(self, game, board, move_maker=None, move_data=None, is_ai_move=False):
         if not board.is_checkmate() or self.is_game_draw(board):
             if not is_ai_move:
@@ -177,15 +191,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                                                      game,
                                                      move_data['from_sq'],
                                                      move_data['to_sq'],
-                                                     move_data['piece'],
                                                      move_data['promotion'])
             else:
                 move = await self.make_move_on_board(board,
                                                      game,
-                                                     is_ai_move=True
-                                                     )
+                                                     is_ai_move=True)
             if move is None:
-                return 'invalid move'
+                await self.send_error_to_client({'error': 'Invalid move!'})
+                return
 
             game.side_to_move = board.turn
             game.fen = board.fen()
@@ -204,7 +217,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             token = data.get('token')
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
-            piece = data.get('piece')
             code = data.get('code')
             promotion = data.get('promotion')
             subgame = data.get('subgame')
@@ -237,12 +249,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         move_data = {
             'from_sq': from_sq,
             'to_sq': to_sq,
-            'piece': piece,
             'promotion': promotion
         }
 
         await self.process_move(game, board, player, move_data)
-        await self.send_move_to_client(game)
+        await self.send_move_to_clients(game)
 
         while self.is_ai_turn_in_game(game):
             ai_player = await User.objects.aget(username='bugdothouse_ai')
@@ -250,7 +261,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                                     board,
                                     ai_player,
                                     is_ai_move=True)
-            await self.send_move_to_client(game)
+            await self.send_move_to_clients(game)
 
     class PlayerRoles(Enum):
         WHITE_PLAYER = 0
@@ -413,8 +424,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def game_move(self, event):
         move = event['message']
-        print(move)
         await self.send(json.dumps(move))
+
+    async def game_error(self, event):
+        error = event['message']
+        print('dupa')
+        await self.send('dupa')
 
     async def lobby_switch(self, event):
         await self.send(text_data=json.dumps({"type": "lobbySwitch",

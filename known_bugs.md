@@ -1,15 +1,12 @@
 **server**
-- token refresh returns 403 forbidden
 
 **client**
-- token refresh returns 403 forbidden
-- (possibly fixed) 'cannot have two html5 backends at the same time' after game start 
-- players get logged in as guests after server reset (should simply get logged out)
 - lobby: cleaner 404 handling
 - lobby: client app renders unusable after failed request
 - lobby:feature let player move back to specs by clicking on current role - now: move AI
 - game: after some time game ws stops working (caused by premoves)?
-- game: bad board orientation
+- game: board 2 gets replaced with board 1 after a capture 
+- game: updateGameContext doesn't keep old values
 
 **stockfish container**
 - no clue how to communicate
@@ -22,9 +19,10 @@
 - hot reload not working (not configured)
 
 **game**
-- promotions not working
-- ai starting 
+- can't make a move after promotion
+- handle game over!
 
 **solved:**
 - lobby: ws events not working, work only after refresh?
+- (possibly fixed) 'cannot have two html5 backends at the same time' after game start 
 
