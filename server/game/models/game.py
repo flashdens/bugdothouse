@@ -19,11 +19,11 @@ class GameMode(models.IntegerChoices):
 
 
 class GameResult(models.IntegerChoices):
-    WHITE_WIN = (0, 'White wins')
-    BLACK_WIN = (1, 'Black wins')
-    TEAM_1_WIN = (2, 'Team 1 wins')
-    TEAM_2_WIN = (3, 'Team 2 wins')
-    DRAW = (4, 'Draw')
+    WHITE_WIN = (1, 'White wins')
+    BLACK_WIN = (2, 'Black wins')
+    TEAM_1_WIN = (3, 'Team 1 wins')
+    TEAM_2_WIN = (4, 'Team 2 wins')
+    DRAW = (5, 'Draw')
 
 
 SUBGAME_ID_CHOICES = [

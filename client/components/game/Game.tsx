@@ -96,6 +96,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                 </>
             )}
             </div>
+            {gameContextData.result && 'THE GAME HAS ENDED' }
         </DndProvider>
     );
 };

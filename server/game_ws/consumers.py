@@ -167,7 +167,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
-                "gameOver": game.result,
+                "result": game.result,
             }
 
         # remember that status and result can also get changed!
@@ -206,6 +206,12 @@ class GameConsumer(AsyncWebsocketConsumer):
                                  player=move_maker,
                                  move=move)
             await move_instance.asave()
+
+            if board.is_checkmate() or self.is_game_draw(board):
+                print('dupa')
+                game.result = self.determine_game_outcome(board).value
+                game.status = GameStatus.FINISHED.value
+
         else:
             game.result = self.determine_game_outcome(board).value
             game.status = GameStatus.FINISHED.value

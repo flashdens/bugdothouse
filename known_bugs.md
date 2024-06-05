@@ -6,7 +6,7 @@
 - lobby:feature let player move back to specs by clicking on current role - now: move AI
 - game: after some time game ws stops working (caused by premoves)?
 - game: board 2 gets replaced with board 1 after a capture 
-- game: updateGameContext doesn't keep old values
+- game: updateGameContext doesn't keep old values, needing a workaround
 
 **stockfish container**
 - no clue how to communicate
@@ -19,7 +19,6 @@
 - hot reload not working (not configured)
 
 **game**
-- can't make a move after promotion
 - handle game over!
 
 **solved:**

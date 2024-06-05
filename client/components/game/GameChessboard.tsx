@@ -16,8 +16,6 @@ export type PlayerSide = 'WHITE' | 'BLACK' | 'SPECTATOR';
 interface MoveData {
     fromSq?: string,
     toSq: string,
-    sideToMove?: boolean,
-    piece: string,
     promotion: ('n' | 'b' | 'r' | 'q') | null
 }
 
@@ -104,15 +102,11 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
-            promotion: piece[1].toLowerCase()
+            promotion: piece[1].toLowerCase() as MoveData['promotion']
         };
         console.log(moveData);
         console.log(isPromotion(from, to, piece));
         return makeMove(moveData);
-    }
-
-    const handlePromotion = () => {
-
     }
 
     return (

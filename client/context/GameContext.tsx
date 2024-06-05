@@ -10,11 +10,11 @@ export enum PlayerRole {
 }
 
 export enum GameResult {
-    WHITE_WIN = 0,
-    BLACK_WIN = 1,
-    TEAM_1_WIN = 2,
-    TEAM_2_WIN = 3,
-    DRAW = 4
+    WHITE_WIN = 1,
+    BLACK_WIN = 2,
+    TEAM_1_WIN = 3,
+    TEAM_2_WIN = 4,
+    DRAW = 5
 }
 
 export const GameResultStrings: Record<GameResult, string> = {
