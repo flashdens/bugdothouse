@@ -155,12 +155,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         games = await sync_to_async(list)(
             Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
         game_boards = {}
-        print('dupa3')
+        result_found = None
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for game in games:
             pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
             no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+
+            # todo im not sure
+            if game.result:
+                result_found = game.result
+            elif result_found and not game.result:
+                game.result = result_found
 
             # casting to str to dodge the strict_map_key=True error
             game_boards[str(game.subgame_id)] = {
@@ -172,11 +178,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "result": game.result,
             }
 
+            if result_found:
+                game.asave()
+
         # remember that status and result can also get changed!
         response_data = {
             "type": "move",
             "status": game.status,
-            "result": game.result,
+            "result": result_found,
             "boards": game_boards,
         }
 

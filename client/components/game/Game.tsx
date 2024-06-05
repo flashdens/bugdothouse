@@ -21,21 +21,20 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     }, []);
 
     if (!gameContextData) {
-        return <div>Loading...</div>;
+        return(<div>Loading...</div>);
     }
 
-    const flexOrder =
-        !gameContextData.boards[1].primaryGame // first board is NOT where we are playing?
-            ? 'flex-row-reverse' // simply switch the boards' places
-            : 'flex-row'
+
+    const flexClasses = gameContextData.boards[1].primaryGame
+        ? "flex flex-col lg:flex-row justify-around"
+        : "flex flex-col-reverse lg:flex-row-reverse justify-around";
         // TODO above is broken for spectators only
 
         return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            <div className={`flex flex-col lg:flex-row justify-around`}>
             {gameContextData && (
-                <>
+            <div className={flexClasses}>
                     {Object.keys(gameContextData.boards).map((subgameId) => {
                         if (user) {
                             let localPlayerIs: PlayerRole =
@@ -61,6 +60,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 */
 
                                 <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
+                                    {subgameId}
                                     <GamePocket
                                         pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
@@ -93,9 +93,8 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                             );
                         }
                     })}
-                </>
-            )}
             </div>
+            )}
             {gameContextData.result && 'THE GAME HAS ENDED' }
         </DndProvider>
     );

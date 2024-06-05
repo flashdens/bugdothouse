@@ -18,16 +18,16 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove}
         || (playerColor == 'BLACK' && sideToMove == BLACK)
 
     return(
-    <div className={'flex'}>
-        <span
-            // todo really ugly
-            className={`place-self-center 
-            ${ isPlayerTurn ? 'bg-green-500' : ''}  
-            `}>
-            {player.username}
-        </span>
-        <span className={'place-self-end'}>5:00</span>
-    </div>
+        <>
+            <div className="flex justify-between items-center w-full">
+                <div className={`flex-1 text-center ${isPlayerTurn ? 'bg-green-500' : ''}`}>
+                    {player.username}
+                </div>
+                <div className="text-right whitespace-nowrap">
+                    5:00
+                </div>
+            </div>
+        </>
     )
 }
 

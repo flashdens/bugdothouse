@@ -1,11 +1,10 @@
-import React, {useCallback, useContext, useEffect, useRef} from 'react';
+import React, {useContext, useEffect} from 'react';
 import {Chessboard} from "react-chessboard";
-import SERVER_URL from "@/config";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
 import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
-import GameContext, {GameResult, GameResultStrings} from "@/context/GameContext";
+import GameContext, {GameResultStrings, GameStatus} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
 const WHITE: boolean = false;
@@ -104,8 +103,6 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
             toSq: to,
             promotion: piece[1].toLowerCase() as MoveData['promotion']
         };
-        console.log(moveData);
-        console.log(isPromotion(from, to, piece));
         return makeMove(moveData);
     }
 
@@ -122,9 +119,10 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                             ? playerSide.toLowerCase() as BoardOrientation
                             : 'black'}
                         isDraggablePiece={({ piece }) => {
-                            return (playerSide === "WHITE" && piece[0] === 'w')
+                            return (gameContextData?.status === GameStatus.ONGOING)
+                                && ((playerSide === "WHITE" && piece[0] === 'w')
                                 || (playerSide === "BLACK" && piece[0] === 'b')
-                                || (playerSide !== "SPECTATOR");
+                                || (playerSide !== "SPECTATOR"));
                         }}
                         onPromotionCheck={isPromotion}
                     />
