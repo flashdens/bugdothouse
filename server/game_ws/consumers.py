@@ -151,46 +151,63 @@ class GameConsumer(AsyncWebsocketConsumer):
         return move
 
     async def send_move_to_clients(self, game):
-        # since pockets can update inbetween turns, all boards need to be fetched
         games = await sync_to_async(list)(
-            Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
+            Game.objects.filter(code=game.code).order_by('subgame_id')
+        )  # todo VERY redundant query
+
         game_boards = {}
         result_found = None
+        status_update = None
 
-        # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for game in games:
-            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # cut out everyting but pockets
-            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # cut out the pockets
+            pockets = re.sub(r'^.*?\[(.*?)].*$', r'\1', game.fen)  # Extract pockets
+            no_pocket_fen = re.sub(r'\[.*?]', '', game.fen).replace('[]', '')  # Remove pockets from FEN
 
-            # todo im not sure
             if game.result:
                 result_found = game.result
             elif result_found and not game.result:
                 game.result = result_found
 
-            # casting to str to dodge the strict_map_key=True error
+            if game.status == 2:
+                status_update = 2
+            elif status_update and game.status != 2:
+                game.status = status_update
+
+            # cast to str to avoid strict_map_key=True error
             game_boards[str(game.subgame_id)] = {
-                "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
-                # count each piece in the pocket string, then return as a dict
+                "fen": no_pocket_fen.replace('~', ''),  # Tilde workaround
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
                 "result": game.result,
             }
 
-            if result_found:
-                game.asave()
+            if result_found or status_update:
+                await sync_to_async(game.save)()
 
-        # remember that status and result can also get changed!
+        # update other results
+        if result_found:
+            for game in games:
+                if not game.result:
+                    game.result = result_found
+                    await sync_to_async(game.save)()
+
+        if status_update:
+            for game in games:
+                if game.status == 1:
+                    game.result = 2
+                    await sync_to_async(game.save)()
+
         response_data = {
             "type": "move",
-            "status": game.status,
+            "status": status_update if status_update else game.status,
             "result": result_found,
             "boards": game_boards,
         }
 
         await self.channel_layer.group_send(
-            self.room_group_name, {'type': 'game.move', 'message': response_data})
+            self.room_group_name, {'type': 'game.move', 'message': response_data}
+        )
 
     async def send_error_to_client(self, error_data):
         await self.send(text_data=json.dumps(error_data))

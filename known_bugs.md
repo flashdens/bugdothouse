@@ -7,6 +7,7 @@
 - game: after some time game ws stops working (caused by premoves)?
 - game: board 2 gets replaced with board 1 after a capture 
 - game: updateGameContext doesn't keep old values, needing a workaround
+- WICHTIG -> REWORK SIDE DISPLAY!
 
 **stockfish container**
 - no clue how to communicate

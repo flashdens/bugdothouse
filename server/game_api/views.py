@@ -100,6 +100,7 @@ class GameInfoView(APIView):
     def get(self, request, game_code):
         games = list(Game.objects.filter(code=game_code))
         game_boards = {}
+        result_found = None
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for game in games:
@@ -110,7 +111,10 @@ class GameInfoView(APIView):
                 pockets = ""
                 no_pocket_fen = ""
 
-            game_boards[game.subgame_id] = {
+            if game.result and not result_found:
+                result_found = game.result
+
+            game_boards[str(game.subgame_id)] = {
                 "fen": no_pocket_fen.replace('~', ''),  # todo tilda workaround
                 # count each piece in the pocket string, then return as a dict
                 "whitePocket": dict(Counter([p for p in pockets if p.isupper()])),
@@ -131,7 +135,7 @@ class GameInfoView(APIView):
                 "gameCode": game.code,
                 "spectators": UserSerializer(game.spectators, many=True).data,
                 "host": UserSerializer(game.host).data,
-                "result": game.result,
+                "result": result_found,
                 "boards": game_boards,
             }
         )

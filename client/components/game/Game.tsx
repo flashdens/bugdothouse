@@ -24,6 +24,21 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return(<div>Loading...</div>);
     }
 
+    const determineTeamNumber = (subgameId: string, side: string) => {
+        const board = gameContextData.boards[subgameId];
+        if (subgameId === '1') {
+            if (side === 'WHITE') return '1';
+            else return '2';
+        }
+        else if (subgameId === '2') {
+            if (side === 'WHITE') return '2';
+            else return '1';
+        }
+        else {
+            assert(false);
+        }
+    }
+
 
     const flexClasses = gameContextData.boards[1].primaryGame
         ? "flex flex-col lg:flex-row justify-around"
@@ -62,7 +77,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
                                     {subgameId}
                                     <GamePocket
-                                        pocketOf={playerSide === "BLACK" ? "WHITE" : "BLACK"}
+                                        pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
@@ -72,6 +87,12 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                             : board.blackPlayer }
                                         playerColor = {playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         sideToMove={board.sideToMove}
+                                        teamNumber={determineTeamNumber(
+                                            subgameId,
+                                            playerSide == "BLACK"
+                                                ? "WHITE"
+                                                : "BLACK"
+                                        )}
                                     />
                                     <GameChessboard
                                         cbId={subgameId}
@@ -83,9 +104,15 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                             : board.whitePlayer }
                                         playerColor = {playerSide === "BLACK" ? "BLACK" : "WHITE"}
                                         sideToMove={board.sideToMove}
+                                        teamNumber={determineTeamNumber(
+                                            subgameId,
+                                            playerSide == "BLACK"
+                                                ? "BLACK"
+                                                : "WHITE"
+                                        )}
                                     />
                                     <GamePocket
-                                        pocketOf={playerSide === "BLACK" ? "BLACK" : "WHITE"}
+                                        pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "BLACK" : "WHITE"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
