@@ -26,7 +26,14 @@ const config: Config = {
       'bg-red-500', 'text-red-700', 'border-red-500',
       'bg-blue-500', 'text-blue-700', 'border-blue-500',
       'bg-green-500', 'text-green-700', 'border-green-500',
-      'flex-row', 'flex-row-reverse', 'flex-col', 'flex-col-reverse'
-    ],
+      'border-gray-500',
+      'flex-row', 'flex-row-reverse', 'flex-col', 'flex-col-reverse',
+     {
+         pattern: /bg-(red|green|gray)-(500)/,
+         variants: ['lg', 'hover', 'focus', 'lg:hover'],
+
+    }
+
+  ],
 }
 export default config

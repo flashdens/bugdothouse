@@ -13,19 +13,19 @@ interface GameProps {
 }
 
 const Game: React.FC<GameProps> = ({ gameData }) => {
-    const { gameContextData, updateGameContext } = useContext(GameContext);
+    const { game, updateGameContext } = useContext(GameContext);
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
         updateGameContext(gameData);
     }, []);
 
-    if (!gameContextData) {
+    if (!game) {
         return(<div>Loading...</div>);
     }
 
     const determineTeamNumber = (subgameId: string, side: string) => {
-        const board = gameContextData.boards[subgameId];
+        const board = game.boards[subgameId];
         if (subgameId === '1') {
             if (side === 'WHITE') return '1';
             else return '2';
@@ -40,7 +40,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     }
 
 
-    const flexClasses = gameContextData.boards[1].primaryGame
+    const flexClasses = game.boards[1].primaryGame
         ? "flex flex-col lg:flex-row justify-around"
         : "flex flex-col-reverse lg:flex-row-reverse justify-around";
         // TODO above is broken for spectators only
@@ -48,14 +48,14 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return (
         // context=window fixes two backends error?
         <DndProvider backend={HTML5Backend} context={window}>
-            {gameContextData && (
+            {game && (
             <div className={flexClasses}>
-                    {Object.keys(gameContextData.boards).map((subgameId) => {
+                    {Object.keys(game.boards).map((subgameId) => {
                         if (user) {
                             let localPlayerIs: PlayerRole =
-                                gameContextData.boards[subgameId].localPlayerIs
+                                game.boards[subgameId].localPlayerIs
                             let playerSide: PlayerSide;
-                            console.log(gameContextData);
+                            console.log(game);
                             if (localPlayerIs == PlayerRole.whitePlayer) {
                                 playerSide = 'WHITE';
                             } else if (localPlayerIs == PlayerRole.blackPlayer) {
@@ -67,7 +67,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 assert(false);
                             }
 
-                            let board = gameContextData.boards[subgameId];
+                            let board = game.boards[subgameId];
 
                             return (
                                 /* todo - in the future i would like the second game to be expanded from the side.
@@ -76,7 +76,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
 
                                 <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
                                     {subgameId}
-                                    { gameContextData.gameMode !== GameMode.CLASSICAL &&
+                                    { game.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
@@ -114,7 +114,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                         )}
                                     />
 
-                                    { gameContextData.gameMode !== GameMode.CLASSICAL &&
+                                    { game.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "BLACK" : "WHITE"}
                                         playerSide={playerSide}
@@ -127,7 +127,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                     })}
             </div>
             )}
-            {gameContextData.result && <h2 className={'text-center'}>THE GAME HAS ENDED</h2> }
+            {game.result && <h2 className={'text-center'}>THE GAME HAS ENDED</h2> }
         </DndProvider>
     );
 };

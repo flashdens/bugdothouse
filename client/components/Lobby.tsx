@@ -20,7 +20,7 @@ interface LobbyProps {
 }
 
 const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
-    const { gameContextData, updateGameContext, fetchGameData } = useContext(GameContext);
+    const { game, updateGameContext, fetchGameData } = useContext(GameContext);
     const { user, authTokens } = useContext(authContext);
     const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
@@ -46,16 +46,16 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     }, [socket]);
 
-    if (!gameContextData) {
+    if (!game) {
         return (<h3>Loading...</h3>);
     }
 
-    const { gameCode, spectators, host } = gameContextData;
+    const { gameCode, spectators, host } = game;
     const fromSide = user?.user_id;
 
     const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
-        for (const boardId in gameContextData.boards) {
-            const board = gameContextData.boards[boardId];
+        for (const boardId in game.boards) {
+            const board = game.boards[boardId];
             if (board.whitePlayer && board.whitePlayer.id == userId) {
                 return ({
                     board: Number(boardId),
@@ -71,8 +71,8 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         }
 
         // finally search spectators
-        if (gameContextData.spectators) {
-            for (const spectator of gameContextData.spectators) {
+        if (game.spectators) {
+            for (const spectator of game.spectators) {
                 if (spectator.id == userId) {
                     return ({
                     board: 1, // spectators are shared, so w/e
@@ -133,14 +133,13 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     return (
         <>
-            {gameContextData ? (
+            {game ? (
                 <>
                     <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
                     <div className="flex flex-row md:flex-row justify-center items-center gap-10">
 
-                        {Object.keys(gameContextData.boards).map((subgameId) => {
-                            // @ts-ignore
-                            const board = gameContextData.boards[subgameId]
+                        {Object.keys(game.boards).map((subgameId) => {
+                            const board = game.boards[subgameId]
                             return (
                                 <SubLobby
                                     key={subgameId}
@@ -159,7 +158,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                             ? <StartGameButton
                                 startGame={startGame}
                                 isDisabled={
-                                    !Object.values(gameContextData.boards).every(
+                                    !Object.values(game.boards).every(
                                         board =>
                                             board.whitePlayer !== null && board.blackPlayer !== null
                                     )

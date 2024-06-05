@@ -65,7 +65,7 @@ export interface GameContextData {
 }
 
 interface GameContextValue {
-    gameContextData: GameContextData | null,
+    game: GameContextData | null,
     loading: boolean,
     error: string | null,
     updateGameContext: (data: Partial<GameContextData>) => void,
@@ -74,7 +74,7 @@ interface GameContextValue {
 }
 
 const GameContext = createContext<GameContextValue>({
-    gameContextData: null,
+    game: null,
     loading: false,
     error: null,
     updateGameContext: (data: Partial<GameContextData>) => {},
@@ -156,7 +156,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <GameContext.Provider value={{  gameContextData: contextData,
+        <GameContext.Provider value={{  game: contextData,
                                         loading,
                                         error,
                                         updateGameContext,

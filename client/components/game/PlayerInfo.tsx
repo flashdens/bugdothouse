@@ -11,22 +11,22 @@ interface PlayerInfoProps {
 
 const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove, teamNumber}) => {
 
-    const {gameContextData} = useContext(GameContext);
+    const {game} = useContext(GameContext);
     const WHITE: boolean = true;
     const BLACK: boolean = false;
 
-    if (!gameContextData)
+    if (!game)
         return;
 
     const isPlayerTurn =
         ((playerColor === 'WHITE' && sideToMove == WHITE)
         || (playerColor == 'BLACK' && sideToMove == BLACK))
-        && (gameContextData?.status == GameStatus.ONGOING)
+        && (game?.status == GameStatus.ONGOING)
     return(
         <>
             <div className="flex justify-between items-center w-65dvh">
                 <div className={`flex-1 text-center ${isPlayerTurn ? 'bg-green-500' : ''}`}>
-                    {player.username} {gameContextData.gameMode === GameMode.BUGHOUSE ? ' - TEAM ' + teamNumber : ''}
+                    {player.username} {game.gameMode === GameMode.BUGHOUSE ? ' - TEAM ' + teamNumber : ''}
                 </div>
                 <div className="text-right whitespace-nowrap">
                     5:00

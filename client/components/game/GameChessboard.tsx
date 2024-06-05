@@ -37,12 +37,12 @@ interface TestChessboardProps {
 }
 
 const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
-    const {gameContextData, updateGameContext, updateBoardContext} = useContext(GameContext);
+    const {game, updateGameContext, updateBoardContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
-    if (!gameContextData)
+    if (!game)
         return(<div>waiting...</div>);
-    const {gameCode} = gameContextData;
-    const {fen,sideToMove, whitePlayer, blackPlayer} = gameContextData.boards[cbId]
+    const {gameCode} = game;
+    const {fen,sideToMove, whitePlayer, blackPlayer} = game.boards[cbId]
     let socket = getWebSocket(gameCode);
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -111,7 +111,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
 
     return (
         <>
-            {gameContextData && (
+            {game && (
                 <div style={{width: '65dvh'}}>
                     <Chessboard
                         position={fen}
@@ -122,7 +122,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                             ? playerSide.toLowerCase() as BoardOrientation
                             : 'black'}
                         isDraggablePiece={({ piece }) => {
-                            return (gameContextData?.status === GameStatus.ONGOING)
+                            return (game?.status === GameStatus.ONGOING)
                                 && ((playerSide === "WHITE" && piece[0] === 'w')
                                 || (playerSide === "BLACK" && piece[0] === 'b')
                                 || (playerSide !== "SPECTATOR"));

@@ -20,7 +20,7 @@ const AIMgmtButton:React.FC<AiMgmtButtonProps> = ( {setIsAIPlayerSet, sendWSAIEv
                     sendWSAIEv(switchTo, subgameId, msgType);
                 }}
             >
-                {msgType == 'aiAdd' ? 'Add AI' : 'Remove AI'}
+                {msgType == 'aiAdd' ? 'Add AI 🤖 ' : 'Remove AI 🤖 '}
             </button>
         </>
     );

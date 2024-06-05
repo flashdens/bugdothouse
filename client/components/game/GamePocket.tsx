@@ -14,10 +14,10 @@ interface TestPocketProps {
 
 const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}) => {
 
-    const {gameContextData} = useContext(GameContext);
-    if (!gameContextData) return;
+    const {game} = useContext(GameContext);
+    if (!game) return;
 
-    const {whitePocket, blackPocket} = gameContextData.boards[subgameId];
+    const {whitePocket, blackPocket} = game.boards[subgameId];
 
     return (
         <div className={'border flex flex-row border-black my-2 w-45dvh'}>
