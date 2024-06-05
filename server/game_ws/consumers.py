@@ -88,7 +88,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                      (game.side_to_move == SideToMove.BLACK.value
                       and game.black_player.username == 'bugdothouse_ai')))
 
-    def is_promotion_move(self, board, from_sq, to_sq):
+    def is_promotion_move(self, board, from_sq, to_sq, dropped_piece):
+
+        # under no circumstances should drops be promotions
+        if dropped_piece:
+            return False
         from_sq = chess.parse_square(from_sq)
         to_sq = chess.parse_square(to_sq)
         piece = board.piece_at(from_sq)
@@ -100,7 +104,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 (piece.color == chess.BLACK and chess.square_rank(to_sq) == 0):
             return True
 
-    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, promotion=None, is_ai_move=False):
+    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, dropped_piece=None, promotion=None, is_ai_move=False):
         if is_ai_move:
             legal_moves = list(board.legal_moves)
             move = random.choice(legal_moves)
@@ -108,11 +112,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             if from_sq:  # move from board
                 move = chess.Move.from_uci(from_sq + to_sq + (promotion if self.is_promotion_move(board,
                                                                                                   from_sq,
-                                                                                                  to_sq) else ''))
+                                                                                                  to_sq,
+                                                                                                  dropped_piece=None) else ''))
                 is_move_valid = move in board.legal_moves
             else:  # move from pocket
-                piece = board.piece_at(from_sq)
-                move = chess.Move.from_uci((piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
+                move = chess.Move.from_uci((dropped_piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
                 is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
             if not is_move_valid:
@@ -219,6 +223,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                                                      game,
                                                      move_data['from_sq'],
                                                      move_data['to_sq'],
+                                                     move_data['dropped_piece'],
                                                      move_data['promotion'])
             else:
                 move = await self.make_move_on_board(board,
@@ -250,6 +255,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             token = data.get('token')
             from_sq = data.get('fromSq')
             to_sq = data.get('toSq')
+            dropped_piece = data.get('droppedPiece')
             code = data.get('code')
             promotion = data.get('promotion')
             subgame = data.get('subgame')
@@ -282,6 +288,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         move_data = {
             'from_sq': from_sq,
             'to_sq': to_sq,
+            'dropped_piece': dropped_piece,
             'promotion': promotion
         }
 
