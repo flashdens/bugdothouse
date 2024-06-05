@@ -3,7 +3,7 @@ import GamePocket from "@/components/game/GamePocket";
 import React, {useContext, useEffect} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import {DndProvider} from "react-dnd";
-import GameContext, {GameContextData, PlayerRole} from "@/context/GameContext";
+import GameContext, {GameContextData, GameMode, PlayerRole} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 import assert from "assert";
 import PlayerInfo from "@/components/game/PlayerInfo";
@@ -76,11 +76,13 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
 
                                 <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
                                     {subgameId}
+                                    { gameContextData.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
+                                    }
                                     <PlayerInfo
                                         player={playerSide === "BLACK"
                                             ? board.whitePlayer
@@ -111,18 +113,21 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                                 : "WHITE"
                                         )}
                                     />
+
+                                    { gameContextData.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "BLACK" : "WHITE"}
                                         playerSide={playerSide}
                                         subgameId={subgameId}
                                     />
+                                    }
                                 </div>
                             );
                         }
                     })}
             </div>
             )}
-            {gameContextData.result && 'THE GAME HAS ENDED' }
+            {gameContextData.result && <h2 className={'text-center'}>THE GAME HAS ENDED</h2> }
         </DndProvider>
     );
 };

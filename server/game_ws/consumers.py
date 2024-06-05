@@ -89,7 +89,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                       and game.black_player.username == 'bugdothouse_ai')))
 
     def is_promotion_move(self, board, from_sq, to_sq, dropped_piece):
-
         # under no circumstances should drops be promotions
         if dropped_piece:
             return False
@@ -104,7 +103,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 (piece.color == chess.BLACK and chess.square_rank(to_sq) == 0):
             return True
 
-    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, dropped_piece=None, promotion=None, is_ai_move=False):
+    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, dropped_piece=None, promotion=None,
+                                 is_ai_move=False):
         if is_ai_move:
             legal_moves = list(board.legal_moves)
             move = random.choice(legal_moves)
