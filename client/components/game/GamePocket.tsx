@@ -20,7 +20,7 @@ const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
     const {whitePocket, blackPocket} = gameContextData.boards[subgameId];
 
     return (
-        <div className={'border flex flex-row border-black my-2'}>
+        <div className={'border flex flex-row border-black my-2 w-45dvh'}>
         {pocketOf === 'WHITE' ? (
             <>
                 <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} side={playerSide} pocketOf={pocketOf} count={whitePocket["P"]} />

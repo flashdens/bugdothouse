@@ -19,7 +19,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove}
 
     return(
         <>
-            <div className="flex justify-between items-center w-full">
+            <div className="flex justify-between items-center w-65dvh">
                 <div className={`flex-1 text-center ${isPlayerTurn ? 'bg-green-500' : ''}`}>
                     {player.username}
                 </div>
