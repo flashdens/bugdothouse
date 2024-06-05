@@ -81,11 +81,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await database_sync_to_async(get_object_or_404)(User, id=user_id)
 
     def is_ai_turn_in_game(self, game):
-        return ((game.side_to_move == SideToMove.WHITE.value
-                 and game.white_player.username == 'bugdothouse_ai')
-                or
-                (game.side_to_move == SideToMove.BLACK.value
-                 and game.black_player.username == 'bugdothouse_ai'))
+        return (game.status == GameStatus.ONGOING
+                and ((game.side_to_move == SideToMove.WHITE.value
+                      and game.white_player.username == 'bugdothouse_ai')
+                     or
+                     (game.side_to_move == SideToMove.BLACK.value
+                      and game.black_player.username == 'bugdothouse_ai')))
 
     def is_promotion_move(self, board, from_sq, to_sq):
         from_sq = chess.parse_square(from_sq)
@@ -99,7 +100,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 (piece.color == chess.BLACK and chess.square_rank(to_sq) == 0):
             return True
 
-    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, promotion=None,is_ai_move=False):
+    async def make_move_on_board(self, board, game, from_sq=None, to_sq=None, promotion=None, is_ai_move=False):
         if is_ai_move:
             legal_moves = list(board.legal_moves)
             move = random.choice(legal_moves)
@@ -122,7 +123,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             brother_game = await self.get_game_async(room_name=self.room_name,
                                                      subgame=2 if game.subgame_id == 1 else 1)
 
-            # add piece to brother game
+            # add captured piece to brother game
             captured_piece = board.piece_at(move.to_square)
             prev_pocket_match = re.search(r'\[(.*?)]', brother_game.fen)
             brother_game.fen = re.sub(r'\[(.*?)]',
@@ -154,6 +155,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         games = await sync_to_async(list)(
             Game.objects.filter(code=game.code).order_by('subgame_id'))  # todo VERY redundant query
         game_boards = {}
+        print('dupa3')
 
         # example crazyhouse fen: 'rnbqkbnr/pppp2pp/8/5p2/8/P7/1PPP1PPP/RNBQKBNR[Pp] w KQkq - 0 4'
         for game in games:
@@ -259,6 +261,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         }
 
         await self.process_move(game, board, player, move_data)
+        print('dupa2')
         await self.send_move_to_clients(game)
 
         while self.is_ai_turn_in_game(game):
@@ -359,7 +362,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         user = await self.get_user_async(user_id)
         game = await self.get_game_async(self.room_name, subgame)
         host = await database_sync_to_async(getattr)(game, 'host')
-        # host = await self.get_user_async(host.pk)
 
         if user.pk != host.pk:
             return False, {'type': 'error', 'error': 'Only hosts can manage AI players!'}

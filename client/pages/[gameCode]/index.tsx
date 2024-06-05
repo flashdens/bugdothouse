@@ -85,7 +85,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
                     ) : game.status === GameStatus.ONGOING ? (
                         <Game gameData={game}/>
                     ) : (
-                        <div>this will be a match history</div>
+                        <Game gameData={game}/>
                     )}
                 </GameProvider>
             ) : (
