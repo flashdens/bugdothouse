@@ -116,7 +116,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
             if not is_move_valid:
-                return None  # todo better returns
+                return None
 
         # it's a bughouse capture, we need to make some shenanigans
         if board.is_capture(move) and game.gamemode == GameMode.BUGHOUSE.value:
@@ -128,7 +128,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             prev_pocket_match = re.search(r'\[(.*?)]', brother_game.fen)
             brother_game.fen = re.sub(r'\[(.*?)]',
                                       '[' + prev_pocket_match.group(1) + captured_piece.symbol() + ']',
-                                      game.fen)
+                                      brother_game.fen)
 
             await brother_game.asave()
 
@@ -219,7 +219,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             await move_instance.asave()
 
             if board.is_checkmate() or self.is_game_draw(board):
-                print('dupa')
                 game.result = self.determine_game_outcome(board).value
                 game.status = GameStatus.FINISHED.value
 
@@ -270,7 +269,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         }
 
         await self.process_move(game, board, player, move_data)
-        print('dupa2')
         await self.send_move_to_clients(game)
 
         while self.is_ai_turn_in_game(game):
@@ -442,11 +440,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_move(self, event):
         move = event['message']
         await self.send(json.dumps(move))
-
-    async def game_error(self, event):
-        error = event['message']
-        print('dupa')
-        await self.send('dupa')
 
     async def lobby_switch(self, event):
         await self.send(text_data=json.dumps({"type": "lobbySwitch",
