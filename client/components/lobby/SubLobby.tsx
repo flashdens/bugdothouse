@@ -1,7 +1,7 @@
 import PlayerHeaderButton from "@/components/lobby/PlayerHeaderButton";
 import Image from "next/image";
 import chessboard from "@/public/chessboard.png";
-import chessboard_reversed from "@/public/chessboard_reversed.png"
+import chessboard_reversed from "@/public/chessboardReversed.png"
 import React from "react";
 import {Player, PlayerRole} from "@/context/GameContext";
 

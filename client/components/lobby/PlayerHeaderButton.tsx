@@ -23,7 +23,7 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
             <h3>{playerColor} player:</h3>
             {player ? (
                 <>
-                    <h1>{player.username}</h1>
+                    <h1>{player.username} {player.id == game?.host.id && '(host)'}</h1>
                     {player.username == 'bugdothouse_ai' &&
                     <AIMgmtButton
                         setIsAIPlayerSet={setIsAIPlayerSet}

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import GameContext, {GameContextData, Player, PlayerRole} from "@/context/GameContext";
+import GameContext, {GameContextData, GameMode, Player, PlayerRole} from "@/context/GameContext";
 import chessboard from '@/public/chessboard.png';
 import Image from 'next/image';
 import getWebSocket from "@/services/socket";
@@ -9,10 +9,12 @@ import SpectatorList from "@/components/lobby/SpectatorList";
 import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 import StartGameButton from "@/components/lobby/StartGameButton";
 import SERVER_URL from "@/config";
-import { router } from "next/client";
+import { useRouter } from "next/router";
 import SubLobby from "@/components/lobby/SubLobby";
 import {bold} from "next/dist/lib/picocolors";
 import assert from "assert";
+
+import copyIcon from '@/public/copyIcon.svg'
 
 interface LobbyProps {
     gameData: GameContextData;
@@ -22,6 +24,8 @@ interface LobbyProps {
 const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const { game, updateGameContext, fetchGameData } = useContext(GameContext);
     const { user, authTokens } = useContext(authContext);
+    const router = useRouter();
+
     const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
     useEffect(() => {
@@ -46,12 +50,15 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     }, [socket]);
 
-    if (!game) {
-        return (<h3>Loading...</h3>);
-    }
+    if (!game || !user) return(<h3>Loading...</h3>);
 
     const { gameCode, spectators, host } = game;
+    const gameLink = SERVER_URL + ':3001/' + game.gameCode;
     const fromSide = user?.user_id;
+
+    const copyLinkToClipboard = () => {
+        void navigator.clipboard.writeText(gameLink);
+    }
 
     const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
         for (const boardId in game.boards) {
@@ -135,37 +142,50 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         <>
             {game ? (
                 <>
-                    <h1>This is a lobby page. Lobby ID: {gameCode}</h1>
-                    <div className="flex flex-row md:flex-row justify-center items-center gap-10">
+                    <div className="flex flex-col justify-center items-center gap-2 border w-fit mx-auto my-5 p-10">
+                        <button
+                            className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
+                            // onClick={void router.push('/')}
+                        >
+                           ⬅️ Back to home
+                        </button>
 
-                        {Object.keys(game.boards).map((subgameId) => {
-                            const board = game.boards[subgameId]
-                            return (
-                                <SubLobby
-                                    key={subgameId}
-                                    whitePlayer={board.whitePlayer}
-                                    blackPlayer={board.blackPlayer}
-                                    sendWSLobbyEvent={sendWSLobbyEvent}
-                                    sendWSAIEvent={sendWSAIAddEvent}
-                                    subgameId={Number(subgameId)}
+                        <h1 className={'text-4xl'}>Game lobby</h1>
+                        <span>{GameMode[game.gameMode]}</span>
+                        <div className={'inline-block cursor-pointer hover:bg-gray-100'}
+                                        onClick={copyLinkToClipboard}>
+                            <h3 className={'mx-2 inline-block'}>{gameLink}</h3>
+                            <Image className={'w-auto h-5 align-middle inline-block'} src={copyIcon} alt={'Copy to clipboard'}/>
+                        </div>
+                        <div className={'flex flex-col lg:flex-row gap-5'}>
+                            {Object.keys(game.boards).map((subgameId) => {
+                                const board = game.boards[subgameId]
+                                return (
+                                    <SubLobby
+                                        key={subgameId}
+                                        whitePlayer={board.whitePlayer}
+                                        blackPlayer={board.blackPlayer}
+                                        sendWSLobbyEvent={sendWSLobbyEvent}
+                                        sendWSAIEvent={sendWSAIAddEvent}
+                                        subgameId={Number(subgameId)}
+                                    />
+                                );
+                            })}
+                        </div>
+                            <SpectatorList spectators={spectators} hostId={game.host.id} />
+                            <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent} />
+                            {host.id === user?.user_id
+                                ? <StartGameButton
+                                    startGame={startGame}
+                                    isDisabled={
+                                        !Object.values(game.boards).every(
+                                            board =>
+                                                board.whitePlayer !== null && board.blackPlayer !== null
+                                        )
+                                    }
                                 />
-                            );
-                        })
-}
-                        <SpectatorList spectators={spectators} />
-                        <MoveToSpectatorsButton wsSendCallback={sendWSLobbyEvent} />
-                        {host.id === user?.user_id
-                            ? <StartGameButton
-                                startGame={startGame}
-                                isDisabled={
-                                    !Object.values(game.boards).every(
-                                        board =>
-                                            board.whitePlayer !== null && board.blackPlayer !== null
-                                    )
-                                }
-                            />
-                            : <p>Waiting for start...</p>
-                        }
+                                : <p>Waiting for start...</p>
+                            }
                     </div>
                 </>
             ) : (
