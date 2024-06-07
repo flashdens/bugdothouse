@@ -56,8 +56,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 })
             });
 
-
-
             data = await response.json();
             if (!response.ok) {
                 if (data) toast(data.error)
@@ -78,6 +76,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         if (e) e.preventDefault();
 
+        console.log('logging out...');
         localStorage.removeItem('authTokens');
         setAuthTokens(null);
         setUser(null);

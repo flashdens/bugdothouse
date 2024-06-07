@@ -1,5 +1,5 @@
 import {useRouter} from 'next/router'
-import Lobby from "@/components/Lobby";
+import Lobby from "@/components/lobby/Lobby";
 import React, {useContext, useEffect, useState} from "react";
 import SERVER_URL from "@/config";
 import {GameContextData, GameProvider, GameStatus} from "@/context/GameContext";
