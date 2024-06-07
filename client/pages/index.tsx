@@ -1,20 +1,21 @@
 import {AuthProvider} from "@/context/AuthContext";
-import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import PrivateRoute from "@/services/PrivateRoute";
 import HomePage from "@/components/auth/HomePage";
 import React from "react";
+import logo from "@/public/logo.svg"
+import Image from "next/image";
+import Hero from "@/components/Hero";
 
 const Index = () => {
     return (
         <>
-            <div className="App">
-                <AuthProvider>
-                    <nav className={"bg-pink-200"}>
-                        {/*<Header/>*/}
-                    </nav>
-                        <HomePage/>
-                </AuthProvider>
-            </div>
+            <AuthProvider>
+                    <Navbar/>
+                    <Hero/>
+                    <Image src={logo} alt={logo}></Image>
+                    <HomePage/>
+            </AuthProvider>
         </>
     )
 }

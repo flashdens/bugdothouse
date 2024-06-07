@@ -60,6 +60,10 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         void navigator.clipboard.writeText(gameLink);
     }
 
+    const backToLobby = () => {
+        router.push('/');
+    }
+
     const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
         for (const boardId in game.boards) {
             const board = game.boards[boardId];
@@ -145,14 +149,14 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                     <div className="flex flex-col justify-center items-center gap-2 border w-fit mx-auto my-5 p-10">
                         <button
                             className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
-                            // onClick={void router.push('/')}
+                            onClick={backToLobby}
                         >
-                           ⬅️ Back to home
+                           ⬅️ Back to homepage
                         </button>
 
                         <h1 className={'text-4xl'}>Game lobby</h1>
                         <span>{GameMode[game.gameMode]}</span>
-                        <div className={'inline-block cursor-pointer hover:bg-gray-100'}
+                        <div className={'inline-block cursor-pointer hover:bg-gray-100 my-2'}
                                         onClick={copyLinkToClipboard}>
                             <h3 className={'mx-2 inline-block'}>{gameLink}</h3>
                             <Image className={'w-auto h-5 align-middle inline-block'} src={copyIcon} alt={'Copy to clipboard'}/>

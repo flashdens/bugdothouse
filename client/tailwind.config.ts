@@ -12,6 +12,9 @@ const config: Config = {
         'gradient-conic':
           'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
+        maxWidth: {
+         50: '50%'
+        },
       width: {
           '45dvh': '45dvh',
           '65dvh': '65dvh'

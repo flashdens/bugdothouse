@@ -1,7 +1,7 @@
 import React, {useContext, useState} from 'react';
 import PrivateRoute from '@/services/PrivateRoute';
 import HomePage from '@/components/auth/HomePage';
-import Header from '@/components/Header';
+import Navbar from '@/components/Navbar';
 import AuthContext, {AuthProvider} from "@/context/AuthContext";
 
 
@@ -9,7 +9,7 @@ const App: React.FC = () => {
     return (
         <div className="App">
             <nav className={"bg-pink-200"}>
-                <Header/>
+                <Navbar/>
             </nav>
             <PrivateRoute>
                 <HomePage />
