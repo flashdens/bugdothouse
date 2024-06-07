@@ -59,8 +59,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             respData = await response.json() /*as { access: AuthTokens, error?: string };*/
             console.log(data);
             if (!response.ok) {
-                if (data) toast(respData.detail)
-                    return;
+                toast(respData.detail)
+                return;
             }
         }
         if (respData) {
