@@ -1,4 +1,3 @@
-# models.py
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Q
@@ -11,10 +10,12 @@ class UserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
-        if self.model.objects.filter(email=email).exists():
+        if User.objects.filter(email=email).exists():
             raise ValueError('A user with this email already exists')
+        elif User.objects.filter(username=username).exists():
+            raise ValueError('A user with this username already exists')
         email = self.normalize_email(email)
-        user = self.model(email=email, username=username, **extra_fields)
+        user = User(email=email, username=username, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user

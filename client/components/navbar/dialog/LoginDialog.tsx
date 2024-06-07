@@ -1,8 +1,7 @@
-
-// LoginPage.js
 import React, { useContext, useState } from 'react';
 import AuthContext from "@/context/AuthContext";
 import Dialog from "@/components/Dialog";
+import {toast} from "react-toastify";
 
 interface LoginPageProps {
     isOpen: boolean,
@@ -17,7 +16,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isOpen, onClose }) => {
         return <div>Loading...</div>;
     }
 
-    const { loginUser } = authContext;
+    const {loginUser} = authContext;
 
     const handleChange = (e: any) => {
         const { name, value } = e.target;
@@ -26,7 +25,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ isOpen, onClose }) => {
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
-        void loginUser(e);
+        loginUser(e)
     };
 
     return (

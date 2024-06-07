@@ -6,11 +6,9 @@ import LoginDialog from "@/components/navbar/dialog/LoginDialog";
 import RegisterDialog from "@/components/navbar/dialog/RegisterDialog";
 
 const NavbarUserSection = () => {
-
     const {user, logoutUser} = useContext(authContext);
     const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
     const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
-    console.log(user);
 
     if (!authContext)
         return (<h3>waiting...</h3>)
@@ -19,7 +17,7 @@ const NavbarUserSection = () => {
             <>
                 <h3>hello {user?.username} </h3>
                 <button onClick={logoutUser} className={"hover:cursor-pointer"}>
-                <Image className={"mx-2"} height={24} width={24} src={logout} alt={"logout"}></Image>
+                    <Image className={"mx-2"} height={24} width={24} src={logout} alt={"logout"}></Image>
                 </button>
             </>
             )

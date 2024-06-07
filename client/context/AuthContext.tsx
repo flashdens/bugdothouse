@@ -4,10 +4,6 @@ import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 import {toast, ToastContainer} from "react-toastify";
 
-interface JwtUser extends JwtPayload {
-    user_id: number
-    username: string
-}
 
 interface AuthTokens {
     access: string;
@@ -15,10 +11,11 @@ interface AuthTokens {
 }
 
 interface AuthContext {
-    user: JwtUser | null;
+    user: JwtPayload & {user_id: number, username: string} | null,
     authTokens: AuthTokens;
     loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens| {error: string} ) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+    registerUser: any
 }
 
 const AuthContext = createContext<AuthContext>(null);
@@ -44,6 +41,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: AuthTokens | object) => {
         if (e) e.preventDefault();
+
+        let respData = null;
+
         if (!data && e) {
             const response = await fetch(`${SERVER_URL}/auth/token/`, {
                 method: 'POST',
@@ -56,18 +56,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 })
             });
 
-            data = await response.json();
+            respData = await response.json() /*as { access: AuthTokens, error?: string };*/
+            console.log(data);
             if (!response.ok) {
-                if (data) toast(data.error)
+                if (data) toast(respData.detail)
                     return;
             }
         }
-        if (data) {
-            localStorage.setItem('authTokens', JSON.stringify(data));
+        if (respData) {
+            localStorage.setItem('authTokens', JSON.stringify(respData));
             setAuthTokens(data);
-            setUser(jwtDecode(data.access));
-            void router.push('/');
-
+            setUser(jwtDecode(respData.access));
         } else {
             alert('Something went wrong while logging in the user!');
         }
@@ -76,11 +75,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         if (e) e.preventDefault();
 
-        console.log('logging out...');
         localStorage.removeItem('authTokens');
         setAuthTokens(null);
         setUser(null);
-        void router.push('/login');
+        void router.push('/');
+    };
+
+    const registerUser = async (e: any) => {
+        try {
+            e.preventDefault();
+
+            const { username, email, password, repeatPassword, consent } = e.currentTarget;
+
+            if (!consent.checked) {
+                return { success: false, message: 'You must agree to the website rules.' };
+            }
+
+            if (password.value !== repeatPassword.value) {
+                return { success: false, message: 'Passwords do not match.' };
+            }
+
+            const response = await fetch(`${SERVER_URL}/auth/register/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username.value,
+                    email: email.value,
+                    password: password.value,
+                    consent: consent.value
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                return { success: false, message:
+                    data.username[0] || data.email[0]};
+            }
+
+            return { success: true, data };
+
+        } catch (error: any) {
+            return { success: false, message: error.message };
+        }
     };
 
     const updateToken = async () => {
@@ -119,10 +157,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [authTokens]);
 
     const contextData: AuthContext = {
-        user: user as JwtPayload,
+        user: user as JwtPayload & {user_id: number, username: string},
         authTokens: authTokens,
         loginUser: loginUser,
         logoutUser: logoutUser,
+        registerUser: registerUser
     };
 
     return (
