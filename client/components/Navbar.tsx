@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from "next/image";
-import pieces from "@/public/pieces/pieces";
+import logo from '@/public/logo.svg'
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -10,12 +10,12 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="bg-gray-200 border">
+        <nav className="bg-gray-200 border z-49">
             <div className="mx-auto text-xl px-4">
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center justify-center flex-1">
                         <div className="text-center">
-                            {pieces.wP}
+                            <Image src={logo} alt={'logo'}/>
                         </div>
                     </div>
                     <div className="flex items-center justify-end">
