@@ -12,7 +12,6 @@ const Index = () => {
     return (
         <>
             <AuthProvider>
-                <Navbar/>
                 <Hero/>
             </AuthProvider>
         </>

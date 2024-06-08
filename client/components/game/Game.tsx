@@ -24,15 +24,12 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         return(<div>Loading...</div>);
     }
 
-    const determineTeamNumber = (subgameId: string, side: string) => {
-        const board = game.boards[subgameId];
-        if (subgameId === '1') {
-            if (side === 'WHITE') return '1';
-            else return '2';
+    const determineTeamNumber = (side: string) => {
+        if (side === 'WHITE') {
+            return '1';
         }
-        else if (subgameId === '2') {
-            if (side === 'WHITE') return '2';
-            else return '1';
+        else if (side === 'BLACK'){
+            return '2';
         }
         else {
             assert(false);
@@ -103,7 +100,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                     <PlayerInfo
                                         player={playerSide === "BLACK"
                                             ? board.blackPlayer
-                                            : board.whitePlayer }
+                                            : board.whitePlayer}
                                         playerColor = {playerSide === "BLACK" ? "BLACK" : "WHITE"}
                                         sideToMove={board.sideToMove}
                                         teamNumber={determineTeamNumber(
