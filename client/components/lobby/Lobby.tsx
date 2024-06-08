@@ -100,6 +100,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     const sendWSLobbyEvent = (toSide: string, toSubgame: number = 1) => {
         if (socket && user) {
             const { board, playerRole } = findPlayerBoardNRole(user.user_id)
+            console.log(board, playerRole);
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
                 fromSubgame: board,
@@ -146,7 +147,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         <>
             {game ? (
                 <>
-                    <div className="flex flex-col justify-center items-center gap-2 border w-fit mx-auto my-5 p-10">
+                    <div className="flex flex-col justify-center items-center gap-2 border w-fit mx-auto p-5 mt-20">
                         <button
                             className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
                             onClick={backToLobby}

@@ -116,7 +116,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                                                                                                   dropped_piece=None) else ''))
                 is_move_valid = move in board.legal_moves
             else:  # move from pocket
-                move = chess.Move.from_uci((dropped_piece.upper() if board.turn else piece.lower()) + '@' + to_sq)
+                move = chess.Move.from_uci(
+                    (dropped_piece.upper() if board.turn else dropped_piece.lower()) + '@' + to_sq)
                 is_move_valid = chess.parse_square(to_sq) in board.legal_drop_squares() and move in board.legal_moves
 
             if not is_move_valid:
@@ -347,13 +348,11 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
         if src_game.pk == dest_game.pk:
             dest_game = src_game
-
         await self.remove_user_from_game(user, src_game, from_side)
         await self.add_user_to_game(user, dest_game, to_side)
 
-        await sync_to_async(src_game.save)()
-        if src_game.pk != dest_game.pk:
-            await sync_to_async(dest_game.save)()
+        await dest_game.asave()
+        await src_game.asave()
 
     async def handle_user_switch(self, data):
         from_subgame = data['fromSubgame']
@@ -362,8 +361,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         to_side = data['toSide']
         token = data['token']
 
-        src_game = await self.get_game_async(self.room_name, from_subgame)
-        dest_game = await self.get_game_async(self.room_name, to_subgame)
+        src_game = await (Game.objects.select_related('white_player', 'black_player').
+                          aget(code=self.room_name, subgame_id=from_subgame))
+
+        dest_game = await (Game.objects.select_related('white_player', 'black_player').
+                           aget(code=self.room_name, subgame_id=to_subgame))
 
         if src_game.status != GameStatus.WAITING_FOR_START.value:
             return False, {'type': 'error', 'error': 'Game has already started'}

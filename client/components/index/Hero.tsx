@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import NewGameDialog from "@/components/index/dialog/NewGameDialog";
 import HowToPlayDialog from "@/components/index/dialog/HowToPlayDialog";
 import logo from "@/public/logo.svg";
@@ -12,8 +12,17 @@ const HeroSection = () => {
     const [isHowToPlayDialogOpen, setIsHowToPlayDialogOpen] = useState(false);
     const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
     const [isRoomListDialogOpen, setIsRoomListDialogOpen] = useState(false);
+    const [isRendered, setIsRendered] = useState(false);
     const {user} = useContext(authContext);
     const router = useRouter();
+
+    useEffect(() => {
+        setIsRendered(true);
+    }, []);
+
+    if (!isRendered) {
+        return null;
+    }
 
     return (
         <div className="flex justify-center items-center">
