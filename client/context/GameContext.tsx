@@ -92,6 +92,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const updateGameContext = (data: Partial<GameContextData>) => {
         if (!data) return;
+
         console.log('updating with', data);
             for (const subgameId in data.boards) {
                 const board = data.boards[subgameId];
@@ -147,6 +148,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 new Error("Failed to fetch game info");
             }
             const data: GameContextData = await response.json();
+            console.log('received', data);
             updateGameContext(data);
         } catch (error: any) {
             setError(error.message);

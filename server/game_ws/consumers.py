@@ -47,6 +47,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.channel_layer.group_discard(
             self.room_group_name, self.channel_name
         )
+        self.channel_layer.group_send(
+            self.room_group_name, {'type': 'lobby.connect'})
 
     def determine_game_outcome(self, board):
         if board.turn == chess.BLACK:  # black was mated
@@ -329,6 +331,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             game.black_player = None
 
         elif user in game.spectators.all() and from_side == self.PlayerRoles.SPECTATOR.value:
+            print('removing user from spectators...')
             game.spectators.remove(user)
 
         game.save()
@@ -345,13 +348,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         elif to_side == self.PlayerRoles.SPECTATOR.value:
             await sync_to_async(game.spectators.add)(user)
 
+        await game.asave()
+
     async def switch_user_positions(self, user, src_game, dest_game, from_side, to_side):
         if src_game.pk == dest_game.pk:
             dest_game = src_game
         await self.remove_user_from_game(user, src_game, from_side)
         await self.add_user_to_game(user, dest_game, to_side)
 
-        await dest_game.asave()
+        await dest_game.asave()  # saving this first dodges a lot of lobby bugs apparently
         await src_game.asave()
 
     async def handle_user_switch(self, data):
@@ -419,6 +424,22 @@ class GameConsumer(AsyncWebsocketConsumer):
                                     ai_player,
                                     is_ai_move=True)
 
+    async def handle_user_disconnect(self, data):
+        subgame_id = data.get('subgameId')
+        player_role = data.get('playerRole')
+        token = data.get('token')
+
+        decoded_token = await self.parse_jwt_token_async(token)
+        user_id = decoded_token['user_id']
+
+        user = await self.get_user_async(user_id)
+
+        game = await self.get_game_async(self.room_name, subgame_id)
+        await self.remove_user_from_game(user, game, player_role)
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'lobby.connect'})
+
     async def handle_game_start(self):
         started_games = await sync_to_async(list)(Game.objects
                                                   .select_related('white_player', 'black_player')
@@ -453,6 +474,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             elif event_type == 'connect':
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'lobby.connect'})
+            elif event_type == 'disconnect':
+                print('received dc event')
+                await self.handle_user_disconnect(data)
             elif event_type == 'gameStart':
                 await self.handle_game_start()
                 await self.channel_layer.group_send(

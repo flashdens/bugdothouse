@@ -22,8 +22,6 @@ const SubLobby: React.FC<SubLobbyProps> = ({whitePlayer,blackPlayer, sendWSLobby
     const topPlayer = isOdd(Number(subgameId)) ? blackPlayer : whitePlayer
     const bottomPlayer = (blackPlayer === topPlayer) ? whitePlayer : blackPlayer
 
-    console.log(subgameId, topPlayer);
-
     return(
         <div>
             <h2>Game {subgameId}:</h2>

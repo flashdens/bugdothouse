@@ -28,43 +28,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
-    useEffect(() => {
-        updateGameContext(gameData);
-
-        if (socket) {
-            socket.onopen = () => {
-                socket.send(JSON.stringify({ type: 'connect' }));
-            }
-
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log(data);
-                if (data.type === 'lobbySwitch' || data.type === 'connect') {
-                    fetchGameData(gameData.gameCode);
-                } else if (data.type == 'gameStart') {
-                    fetchGameData(gameData.gameCode);
-                    rerenderParent();
-                }
-            }
-        }
-
-    }, [socket]);
-
-    if (!game || !user) return(<h3>Loading...</h3>);
-
-    const { gameCode, spectators, host } = game;
-    const gameLink = SERVER_URL + ':3001/' + game.gameCode;
-    const fromSide = user?.user_id;
-
-    const copyLinkToClipboard = () => {
-        void navigator.clipboard.writeText(gameLink);
-    }
-
-    const backToLobby = () => {
-        router.push('/');
-    }
-
-    const findPlayerBoardNRole = (userId: number): {board: number, playerRole: PlayerRole} => {
+    const findPlayerBoardNRole = (userId: number, game: any): undefined | {board: number, playerRole: PlayerRole} => {
         for (const boardId in game.boards) {
             const board = game.boards[boardId];
             if (board.whitePlayer && board.whitePlayer.id == userId) {
@@ -97,9 +61,80 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         assert(false);
     }
 
+    useEffect(() => {
+        updateGameContext(gameData);
+    }, []);
+
+    useEffect(() => {
+        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+            if (!socket || !user) return;
+            const boardRoleData = findPlayerBoardNRole(user?.user_id, game);
+            if (!boardRoleData) {
+                console.log('really bad');
+                return;
+            }
+            const {board, playerRole} = boardRoleData;
+            socket.send(JSON.stringify({
+                type: 'disconnect',
+                subgameId: board,
+                playerRole: playerRole,
+                token: authTokens.access
+            }));
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        if (socket) {
+            socket.onopen = () => {
+                socket.send(JSON.stringify({ type: 'connect' }));
+            }
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log(data);
+                if (data.type === 'lobbySwitch' || data.type === 'connect') {
+                    fetchGameData(gameData.gameCode);
+                    console.log('dupa')
+                } else if (data.type == 'gameStart') {
+                    fetchGameData(gameData.gameCode);
+                    rerenderParent();
+                }
+            }
+        }
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+
+    }, [socket, game?.spectators]);
+
+
+    if (!game || !user) return(<h3>Loading...</h3>);
+    const { gameCode, spectators, host } = game;
+
+    const gameLink = SERVER_URL + ':3001/' + game.gameCode;
+
+
+      const copyLinkToClipboard = (event: any) => {
+        void navigator.clipboard.writeText(gameLink);
+
+        const element = event.currentTarget;
+        if (!element) return;
+
+        element.classList.add('bg-green-500', 'transition-colors', 'duration-500', 'ease-in-out');
+
+        setTimeout(() => {
+            element.classList.remove('bg-green-500');
+        }, 1000);
+    }
+
+    const backToLobby = () => {
+        router.push('/');
+    }
+
     const sendWSLobbyEvent = (toSide: string, toSubgame: number = 1) => {
         if (socket && user) {
-            const { board, playerRole } = findPlayerBoardNRole(user.user_id)
+            const { board, playerRole } = findPlayerBoardNRole(user.user_id, game)
             console.log(board, playerRole);
             socket.send(JSON.stringify({
                 type: 'lobbySwitch',
@@ -157,7 +192,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
                         <h1 className={'text-4xl'}>Game lobby</h1>
                         <span>{GameMode[game.gameMode]}</span>
-                        <div className={'inline-block cursor-pointer hover:bg-gray-100 my-2'}
+                        <div className={'inline-block cursor-pointer hover:bg-gray-100 p-1 rounded'}
                                         onClick={copyLinkToClipboard}>
                             <h3 className={'mx-2 inline-block'}>{gameLink}</h3>
                             <Image className={'w-auto h-5 align-middle inline-block'} src={copyIcon} alt={'Copy to clipboard'}/>
