@@ -47,7 +47,7 @@ class NewGameView(APIView):
 
     def post(self, request):
         gamemode = request.data.get('gamemode')
-        room_type = request.data.get('roomType')
+        is_private = request.data.get('isPrivate')
 
         # Get the JWT token from the Authorization header
         auth_header = request.headers.get('Authorization')
@@ -68,7 +68,7 @@ class NewGameView(APIView):
 
         game1 = Game(host=user,
                      gamemode=gamemode,
-                     is_private=True if room_type == 'private' else False,
+                     is_private=True if is_private == 'private' else False,
                      code=game_code)
 
         game1.save()
@@ -76,7 +76,7 @@ class NewGameView(APIView):
         if gamemode == GameMode.BUGHOUSE.value:
             game2 = Game(host=user,
                          gamemode=gamemode,
-                         is_private=True if room_type == 'private' else False,
+                         is_private=True if is_private == 'private' else False,
                          code=game_code,
                          brother_game=game1,
                          subgame_id=2)

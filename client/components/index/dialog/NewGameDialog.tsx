@@ -1,10 +1,10 @@
-// NewGameDialog.tsx
-import React, {useContext, useState} from 'react';
+import React, { useContext, useState } from 'react';
 import Dialog from "@/components/Dialog";
 import SERVER_URL from "@/config";
 import AuthContext from "@/context/AuthContext";
-import {useRouter} from 'next/router'
-import {GameMode} from "@/context/GameContext";
+import { useRouter } from 'next/router'
+import { GameMode } from "@/context/GameContext";
+import {toast} from "react-toastify";
 
 interface NewGameDialogProps {
     isOpen: boolean;
@@ -13,9 +13,9 @@ interface NewGameDialogProps {
 
 const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
     const [gamemode, setGamemode] = useState<GameMode | undefined>(undefined);
-    const [roomType, setRoomType] = useState("");
+    const [isRoomPrivate, setIsRoomPrivate] = useState(false);
 
-    const {user, authTokens} = useContext(AuthContext);
+    const { user, authTokens } = useContext(AuthContext);
 
     const router = useRouter();
     const gamemodeSpans: Record<GameMode, string> = {
@@ -24,14 +24,18 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
         [GameMode.CLASSICAL]: '2 Players',
     }
 
-    const roomTypeSpans: Record<string, string> = {
-        public: 'Visible on the room list',
-        private: 'Only can join with link',
+    const roomTypeSpans: Record<number, string> = {
+        0: 'Only can join with link',
+        1: 'Visible on the room list',
     }
 
     const onCreateGame = () => {
-        console.log('creating...', gamemode, roomType);
-        if (!user || gamemode === undefined || !roomType) return;
+        console.log('creating...', gamemode, isRoomPrivate);
+        if (!user) return;
+        if (gamemode === undefined) {
+            toast.error('Select gamemode', {hideProgressBar: true})
+            return;
+        }
         fetch(`${SERVER_URL}/api/new_game/`, {
             method: 'POST',
             headers: {
@@ -41,7 +45,7 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
             body: JSON.stringify({
                 user: user.user_id,
                 gamemode: gamemode,
-                roomType: roomType,
+                isPrivate: isRoomPrivate,
             })
         })
             .then(response => {
@@ -59,8 +63,8 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
         setGamemode(Number(event.target.value));
     }
 
-    const handleRoomTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        setRoomType(event.target.value);
+    const handleRoomTypeChange = () => {
+        setIsRoomPrivate(prevRoomType => !prevRoomType);
     }
 
     return (
@@ -80,22 +84,20 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
                     <option value={GameMode.CLASSICAL}>Classical</option>
                 </select>
                 {gamemode != null && (
-                        <span className="mb-2 text-xs">{gamemodeSpans[gamemode]}</span>
+                    <span className="mb-2 text-xs">{gamemodeSpans[gamemode]}</span>
                 )}
 
                 <label className="mb-2">Room type:</label>
-                <select
-                    value={roomType}
-                    onChange={handleRoomTypeChange}
-                    className={"mb-2"}
-                >
-                    <option value="">--Select--</option>
-                    <option value="private">Private</option>
-                    <option value="public">Public</option>
-                </select>
-                {roomType && (
-                    <span className="mb-2 text-xs">{roomTypeSpans[roomType]}</span>
-                )}
+                <label className="mb-2 flex items-center">
+                    <input
+                        type="checkbox"
+                        checked={!isRoomPrivate}
+                        onChange={handleRoomTypeChange}
+                        className="mr-2"
+                    />
+                    Public
+                </label>
+                <span className="mb-2 text-xs">{roomTypeSpans[isRoomPrivate ? 0 : 1]}</span>
                 <button onClick={onCreateGame} className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Create Game
                 </button>

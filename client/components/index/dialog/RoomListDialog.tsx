@@ -13,9 +13,11 @@ interface RoomListDialogProps {
 }
 
 export interface RoomListGame {
-    code: string;
-    host: Player;
-    gamemode: GameMode;
+    code: string,
+    host: Player,
+    gamemode: GameMode,
+    maxPlayers: number,
+    currentPlayers: number
 }
 
 const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
@@ -63,22 +65,31 @@ const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
     return (
         <Dialog isOpen={isOpen} onClose={onClose} title="Room list"
                 animation={"animate-in slide-in-from-bottom duration-300"}>
-            <span className={"text-center"}>Click to join</span>
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Game Mode</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
-                </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                {roomList.map((room, index) => (
-                    <GameListEntry key={index} room={room} onJoin={() => joinGame(room.code)} />
-                ))}
-                </tbody>
-            </table>
+            {roomList.length === 0 ? (
+                    <p>No active lobbies found. Why not create one?</p>
+                ) : (
+                <>
+                    <span className={"text-center"}>Click to join</span>
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Host</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Game
+                                Mode
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Players</th>
+                        </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                        {roomList.map((room, index) => (
+                                <GameListEntry key={index} room={room} onJoin={() => joinGame(room.code)}/>
+                            )
+                        )}
+                        </tbody>
+                    </table>
+                </>
+            )}
         </Dialog>
     );
 }

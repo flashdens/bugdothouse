@@ -1,0 +1,14 @@
+[
+  {
+    "model": "authorization.user",
+    "fields": {
+      "username": "bugdothouse_ai",
+      "password": "pbkdf2_sha256$180000$w3sN0H90gr7b$V/2a0Y/LgAXU8SYeQHfz86brYgd3q6oekXHx2R5rhRc=",
+      "email": "bugdothouse_ai@example.com",
+      "is_active": true,
+      "is_staff": true,
+      "date_joined": "2022-01-03T00:00:00Z",
+      "elo": 1200
+    }
+  }
+]

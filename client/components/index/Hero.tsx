@@ -52,7 +52,7 @@ const HeroSection = () => {
                      <button onClick={() => setIsRoomListDialogOpen(true)}
                                 className="my-2 bg-transparent hover:bg-pink-500 text-pink-700 font-semibold hover:text-white py-2 px-4 border border-pink-500 hover:border-transparent rounded"
                         >
-                            SEE GAME ROOMS
+                            SEE OPEN ROOMS
                         </button>
                         <RoomListDialog
                             isOpen={isRoomListDialogOpen}
