@@ -16,14 +16,8 @@ from authorization.models import User
 from bugdothouse_server import settings
 from bugdothouse_server.settings import SECRET_KEY
 from game.models import Game, GameMode, GameStatus
-from game_api.serializers import UserSerializer, ProfileSerializer
+from game_api.serializers import UserSerializer, GameSerializer
 
-
-class GetAuthenticatedUserView(APIView):
-    def get(self, request):
-        user = request.user
-        serializer = ProfileSerializer(user, many=False)
-        return Response(serializer.data)
 
 class ResetGameView(APIView):
     def post(self, request):
@@ -247,4 +241,18 @@ class StartGameView(APIView):
         return Response({
             "success": True,
             "info": f"Game {game_code} started"
-            })
+        })
+
+
+class PublicGameListView(APIView):
+
+    def get(self, request):
+        games = Game.objects.filter(
+            status=GameStatus.WAITING_FOR_START.value,
+            is_private=False,
+            subgame_id=1  # don't fetch subgames
+        )
+
+        serializer = GameSerializer(games, many=True)
+
+        return Response(serializer.data)

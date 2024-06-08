@@ -57,4 +57,4 @@ class Game(models.Model):
     result = models.IntegerField(null=True, choices=GameResult.choices)  # null -> result undetermined
 
     def __str__(self):
-        return f"Game {self.code} - {self.status}"
+        return f"Game {self.code}"

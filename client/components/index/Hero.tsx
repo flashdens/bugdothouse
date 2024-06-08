@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from 'next/router';
 import RoomListDialog from "@/components/index/dialog/RoomListDialog";
 import authContext from "@/context/AuthContext";
+import SERVER_URL from "@/config";
 
 const HeroSection = () => {
     const [isHowToPlayDialogOpen, setIsHowToPlayDialogOpen] = useState(false);
@@ -17,8 +18,9 @@ const HeroSection = () => {
     const router = useRouter();
 
     useEffect(() => {
-        setIsRendered(true);
+    setIsRendered(true);
     }, []);
+
 
     if (!isRendered) {
         return null;

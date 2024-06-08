@@ -10,9 +10,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email']  # todo
 
 
+class GameSerializer(serializers.ModelSerializer):
 
-class ProfileSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model = User
-        fields = ('username', 'elo')
-        
+        model = Game
+        fields = ['host', 'code', 'gamemode']

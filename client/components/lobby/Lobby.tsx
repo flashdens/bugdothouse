@@ -28,7 +28,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
 
     const socket: WebSocket | null = getWebSocket(gameData.gameCode);
 
-    const findPlayerBoardNRole = (userId: number, game: any): undefined | {board: number, playerRole: PlayerRole} => {
+    const findPlayerBoardNRole = (userId: number, game: any): {board: number, playerRole: PlayerRole} => {
         for (const boardId in game.boards) {
             const board = game.boards[boardId];
             if (board.whitePlayer && board.whitePlayer.id == userId) {
