@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { Player } from '@/context/GameContext';
+import authContext from "@/context/AuthContext";
 
 interface Props {
     spectators: Player[] | null;
@@ -7,12 +8,18 @@ interface Props {
 }
 
 const SpectatorList: React.FC<Props> = ({ spectators , hostId}) => {
+
+    const {user} = useContext(authContext);
+    if (!user) return;
+
     return (
         <div className={'p-3'}>
             <h3>Spectators:</h3>
             <ul>
                 {spectators?.map((spectator, index) => (
-                    <li key={index}>{spectator.username} {spectator.id === hostId && '(host)'}</li>
+                    <li key={index} className={
+                        (user.user_id === spectator.id) ? "font-bold" : ""
+                    }>{spectator.username} {spectator.id === hostId && '(host)'}</li>
                 ))}
             </ul>
         </div>

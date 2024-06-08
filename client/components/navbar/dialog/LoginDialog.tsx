@@ -1,7 +1,6 @@
 import React, { useContext, useState } from 'react';
 import AuthContext from "@/context/AuthContext";
 import Dialog from "@/components/Dialog";
-import {toast} from "react-toastify";
 
 interface LoginPageProps {
     isOpen: boolean,

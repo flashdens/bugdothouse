@@ -31,6 +31,7 @@ const config: Config = {
       'bg-green-500', 'text-green-700', 'border-green-500',
       'border-gray-500',
       'flex-row', 'flex-row-reverse', 'flex-col', 'flex-col-reverse',
+      'font-bold',
      {
          pattern: /bg-(red|green|gray)-(500)/,
          variants: ['lg', 'hover', 'focus', 'lg:hover'],
