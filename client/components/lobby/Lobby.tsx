@@ -66,7 +66,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
     }, []);
 
     useEffect(() => {
-        const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+        const handleBeforeUnload = () => {
             if (!socket || !user) return;
             const boardRoleData = findPlayerBoardNRole(user?.user_id, game);
             if (!boardRoleData) {
@@ -182,7 +182,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         <>
             {game ? (
                 <>
-                    <div className="flex flex-col justify-center items-center gap-2 border w-fit mx-auto p-5 mt-20">
+                    <div className="flex flex-col justify-center items-center gap-2 border bg-white rounded-lg shadow-2xl w-fit mx-auto p-5 mt-24 lg:mt-10">
                         <button
                             className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
                             onClick={backToLobby}

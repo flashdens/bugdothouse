@@ -41,8 +41,8 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
                 }}>
                     <svg
           viewBox={"1 1 43 43"}
-          width={`calc(65dvh / 8)`}
-          height={`calc(65dvh / 8)`}
+          width={`7.5dvh`}
+          height={`7.5dvh`}
           style={{ display: "block" }}
         >
           <g>{svg}</g>

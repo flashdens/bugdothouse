@@ -25,6 +25,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     }
 
     const determineTeamNumber = (side: string) => {
+        console.log(side)
         if (side === 'WHITE') {
             return '1';
         }
@@ -35,13 +36,13 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
 
 
     const flexClasses = game.boards[1].primaryGame
-        ? "flex flex-col lg:flex-row justify-around"
-        : "flex flex-col-reverse lg:flex-row-reverse justify-around";
+        ? "flex flex-col lg:flex-row justify-around my-16"
+        : "flex flex-col-reverse lg:flex-row-reverse justify-around my-16";
         // TODO above is broken for spectators only
 
         return (
         // context=window fixes two backends error?
-        <DndProvider backend={HTML5Backend} context={window}>
+            <DndProvider backend={HTML5Backend} context={window}>
             {game && (
             <div className={flexClasses}>
                     {Object.keys(game.boards).map((subgameId) => {
@@ -68,8 +69,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 but it's a different story...
                                 */
 
-                                <div className={"space-y-2 py-20 lg:py-2"} key={subgameId}>
-                                    {subgameId}
+                                <div className={"flex flex-col items-center space-y-2 py-2 md:py-5 bg-white rounded-lg shadow-2xl w-auto"} key={subgameId}>
                                     { game.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}
@@ -84,7 +84,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                         playerColor = {playerSide === "BLACK" ? "WHITE" : "BLACK"}
                                         sideToMove={board.sideToMove}
                                         teamNumber={determineTeamNumber(
-                                            subgameId,
                                             playerSide == "BLACK"
                                                 ? "WHITE"
                                                 : "BLACK"
@@ -101,7 +100,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                         playerColor = {playerSide === "BLACK" ? "BLACK" : "WHITE"}
                                         sideToMove={board.sideToMove}
                                         teamNumber={determineTeamNumber(
-                                            subgameId,
                                             playerSide == "BLACK"
                                                 ? "BLACK"
                                                 : "WHITE"

@@ -112,7 +112,7 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
     return (
         <>
             {game && (
-                <div style={{width: '65dvh'}}>
+                <div className={'w-60dvh lg:w-70dvh'}>
                     <Chessboard
                         position={fen}
                         onPieceDrop={onDrop}

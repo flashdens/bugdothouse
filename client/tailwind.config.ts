@@ -16,8 +16,9 @@ const config: Config = {
          50: '50%'
         },
       width: {
+          '30dvh': '30dvh',
           '45dvh': '45dvh',
-          '65dvh': '65dvh'
+          '60dvh': '60dvh'
       },
     },
   },
@@ -35,9 +36,11 @@ const config: Config = {
      {
          pattern: /bg-(red|green|gray)-(500)/,
          variants: ['lg', 'hover', 'focus', 'lg:hover'],
-
-    }
-
+    },
+      {
+          pattern: /w-(30|45|60)dvh/,
+          variants: ['md', 'lg']
+      }
   ],
 }
 export default config

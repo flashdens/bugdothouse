@@ -20,11 +20,11 @@ const NavbarUserSection = () => {
     }
 
     return (
-        <>
+        <div className={'flex p-2'}>
             {user?.user_id ? (
                 <>
                     <h3>hello {user.username ? user.username : 'guest'}</h3>
-                    <button onClick={logoutUser} className={"hover:cursor-pointer"}>
+                    <button onClick={logoutUser} className={"hover:bg-gray-400 p-1"}>
                         <Image className={"mx-2"} height={24} width={24} src={logout} alt={"logout"} />
                     </button>
                 </>
@@ -53,7 +53,7 @@ const NavbarUserSection = () => {
                     />
                 </>
             )}
-        </>
+        </div>
     );
 };
 
