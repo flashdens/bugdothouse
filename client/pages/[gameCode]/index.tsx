@@ -1,10 +1,11 @@
-import {useRouter} from 'next/router'
+import { useRouter } from 'next/router';
 import Lobby from "@/components/lobby/Lobby";
-import React, {useContext, useEffect, useState} from "react";
+import React, { useContext, useEffect, useState } from "react";
 import SERVER_URL from "@/config";
-import {GameContextData, GameProvider, GameStatus} from "@/context/GameContext";
+import { GameContextData, GameProvider, GameStatus } from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
+import { toast } from "react-toastify";
 
 interface GameIndexProps {
     gameCode: string
@@ -13,7 +14,7 @@ interface GameIndexProps {
 const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
     const [game, setGame] = useState<GameContextData | null>(null);
     const router = useRouter();
-    const {authTokens, user, loginUser} = useContext(AuthContext);
+    const { authTokens, user, loginUser } = useContext(AuthContext);
     const [shouldRerender, setShouldRerender] = useState(false);
 
     const handleRerender = () => {
@@ -23,56 +24,57 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
     }
 
     useEffect(() => {
-        if (!gameCode) return;
-        joinGame(gameCode);
-        getGameInfo(gameCode)
-    }, [gameCode]);
+        const fetchData = async () => {
+            if (!gameCode) return;
+            await joinGame(gameCode);
+            await getGameInfo(gameCode);
+        };
 
+        fetchData();
+    }, []);
 
-    const joinGame = (gameCode: string) => {
-        fetch(`${SERVER_URL}/api/${gameCode}/join/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                ...(authTokens && { authTokens })
-            })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('upsi');
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) throw new Error(data.error);
-                if (data.guestToken) loginUser(undefined, data.guestToken);
-            })
-            .catch(error => {
-                console.error('Error:', error);
+    const joinGame = async (gameCode: string) => {
+        try {
+            const response = await fetch(`${SERVER_URL}/api/${gameCode}/join/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    authTokens
+                }),
             });
+            if (!response.ok) throw new Error('error joining game...');
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            if (data.guestToken) {
+                console.log(data.guestToken)
+                await loginUser(undefined, undefined, data.guestToken); // Await loginUser
+            }
+
+            router.push(`/${gameCode}`);
+        } catch (error: any) {
+            toast.error('Error:', error);
+        }
     };
 
-
-    const getGameInfo = (gameCode: string) => {
-        fetch(`${SERVER_URL}/api/${gameCode}/info/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(response => {
-                if (!response.ok) {
-                    void router.push('/404');
-                    throw new Error('Response not OK');
+    const getGameInfo = async (gameCode: string) => { // Make getGameInfo async
+        try {
+            const response = await fetch(`${SERVER_URL}/api/${gameCode}/info/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
                 }
-                return response.json();
-            })
-            .then(data => {
-                setGame(data);
-            })
-            .catch(error => {
-                console.error('Error fetching game:', error);
             });
+            if (!response.ok) {
+                void router.push('/404');
+                throw new Error('Response not OK');
+            }
+            const data = await response.json();
+            setGame(data);
+        } catch (error) {
+            console.error('Error fetching game:', error);
+        }
     };
 
     return (
@@ -80,8 +82,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
             {game != null ? (
                 <GameProvider>
                     {game.status === GameStatus.WAITING_FOR_START ? (
-                        <Lobby gameData={game} rerenderParent={handleRerender}
-                        />
+                        <Lobby gameData={game} rerenderParent={handleRerender} />
                     ) : game.status === GameStatus.ONGOING ? (
                         <Game gameData={game}/>
                     ) : (

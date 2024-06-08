@@ -23,7 +23,7 @@ const NavbarUserSection = () => {
         <>
             {user?.user_id ? (
                 <>
-                    <h3>hello {user.username}</h3>
+                    <h3>hello {user.username ? user.username : 'guest'}</h3>
                     <button onClick={logoutUser} className={"hover:cursor-pointer"}>
                         <Image className={"mx-2"} height={24} width={24} src={logout} alt={"logout"} />
                     </button>

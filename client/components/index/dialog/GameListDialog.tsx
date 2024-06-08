@@ -7,6 +7,8 @@ import { GameMode, Player } from "@/context/GameContext";
 import GameListEntry from "@/components/index/dialog/GameListEntry";
 import Image from "next/image";
 import refresh from "@/public/refresh.svg";
+import {toast} from "react-toastify";
+import gameCode from "@/pages/[gameCode]";
 
 interface RoomListDialogProps {
     isOpen: boolean;
@@ -22,7 +24,7 @@ export interface RoomListGame {
     spectators: number
 }
 
-const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
+const GameListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
     const { authTokens, loginUser } = useContext(authContext);
     const router = useRouter();
     const [roomList, setRoomList] = useState<RoomListGame[]>([]);
@@ -39,30 +41,6 @@ const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
     useEffect(() => {
         fetchRoomList();
     }, []);
-
-    const joinGame = async (gameCode: string) => {
-        fetch(`${SERVER_URL}/api/${gameCode}/join/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                ...authTokens && { authTokens },
-            }),
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('error joining game...');
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) throw new Error(data.error);
-                if (data.guestToken) loginUser(undefined, data.guestToken);
-                router.push(`/${gameCode}`);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-    };
 
     const handleRefresh = () => {
         fetchRoomList();
@@ -89,7 +67,7 @@ const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                         {roomList.map((room, index) => (
-                                <GameListEntry key={index} room={room} onJoin={() => joinGame(room.code)}/>
+                                <GameListEntry key={index} room={room} onJoin={() => router.push(`/${room.code}`) }/>
                             )
                         )}
                         </tbody>
@@ -107,4 +85,4 @@ const RoomListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
     );
 }
 
-export default RoomListDialog;
+export default GameListDialog;

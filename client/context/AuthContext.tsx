@@ -3,6 +3,7 @@ import {jwtDecode, JwtHeader, JwtPayload} from 'jwt-decode';
 import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 import {toast, ToastContainer} from "react-toastify";
+import assert from "assert";
 
 
 interface AuthTokens {
@@ -13,7 +14,7 @@ interface AuthTokens {
 interface AuthContext {
     user: JwtPayload & {user_id: number, username: string} | null,
     authTokens: AuthTokens;
-    loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens| {error: string} ) => Promise<void>;
+    loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any ) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
     registerUser: any
 }
@@ -23,14 +24,14 @@ export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       let [user, setUser] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.getItem('authTokens')) {
+        if (typeof window !== 'undefined' && localStorage.getItem('authTokens') !== 'null' && localStorage.getItem('authTokens')) {
             return jwtDecode(localStorage.getItem('authTokens'));
         }
         return null;
     });
 
     let [authTokens, setAuthTokens] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.getItem('authTokens')) {
+        if (typeof window !== 'undefined' && localStorage.getItem('authTokens') != 'null' && localStorage.getItem('authTokens') ) {
             return JSON.parse(localStorage.getItem('authTokens'));
         }
         return null;
@@ -39,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: AuthTokens | object) => {
+    const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any) => {
         if (e) e.preventDefault();
 
         let respData = null;
@@ -63,13 +64,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return;
             }
         }
-        if (respData) {
-            localStorage.setItem('authTokens', JSON.stringify(respData));
-            setAuthTokens(data);
-            setUser(jwtDecode(respData.access));
-        } else {
-            alert('Something went wrong while logging in the user!');
+
+        if (guestToken) {
+            console.log(guestToken);
+            setUser(jwtDecode(guestToken.access));
+            setAuthTokens(guestToken)
+            localStorage.setItem('authTokens', JSON.stringify(guestToken));
         }
+        else if (respData) {
+                setUser(jwtDecode(respData.access));
+                setAuthTokens(data);
+                localStorage.setItem('authTokens', JSON.stringify(respData));
+        }
+        else {
+            assert(false);
+        }
+
     };
 
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {

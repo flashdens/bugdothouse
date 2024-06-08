@@ -168,6 +168,7 @@ class JoinGameView(APIView):
             user = User(username=guest_username, email=guest_username + '@bug.house')
             user.save()
 
+            print('creating', guest_username)
             # Create a token for the guest user
             access = AccessToken.for_user(user)
             refresh = RefreshToken.for_user(user)

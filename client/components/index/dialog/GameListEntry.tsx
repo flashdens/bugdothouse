@@ -1,5 +1,5 @@
 import React from "react";
-import { RoomListGame } from "@/components/index/dialog/RoomListDialog";
+import { RoomListGame } from "@/components/index/dialog/GameListDialog";
 import { GameMode } from "@/context/GameContext";
 import game from "@/components/game/Game";
 

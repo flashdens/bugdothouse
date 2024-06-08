@@ -5,7 +5,7 @@ import logo from "@/public/logo.svg";
 import krowcia from "@/public/krowcia.gif"
 import Image from "next/image";
 import { useRouter } from 'next/router';
-import RoomListDialog from "@/components/index/dialog/RoomListDialog";
+import GameListDialog from "@/components/index/dialog/GameListDialog";
 import authContext from "@/context/AuthContext";
 import SERVER_URL from "@/config";
 
@@ -54,7 +54,7 @@ const HeroSection = () => {
                         >
                             SEE OPEN ROOMS
                         </button>
-                        <RoomListDialog
+                        <GameListDialog
                             isOpen={isRoomListDialogOpen}
                             onClose={() => setIsRoomListDialogOpen(false)}
                         />
