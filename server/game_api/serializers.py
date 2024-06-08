@@ -14,7 +14,7 @@ class GameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = ['host', 'code']
+        fields = ['host', 'code', 'gamemode']
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -40,5 +40,7 @@ class GameSerializer(serializers.ModelSerializer):
                 subgame_current_players += 1
             if subgame.black_player is not None:
                 subgame_current_players += 1
+
+        representation['spectators'] = instance.spectators.filter().count()
 
         return representation

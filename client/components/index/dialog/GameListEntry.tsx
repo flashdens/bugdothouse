@@ -17,6 +17,7 @@ const GameListEntry: React.FC<GameListEntryProps> = ({ room, onJoin }) => {
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {room.currentPlayers}/{room.maxPlayers}
             </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{room.spectators}</td>
         </tr>
     );
 }
