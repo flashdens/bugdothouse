@@ -331,7 +331,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             game.black_player = None
 
         elif user in game.spectators.all() and from_side == self.PlayerRoles.SPECTATOR.value:
-            print('removing user from spectators...')
             game.spectators.remove(user)
 
         game.save()
@@ -424,6 +423,45 @@ class GameConsumer(AsyncWebsocketConsumer):
                                     ai_player,
                                     is_ai_move=True)
 
+    async def find_non_host_player_in_game(self, game):
+        if game.white_player and game.white_player.pk != game.host.pk:
+            return game.white_player
+        elif game.black_player and game.black_player.pk != game.host.pk:
+            return game.black_player
+        else:
+            async for spectator in game.spectators.all():
+                if spectator.pk != game.host.pk:
+                    return spectator
+
+        return None
+
+    async def find_new_game_host(self, game):
+        found_player = await self.find_non_host_player_in_game(game)
+        brother_game = await Game.objects.select_related('white_player', 'black_player', 'host').aget(
+                code=self.room_name,
+                subgame_id=2 if game.subgame_id == 1
+                else 2)
+
+        if found_player:
+            game.host = found_player
+            if brother_game:
+                brother_game.host = found_player
+                await brother_game.asave()
+            await game.asave()
+            return True
+
+        if game.gamemode == GameMode.BUGHOUSE:
+
+            found_player = await self.find_non_host_player_in_game(brother_game)
+            if found_player:
+                game.host = found_player
+                brother_game.host = found_player
+                await brother_game.asave()
+                await game.asave()
+                return True
+
+        return False
+
     async def handle_user_disconnect(self, data):
         subgame_id = data.get('subgameId')
         player_role = data.get('playerRole')
@@ -434,8 +472,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         user = await self.get_user_async(user_id)
 
-        game = await self.get_game_async(self.room_name, subgame_id)
+        game = await Game.objects.select_related('white_player', 'black_player', 'host').aget(code=self.room_name,
+                                                                                                 subgame_id=subgame_id)
+
         await self.remove_user_from_game(user, game, player_role)
+
+        if game.host.pk == user.pk:  # if a host left the game...
+            new_host_found = await self.find_new_game_host(game)  # ...we need to find a new one
+
+            if not new_host_found:
+                await game.adelete()  # no other players found in game
 
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.connect'})
@@ -475,7 +521,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_send(
                     self.room_group_name, {'type': 'lobby.connect'})
             elif event_type == 'disconnect':
-                print('received dc event')
                 await self.handle_user_disconnect(data)
             elif event_type == 'gameStart':
                 await self.handle_game_start()
