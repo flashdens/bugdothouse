@@ -31,9 +31,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
         else if (side === 'BLACK'){
             return '2';
         }
-        else {
-            assert(false);
-        }
     }
 
 
