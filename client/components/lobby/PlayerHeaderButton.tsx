@@ -20,12 +20,12 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
     const {game} = useContext(GameContext);
     return (
         <>
-            <h3>{playerColor} player:</h3>
             {player ? (
                 <>
                     <h1
                         className={user?.user_id === player.id ? "font-bold" : ""}
-                    >{player.username} {player.id == game?.host.id && '(host)'}</h1>
+                    >
+                        {playerColor} player: {player.username} {player.id == game?.host.id && '(host)'}</h1>
                     {player.username == 'bugdothouse_ai' &&
                     <AIMgmtButton
                         setIsAIPlayerSet={setIsAIPlayerSet}
@@ -43,9 +43,10 @@ const PlayerHeaderButton: React.FC<Props> = ({ player, sendWSLobbyEv, sendWSAIEv
                 </>
                 ) :
                 <>
+                    {playerColor} player: <br/>
                     <button
                         onClick={() => sendWSLobbyEv(switchTo, subgameId)}
-                        className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
+                        className="blue-button"
                     >
                         Play as {playerColor} {colorEmoji}
                     </button>

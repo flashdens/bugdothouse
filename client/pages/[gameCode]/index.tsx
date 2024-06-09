@@ -58,7 +58,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
         }
     };
 
-    const getGameInfo = async (gameCode: string) => { // Make getGameInfo async
+    const getGameInfo = async (gameCode: string) => {
         try {
             const response = await fetch(`${SERVER_URL}/api/${gameCode}/info/`, {
                 method: 'GET',

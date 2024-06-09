@@ -12,7 +12,7 @@ const SpectatorList: React.FC<Props> = ({ spectators, hostId }) => {
     if (!user) return null;
 
     return (
-        <div className="p-3 max-h-24 overflow-y-auto">
+        <div className="p-3 mt-2 max-h-24 overflow-y-auto">
             <h3>Spectators:</h3>
             <ul>
                 {spectators?.map((spectator, index) => (

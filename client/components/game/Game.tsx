@@ -69,7 +69,7 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 but it's a different story...
                                 */
 
-                                <div className={"flex flex-col items-center space-y-2 py-2 md:py-5 bg-white rounded-lg shadow-2xl w-auto"} key={subgameId}>
+                                <div className={"flex flex-col items-center space-y-2 py-2 md:py-5 bg-white rounded-lg shadow-2xl px-8 w-auto"} key={subgameId}>
                                     { game.gameMode !== GameMode.CLASSICAL &&
                                     <GamePocket
                                         pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}

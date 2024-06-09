@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 import {toast, ToastContainer} from "react-toastify";
 import assert from "assert";
+import Router from 'next/router'
 
 
 interface AuthTokens {
@@ -72,14 +73,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.setItem('authTokens', JSON.stringify(guestToken));
         }
         else if (respData) {
-                setUser(jwtDecode(respData.access));
-                setAuthTokens(data);
-                localStorage.setItem('authTokens', JSON.stringify(respData));
+            setUser(jwtDecode(respData.access));
+            setAuthTokens(data);
+            localStorage.setItem('authTokens', JSON.stringify(respData));
         }
         else {
             assert(false);
         }
 
+        Router.reload();
     };
 
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -88,7 +90,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         localStorage.removeItem('authTokens');
         setAuthTokens(null);
         setUser(null);
-        void router.push('/');
+
+        Router.reload();
     };
 
     const registerUser = async (e: any) => {
@@ -146,6 +149,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(jwtDecode(data.access));
             localStorage.setItem('authTokens', JSON.stringify(data));
         } else {
+            alert("Unauthorized to refresh the auth token! " +
+                "Guest accounts can only play for 30 minutes")
             logoutUser();
         }
 
@@ -155,7 +160,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     useEffect(() => {
-        const REFRESH_INTERVAL = 1000 * 60 * 4; // 4 minutes
+        const REFRESH_INTERVAL = 1000 * 60 * 30; // 30 minutes
         let interval: NodeJS.Timeout =
             setInterval(() => {
                 if (authTokens) {
