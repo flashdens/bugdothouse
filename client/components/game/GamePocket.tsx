@@ -5,14 +5,22 @@ import defaultPieces from "@/public/pieces/pieces";
 import GameContext from "@/context/GameContext";
 import {PlayerSide} from "@/components/game/GameChessboard";
 
-interface TestPocketProps {
+/**
+ * @interface GamePocketProps
+ * @brief Props komponentu GamePocket.
+ *
+ * @property {'WHITE' | 'BLACK' | 'SPECTATOR' } playerSide strona w grze, którą zajmuje gracz.
+ * @property {'WHITE' | 'BLACK'} pocketOf strona w grze, do której należy kieszeń
+ * @property {string} subgameId identyfikator szachownicy (dotyczy gier w kloca)
+ */
+interface GamePocketProps {
     playerSide: PlayerSide,
-    pocketOf: 'WHITE' | 'BLACK',
+    pocketOf: Exclude<PlayerSide, 'SPECTATOR'>,
     subgameId: string
 }
 
 
-const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}) => {
+const GamePocket: React.FC<GamePocketProps> = ({playerSide, pocketOf, subgameId}) => {
 
     const {game} = useContext(GameContext);
     if (!game) return;
@@ -20,7 +28,7 @@ const GamePocket: React.FC<TestPocketProps> = ({playerSide, pocketOf, subgameId}
     const {whitePocket, blackPocket} = game.boards[subgameId];
 
     return (
-        <div className={'border flex flex-row justify-around align-middle border-black my-2 w-45dvh'}>
+        <div className={'border flex flex-row justify-around align-middle border-black my-2'}>
         {pocketOf === 'WHITE' ? (
             <>
                 <TestPocketPiece svg={defaultPieces.wP} piece={"wP"} side={playerSide} pocketOf={pocketOf} count={whitePocket["P"]} />

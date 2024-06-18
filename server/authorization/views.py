@@ -6,25 +6,24 @@ from .serializers import AuthTokenObtainPairSerializer, RegisterSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 
-@api_view(['GET'])
-def get_routes(request):
-    """returns a view containing all the possible routes"""
-    routes = [
-        '/api/token',
-        '/api/token/refresh'
-    ]
-
-    return Response(routes)
-
-
 class AuthTokenObtainPairView(TokenObtainPairView):
+    """
+    Widok pozyskiwania pary żetonów JWT.
+    """
     serializer_class = AuthTokenObtainPairSerializer
 
 
 class RegisterView(generics.CreateAPIView):
+    """
+    Widok rejestracji użytkownika.
+    """
     serializer_class = RegisterSerializer
 
     def post(self, request, *args, **kwargs):
+        """
+        Metoda obsługująca zapytanie POST wysłane do widoku.
+        Rejestruje użytkownika.
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)

@@ -1,6 +1,16 @@
 import React from "react";
 import {PlayerRole} from "@/context/GameContext";
 
+/**
+ * @interface AiMgmtButtonProps
+ * @brief Props komponentu AIMgmtButton.
+ *
+ * @property {function} setIsAIPlayerSet callback do funkcji zmieniającej stan 'isAiPlayerSet'.
+ * @property {function} sendWSAIEv callback do funkcji wysyłającej zdarzenie typu 'aiAdd' lub 'aiRemove' do gniazdka WebSocket.
+ * @property {string} switchTo wskazanie, czy AI ma dołączyć jako gracz biały, czy też czarny.
+ * @property {number} subgameId nr podgry, do której ma dołączyć AI
+ * @property {'aiAdd' | 'aiRemove'} typ wiadomości, która ma zostać wysłana za pośrednictwem WebSocket.
+ */
 interface AiMgmtButtonProps {
     setIsAIPlayerSet: React.Dispatch<React.SetStateAction<boolean>>
     sendWSAIEv: (toSide: string, toSubgame: number, msgType: 'aiAdd' | 'aiRemove' ) => void

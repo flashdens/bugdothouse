@@ -1,6 +1,6 @@
 import GameChessboard, {PlayerSide} from "@/components/game/GameChessboard";
 import GamePocket from "@/components/game/GamePocket";
-import React, {useContext, useEffect} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import {DndProvider} from "react-dnd";
 import GameContext, {GameContextData, GameMode, PlayerRole} from "@/context/GameContext";
@@ -8,6 +8,12 @@ import AuthContext from "@/context/AuthContext";
 import assert from "assert";
 import PlayerInfo from "@/components/game/PlayerInfo";
 
+/**
+ * @interface GameProps
+ * @brief Props komponentu Game.
+ *
+ * @property {GameContextData} gameData dane dotyczące gry, pobierane przed wyświetlaniem komponentu z serwera.
+ */
 interface GameProps {
     gameData: GameContextData
 }
@@ -23,17 +29,22 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     if (!game) {
         return(<div>Loading...</div>);
     }
-
-    const determineTeamNumber = (side: string) => {
-        console.log(side)
+    /**
+     * @brief określa numer drużyny, do której należy gracz.
+     *
+     * @returns zwraca '1', jeżeli gracz gra białymi, '2', jeśli czarnymi, undefined, jeżeli jest obserwatorem
+     */
+    const determineTeamNumber = (side: string): '1' | '2' | undefined => {
         if (side === 'WHITE') {
             return '1';
         }
         else if (side === 'BLACK'){
             return '2';
         }
+        else {
+            return undefined;
+        }
     }
-
 
     const flexClasses = game.boards[1].primaryGame
         ? "flex flex-col lg:flex-row justify-around my-16"
@@ -119,7 +130,6 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                     })}
             </div>
             )}
-            {game.result && <h2 className={'text-center'}>THE GAME HAS ENDED</h2> }
         </DndProvider>
     );
 };

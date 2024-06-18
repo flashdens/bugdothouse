@@ -1,24 +1,48 @@
 from django.db import models
-from django.db.models.enums import IntEnum
+from django.contrib.auth import get_user_model
 
-from authorization.models.user import User
-
-from enum import Enum
+User = get_user_model()
 
 
 class GameStatus(models.IntegerChoices):
+    """
+    Enum reprezentujący status gry.
+
+    Wartości:
+        WAITING_FOR_START (int): gra oczekuje na rozpoczęcie.
+        ONGOING (int): gra jest w toku.
+        FINISHED (int): gra zakończona.
+    """
     WAITING_FOR_START = (0, 'Waiting for start')
     ONGOING = (1, 'Ongoing')
     FINISHED = (2, 'Finished')
 
 
 class GameMode(models.IntegerChoices):
+    """
+    Enum reprezentujący warainy gry.
+
+    Wartości:
+        BUGHOUSE (int): bughouse
+        CRAZYHOUSE (int): crazyhouse.
+        CLASSICAL (int): szachy klasyczne.
+    """
     BUGHOUSE = (0, 'Bughouse')
     CRAZYHOUSE = (1, 'Crazyhouse')
     CLASSICAL = (2, 'Classical')
 
 
 class GameResult(models.IntegerChoices):
+    """
+    Enum reprezentujący wynik gry.
+
+    Wartości:
+        WHITE_WIN (int): wygrana białych.
+        BLACK_WIN (int): wygrana czarnych.
+        TEAM_1_WIN (int): wygrana drużyny 1.
+        TEAM_2_WIN (int): wygrana drużyny 2.
+        DRAW (int): remis.
+    """
     WHITE_WIN = (1, 'White wins')
     BLACK_WIN = (2, 'Black wins')
     TEAM_1_WIN = (3, 'Team 1 wins')
@@ -33,6 +57,24 @@ SUBGAME_ID_CHOICES = [
 
 
 class Game(models.Model):
+    """
+    Model reprezentujący grę.
+
+    Atrybuty:
+        status (int): status gry.
+        gamemode (int): rryb gry.
+        code (str): unikalny kod gry.
+        is_private (bool): widoczność gry na liście gier.
+        host (ForeignKey): gospodarz gry.
+        fen (str): Pozycja w notacji FEN.
+        side_to_move (bool): strona, która ma wykonać ruch.
+        white_player (ForeignKey): gracz grający białymi.
+        black_player (ForeignKey): gracz grający czarnymi.
+        spectators (ManyToManyField): obserwujący grę.
+        brother_game (ForeignKey): powiązana gra.
+        subgame_id (int): identyfikator podgry.
+        result (int): wynik gry.
+    """
     status = models.IntegerField(
         choices=GameStatus.choices,
         default=GameStatus.WAITING_FOR_START
@@ -57,4 +99,7 @@ class Game(models.Model):
     result = models.IntegerField(null=True, choices=GameResult.choices)  # null -> result undetermined
 
     def __str__(self):
+        """
+        Zwraca reprezentację tekstową gry.
+        """
         return f"Game {self.code}"

@@ -40,7 +40,7 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + String(authTokens.access)
+                'Authorization': 'Bearer ' + String(authTokens?.access)
             },
             body: JSON.stringify({
                 user: user.user_id,
@@ -49,8 +49,10 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
             })
         })
             .then(response => {
-                if (!response.ok)
-                    throw new Error('error creating lobby');
+                if (!response.ok) {
+                    toast.error('Error creating lobby');
+                    return;
+                }
                 return response.json();
             })
             .then(data =>
@@ -71,7 +73,7 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
         <Dialog isOpen={isOpen} onClose={onClose} title="Create New Game"
                 animation={"animate-in slide-in-from-bottom duration-300"}
         >
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-ce  nter">
                 <label className="mb-2">Gamemode:</label>
                 <select
                     value={gamemode}
@@ -87,7 +89,6 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
                     <span className="mb-2 text-xs">{gamemodeSpans[gamemode]}</span>
                 )}
 
-                <label className="mb-2">Room type:</label>
                 <label className="mb-2 flex items-center">
                     <input
                         type="checkbox"
@@ -95,9 +96,9 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
                         onChange={handleRoomTypeChange}
                         className="mr-2"
                     />
-                    Public
+                   Public
                 </label>
-                <span className="mb-2 text-xs">{roomTypeSpans[isRoomPrivate ? 0 : 1]}</span>
+                <span className="mb-2 text-lg">{roomTypeSpans[isRoomPrivate ? 0 : 1]}</span>
                 <button onClick={onCreateGame} className="mt-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Create Game
                 </button>

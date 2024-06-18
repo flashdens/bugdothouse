@@ -2,7 +2,7 @@ import React, { createContext, useState, ReactNode, FormEvent, useEffect } from 
 import {jwtDecode, JwtHeader, JwtPayload} from 'jwt-decode';
 import { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
-import {toast, ToastContainer} from "react-toastify";
+import {toast} from "react-toastify";
 import assert from "assert";
 import Router from 'next/router'
 
@@ -12,12 +12,23 @@ interface AuthTokens {
     refresh: string;
 }
 
+/**
+ * @interface AuthContext
+ * @brief Części składowe kontekstu AuthContext.
+ *
+ * @property {(JwtPayload & {user_id: number, username: string}) | null} user odszyfrowany żeton dostępu JWT użytkownika.
+ * @property {AuthTokens} authTokens żetony dostępu oraz odświeżenia użytkownika
+ *
+ * @property {function} loginUser funkcja logująca użytkownika.
+ * @property {function} logoutUser funkcja wylogowująca użytkownika.
+ * @property {function} registerUser funkcja rejestrująca użytkownika.
+ */
 interface AuthContext {
-    user: JwtPayload & {user_id: number, username: string} | null,
-    authTokens: AuthTokens;
+    user?: (JwtPayload & {user_id: number, username: string}) | null,
+    authTokens?: AuthTokens;
     loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any ) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
-    registerUser: any
+    registerUser: () => any
 }
 
 const AuthContext = createContext<AuthContext>(null);
@@ -160,7 +171,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     useEffect(() => {
-        const REFRESH_INTERVAL = 1000 * 60 * 30; // 30 minutes
+        const REFRESH_INTERVAL = 1000 * 60 * 1; // 30 minutes
         let interval: NodeJS.Timeout =
             setInterval(() => {
                 if (authTokens) {

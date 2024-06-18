@@ -4,6 +4,16 @@ import AuthContext from "@/context/AuthContext";
 import AIMgmtButton from "@/components/lobby/AIMgmtButton";
 import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 
+/**
+ * @interface Props
+ * @brief Props komponentu PlayerHeaderButton.
+ *
+ * @property {player | null} player gracz, który zajmuje daną stronę w grze.
+ * @property {function} sendWSLobbyEv funkcja wysyłające zdarzenie typu 'lobby' do gniazdka WebSocket.
+ * @property {function} sendWSAIEv funkcja wysyłające zdarzenie typu 'aiAdd' lub 'aiRemove' do gniazdka WebSocket.
+ * @property {string} switchTo strona, którą zajmuje lub ma zająć gracz.
+ * @property {number} subgameId nr podgry, której dotyczy przycisk.
+ */
 interface Props {
     player: Player | null;
     sendWSLobbyEv: (switchTo: string, subgameId?: number) => void;

@@ -3,13 +3,23 @@ import Image from "next/image";
 import chessboard from "@/public/chessboard.png";
 import chessboard_reversed from "@/public/chessboardReversed.png"
 import React from "react";
-import {Player, PlayerRole} from "@/context/GameContext";
+import {Player} from "@/context/GameContext";
 
+/**
+ * @interface SubLobbyProps
+ * @brief Props komponentu SubLobby.
+ *
+ * @property {Player | null} blackPlayer gracz czarny.
+ * @property {Player | null} whitePlayer gracz biały.
+ * @property {function} sendWSLobbyEvent callback do funkcji wysyłającej zdarzenie typu "lobby" do gniazdka WebSocket.
+ * @property {function} sendWSAIEvent callback do funkcji wysyłającej zdarzenie typu "ai" do gniazdka WebSocket.
+ * @property {subgameId} subgameId identifkator podgry.
+ */
 interface SubLobbyProps {
     blackPlayer: Player | null,
     whitePlayer: Player | null,
     sendWSLobbyEvent: (switchTo: string) => void,
-    sendWSAIEvent: (toSide: string , toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
+    sendWSAIEvent: (toSide: string, toSubgame: number, msgType: 'aiAdd' | 'aiRemove') => void,
     subgameId: number
 }
 

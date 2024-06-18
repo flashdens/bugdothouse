@@ -7,8 +7,6 @@ import { GameMode, Player } from "@/context/GameContext";
 import GameListEntry from "@/components/index/dialog/GameListEntry";
 import Image from "next/image";
 import refresh from "@/public/refresh.svg";
-import {toast} from "react-toastify";
-import gameCode from "@/pages/[gameCode]";
 
 interface RoomListDialogProps {
     isOpen: boolean;

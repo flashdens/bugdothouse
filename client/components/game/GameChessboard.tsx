@@ -7,37 +7,42 @@ import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext, {GameResultStrings, GameStatus} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
-const WHITE: boolean = false;
-const BLACK: boolean = true;
-
+/**
+ * @type PlayerSide {('WHITE' | 'BLACK' | 'SPECTATOR')}
+ * @brief Typ reprezentujący stronę gracza w grze.
+ */
 export type PlayerSide = 'WHITE' | 'BLACK' | 'SPECTATOR';
 
+/**
+ * @interface MoveData
+ * @brief Interfejs wiadomości o ruchu wysyłanej do serwera.
+ *
+ * @property {string} [fromSq] - pole, z którego został wykonany ruch (puste w przypadku).
+ * @property {string} toSq - pole będące celem ruchu.
+ * @property {string} droppedPiece - bierka, którą został wykonany ruch lub upuszczana bierka.
+ * @property {('n' | 'b' | 'r' | 'q') | null} promotion - bierka promowana.
+ */
 interface MoveData {
-    fromSq?: string,
-    toSq: string,
-    droppedPiece: string,
-    promotion: ('n' | 'b' | 'r' | 'q') | null
+    fromSq?: string;
+    toSq: string;
+    droppedPiece: string;
+    promotion: ('n' | 'b' | 'r' | 'q') | null;
 }
 
-
-interface WSMoveResponse {
-    error?: string,
-    fen: string,
-    gameOver?: string,
-    subgame: string,
-    sideToMove: boolean,
-    type: 'move',
-    whitePocket: {[key: string]: number},
-    blackPocket: {[key: string]: number},
-}
-
-interface TestChessboardProps {
+/**
+ * @interface GameChessboardProps
+ * @brief props komponentu GameChessboard.
+ *
+ * @property {string} cbId numer szachownicy (dotyczy kloca)
+ * @property {playerSide} strona, którą zajmuje gracz
+ */
+interface GameChessboardProps {
     cbId: string,
     playerSide: PlayerSide
 }
 
-const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
-    const {game, updateGameContext, updateBoardContext} = useContext(GameContext);
+const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
+    const {game, updateGameContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
     if (!game)
         return(<div>waiting...</div>);
@@ -66,17 +71,25 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
                 }
             }
         }
+
+        if (game.result) {
+        }
     }, []);
 
 
 
+    /**
+     * @brief Wysyła wiadomość o ruchu do serwera.
+     *
+     * @param {MoveData} moveData - Obiekt zawierający dane ruchu.
+     * @returns {boolean} - Zwraca true, jeśli wiadomość została pomyślnie wysłana, false w przeciwnym razie.
+     */
     const makeMove = (moveData: MoveData): boolean => {
         if (!socket) {
             console.log('no sockets?');
             return false;
         }
         else {
-            console.log(cbId);
             socket.send(JSON.stringify({
                 type: 'move',
                 token: authTokens.access,
@@ -89,16 +102,32 @@ const GameChessboard: React.FC<TestChessboardProps> = ({cbId, playerSide} ) => {
     };
 
 
-    const isPromotion = (sourceSquare: string, targetSquare: string, piece: Piece) => {
-        if (!sourceSquare)
-            return false;
+    /**
+     * @brief Sprawdza, czy ruch jest promocją pionka.
+     *
+     * @param {string} sourceSquare - Pole, z którego został wykonany ruch.
+     * @param {string} targetSquare - Pole będące celem ruchu.
+     * @param {Piece} piece - Bierka, która została przesunięta.
+     * @returns {boolean} - Zwraca true, jeśli ruch jest promocją pionka, false w przeciwnym razie.
+     */
+    const isPromotion = (sourceSquare: string, targetSquare: string, piece: Piece): boolean => {
+            if (!sourceSquare)
+                return false;
 
-        return ((piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
-            (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1")) &&
-            (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
+            return ((piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
+                (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1")) &&
+                (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
     }
 
-    const onDrop = (from: string, to: string, piece: Piece): boolean => {
+    /**
+     * @brief Funkcja wywoływana w momencie upuszczenia bierki na planszy.
+     *
+     * @param {string} from - pole, z którego został wykonany ruch.
+     * @param {string} to - pole będące celem ruchu.
+     * @param {Piece} piece - bierka, która została przesunięta.
+     * @returns {boolean} - zraca true, jeśli ruch został pomyślnie przetworzony, w przeciwnym razie false.
+     */
+    const onDrop = (from: string, to: string, piece: Piece): boolean  => {
         console.log(piece)
         const moveData: MoveData = {
             fromSq: from,

@@ -1,13 +1,13 @@
 **server**
+- refresh token on every page load
 
 **client**
 - lobby: cleaner 404 handling
 - lobby: client app renders unusable after failed request
 - lobby:feature let player move back to specs by clicking on current role - now: move AI
 - game: after some time game ws stops working (caused by premoves)?
-- game: board 2 gets replaced with board 1 after a capture 
-- game: updateGameContext doesn't keep old values, needing a workaround
 - WICHTIG -> REWORK SIDE DISPLAY!
+- WICHTIG -> refresh token with axios interceptor
 
 **stockfish container**
 - no clue how to communicate
@@ -19,8 +19,12 @@
 **asgi**
 - hot reload not working (not configured)
 
-**game**
-- handle game over!
+**todo**
+- better game over handling!
+- ai vs ai games
+
+**want to have**
+- time control!
 
 **solved:**
 - lobby: ws events not working, work only after refresh?

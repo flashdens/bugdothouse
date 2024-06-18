@@ -2,7 +2,6 @@ import React, {useState, FormEvent, useContext} from 'react';
 import Dialog from "@/components/Dialog";
 import AuthContext from "@/context/AuthContext";
 import {toast} from "react-toastify";
-import success = toast.success;
 
 interface RegisterDialogProps {
     isOpen: boolean;

@@ -34,12 +34,12 @@ const HeroSection = () => {
                 <h1 className="text-4xl md:text-6xl font-bold mb-2">
                     bug.house
                 </h1>
-                <span>Play bughouse chess online!</span>
+                <span className={'text-lg'}>Play bughouse chess online!</span>
                 <div className="w-full flex flex-col items-center space-y-6 mt-4">
                     <button
                         onClick={() => setNewGameDialogOpen(true)}
                         key={'1'}
-                        className="pink-button w-full max-w-sm"
+                        className="pink-button w-full max-w-sm text-xl"
                         disabled={!user || !authTokens.refresh} // guests don't own refresh tokens
                     >
                         {user ? 'CREATE A NEW GAME' : 'LOG IN TO CREATE GAMES'}
@@ -51,7 +51,7 @@ const HeroSection = () => {
 
                     <button
                         onClick={() => setIsRoomListDialogOpen(true)}
-                        className="pink-button w-full max-w-sm"
+                        className="pink-button w-full max-w-sm text-xl"
                     >
                         SEE OPEN ROOMS
                     </button>
@@ -62,7 +62,7 @@ const HeroSection = () => {
 
                     <button
                         onClick={() => setIsJoinWithCodeDialogOpen(true)}
-                        className="pink-button w-full max-w-sm"
+                        className="pink-button w-full max-w-sm text-xl"
                     >
                         JOIN WITH CODE
                     </button>
@@ -72,7 +72,7 @@ const HeroSection = () => {
                     />
 
                     <button
-                        className="gray-button w-full max-w-sm"
+                        className="gray-button w-full max-w-sm text-xl"
                         onClick={() => setIsHowToPlayDialogOpen(true)}
                     >
                         How to play bughouse?

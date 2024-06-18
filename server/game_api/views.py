@@ -19,33 +19,24 @@ from game.models import Game, GameMode, GameStatus
 from game_api.serializers import UserSerializer, GameSerializer
 
 
-class ResetGameView(APIView):
-    def post(self, request):
-        game = Game(pk=1)
-        board = chess.variant.CrazyhouseBoard()
-        game.side_to_move = True
-        game.fen = board.fen()
-        game.save()
-        response_data = {
-            "fen": re.sub(r'\[.*?]', '', game.fen).replace('[]', ''),  # cut out the pockets
-            "whitePocket": [],
-            "blackPocket": [],
-            "sideToMove": game.side_to_move,
-        }
-
-        return Response(response_data)
-
-
-def generate_game_code():
-    while True:  # roll till nonexistent
-        code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
-        if not Game.objects.filter(code=code).exists():
-            return code
-
-
 class NewGameView(APIView):
+    """
+    Widok API odpowiedzialny za tworzenie nowej gry.
+    """
+
+    def generate_game_code(self):
+        """
+        Generuje i zwracająca unikalny kod gry.
+        """
+        while True:  # roll till nonexistent
+            code = secrets.token_bytes(3).hex()  # generate a random 6-digit hex code
+            if not Game.objects.filter(code=code).exists():
+                return code
 
     def post(self, request):
+        """
+        Obsługuje zapytania POST przychodzące do widoku - tworzy nową grę.
+        """
         gamemode = request.data.get('gamemode')
         is_private = request.data.get('isPrivate')
 
@@ -64,7 +55,7 @@ class NewGameView(APIView):
             return Response("Invalid or expired token", status=status.HTTP_401_UNAUTHORIZED)
 
         user = get_object_or_404(User, pk=user_id)
-        game_code = generate_game_code()
+        game_code = self.generate_game_code()
 
         game1 = Game(host=user,
                      gamemode=gamemode,
@@ -90,8 +81,15 @@ class NewGameView(APIView):
 
 
 class GameInfoView(APIView):
+    """
+    Widok API odpowiedzialny za pozyskiwanie informacji o grze.
+    """
 
     def get(self, request, game_code):
+        """
+        Obsługuje zapytania GET przychodzące do widoku.
+        Zwraca informacje o grze określonej w parametrze game_code.
+        """
         games = list(Game.objects.filter(code=game_code))
         game_boards = {}
         result_found = None
@@ -135,16 +133,25 @@ class GameInfoView(APIView):
         )
 
 
-def generate_guest_username():
-    while True:  # roll till nonexistent
-        random_sequence = random.randint(100000, 999999)
-        if not User.objects.filter(username=random_sequence).exists():
-            return str(random_sequence)
-
-
 class JoinGameView(APIView):
+    """
+    Widok API odpowiedzialny za obsługę dołączania się graczy do gry.
+    """
+
+    def generate_guest_username(self):
+        """
+        Generuje i zwraca nazwę użytkownika dla gościa serwisu.
+        """
+        while True:  # roll till nonexistent
+            random_sequence = random.randint(100000, 999999)
+            if not User.objects.filter(username=random_sequence).exists():
+                return 'guest-' + str(random_sequence)
 
     def post(self, request, game_code):
+        """
+        Obsługuje zapytania POST przychodzące do widoku.
+        Dołącza użytkowników do gier,
+        """
         if not game_code:
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -164,11 +171,10 @@ class JoinGameView(APIView):
                 return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
 
         else:  # create a guest account
-            guest_username = 'guest-' + generate_guest_username()
+            guest_username = self.generate_guest_username()
             user = User(username=guest_username, email=guest_username + '@bug.house')
             user.save()
 
-            print('creating', guest_username)
             # Create a token for the guest user
             access = AccessToken.for_user(user)
             refresh = RefreshToken.for_user(user)
@@ -201,25 +207,34 @@ class JoinGameView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
 
 
-def can_start_game(game, user):
-    if game.host != user:
-        return Response({"error": "Only game hosts can start games"},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    if game.status != GameStatus.WAITING_FOR_START.value:
-        return Response({"error": "Game was already started"},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    if game.white_player is None or game.black_player is None:
-        return Response({"error": "Sides have not been taken"},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    return True
-
-
 class StartGameView(APIView):
+    """
+    Widok API odpowiedzialny za startowanei rozgrywek.
+    """
+
+    def can_start_game(self, game, user):
+        """
+        Ustala, czy gra może zostać rozpoczęta.
+        """
+        if game.host != user:
+            return Response({"error": "Only game hosts can start games"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if game.status != GameStatus.WAITING_FOR_START.value:
+            return Response({"error": "Game was already started"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if game.white_player is None or game.black_player is None:
+            return Response({"error": "Sides have not been taken"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        return True
 
     def post(self, request, game_code):
+        """
+        Obsługuje zapytania POST przychodzące do widoku.
+        Rozpoczyna gry.
+        """
         token = request.headers.get('Authorization').split(" ")[1]
         try:
             token = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
@@ -233,7 +248,7 @@ class StartGameView(APIView):
         user = get_object_or_404(User, pk=token.get('user_id'))
 
         for game in games:
-            if can_start_game(game, user):
+            if self.can_start_game(game, user):
                 game.fen = \
                     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1" if game.gamemode != GameMode.CLASSICAL.value else "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
                 game.status = GameStatus.ONGOING
@@ -246,8 +261,15 @@ class StartGameView(APIView):
 
 
 class PublicGameListView(APIView):
+    """
+    Widok API listy gier.
+    """
 
     def get(self, request):
+        """
+        Obsługuje zapytania GET przychodzące do widoku.
+        Zwraca listę nierozpoczętych, publicznych gier.
+        """
         games = Game.objects.filter(
             status=GameStatus.WAITING_FOR_START.value,
             is_private=False,

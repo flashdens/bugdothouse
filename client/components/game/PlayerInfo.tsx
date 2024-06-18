@@ -2,6 +2,15 @@ import React, {useContext} from "react";
 import GameContext, {GameMode, GameStatus, Player} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
 
+/**
+ * @interface PlayerInfoProps
+ * @brief Props komponentu PlayerInfo.
+ *
+ * @property {Player} player gracz, nt. którego informacje wyświetlane są informacje.
+ * @property {'WHITE' | 'BLACK'} playerColor kolor gracza, nt, którego wyświetlane są informacje.
+ * @property {boolean} sideToMove strona, która ma wykonać ruch w partii (true - białe, false - czarne)
+ * @property {string} teamNumber numer drużyny, do której należy gracz
+ */
 interface PlayerInfoProps {
     player: Player,
     playerColor: 'WHITE' | 'BLACK',

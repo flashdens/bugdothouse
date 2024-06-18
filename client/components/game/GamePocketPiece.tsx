@@ -1,16 +1,27 @@
 import React, { ReactNode } from 'react';
 import { useDrag } from 'react-dnd';
 import {PlayerSide} from "@/components/game/GameChessboard";
+import {Piece} from "react-chessboard/dist/chessboard/types";
 
-interface ChessPieceProps {
-    piece: "wP" | "wB" | "wN" | "wR" | "wQ" | "wK" | "bP" | "bB" | "bN" | "bR" | "bQ" | "bK";
-    svg: ReactNode;
-    count: number;
-    side: PlayerSide
-    pocketOf: "WHITE" | "BLACK";
+/**
+ * @interface GamePocketPieceProps
+ * @brief Props komponentu GamePocketPiece.
+ *
+ * @property {Piece} piece typ bierki znajdującej się w kieszeni.
+ * @property {ReactNode} svg obraz bierki w formacie svg.
+ * @property {number} count ilość bierek w kieszeni.
+ * @property {PlayerSide} side strona w grze, którą zajmuje gracz.
+ * @property {'WHITE' | 'BLACK'} pocketOf strona, do której należy kieszeń.
+ */
+interface GamePocketPieceProps {
+    piece: Piece,
+    svg: ReactNode,
+    count: number,
+    side: PlayerSide,
+    pocketOf: 'WHITE' | 'BLACK';
 }
 
-const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, pocketOf }) => {
+const GamePocketPiece: React.FC<GamePocketPieceProps> = ({ piece, svg, count, side, pocketOf }) => {
     const [{ isDragging }, drag] = useDrag({
         type: 'piece',
         item: () => ({ piece }),
@@ -24,15 +35,10 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
     });
 
     return (
-        <div
-            style={{
-                position: 'relative',
-                display: 'inline-block',
-            }}
+        <div className={"relative inline-block"}
         >
             <div
                 ref={drag}
-                className={"piece"}
                 style={{
                     opacity: (isDragging || !count || side !== pocketOf) ? 0.4 : 1,
                     fontSize: 25,
@@ -43,7 +49,6 @@ const GamePocketPiece: React.FC<ChessPieceProps> = ({ piece, svg, count, side, p
           viewBox={"1 1 43 43"}
           width={`7.5dvh`}
           height={`7.5dvh`}
-          style={{ display: "block" }}
         >
           <g>{svg}</g>
         </svg>

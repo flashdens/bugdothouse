@@ -50,8 +50,8 @@ const Dialog: React.FC<DialogProps> = ({ isOpen, onClose, title, children, anima
                     >
                         <Image src={close} alt="close" width={24} height={24} />
                     </button>
-                    <h2 className="text-lg md:text-xl font-semibold text-center">{title}</h2>
-                    <div className="dialog-content mt-2 md:mt-4">
+                    <h2 className="text-2xl font-semibold text-center">{title}</h2>
+                    <div className="dialog-content mt-2 md:mt-4 text-xl">
                         {children}
                     </div>
                 </div>

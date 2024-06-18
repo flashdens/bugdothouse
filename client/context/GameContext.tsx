@@ -2,6 +2,7 @@ import React, {createContext, ReactNode, useEffect, useState, useCallback, useCo
 import SERVER_URL from "@/config";
 import authContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
+import {toast} from "react-toastify";
 
 export enum PlayerRole {
     'whitePlayer',
@@ -43,6 +44,19 @@ export interface Player {
     email: string,
 }
 
+/**
+ * @interface BoardData
+ * @brief Dane dotyczące planszy wchodzącej w skład gry.
+ *
+ * @property {string} fen pozycja na planszy w notacji FEN.
+ * @property {Object} whitePocket dane nt. figur wchodzących w skład kieszeni gracza białego.
+ * @property {Object} blackPocket dane nt. figur wchodzących w skład kieszeni gracza czarnego.
+ * @property {boolean} sideToMove strona, która ma wykonać ruch w partii (true - białe, false - czarne)
+ * @property {Player | null} whitePlayer gracz biały.
+ * @property {Player | null} blackPlayer gracz czarny.
+ * @property {PlayerRole} localPlayerIs kim użytkownik jest w grze białe/czarne/obesrwator
+ * @property {boolean} primaryGame czy jest to gra, w której użytkownik gra którąś ze stron?
+ */
 export interface BoardData{
     fen: string,
     whitePocket: {[key: string]: number},
@@ -54,31 +68,46 @@ export interface BoardData{
     primaryGame: boolean,
 }
 
+/**
+ * @interface GameContextData
+ *
+ * @brief Dane dotyczące gry.
+ *
+ * @property {} status stan obecnie rozgrywanej gry.
+ * @property {} gameMode wariant, w którym gra jest rozgrywana.
+ * @property {string} gameCode unikalny kod reprezentujący grę.
+ * @property {Player[]} spectators tablica obserwujących rozgrywkę.
+ * @property {Player} host gospodarz gry.
+ * @property {GameResult | null} result rezultat gry.
+ * @property {Object} boards dane plansz wchodzących w skład gry.
+ */
 export interface GameContextData {
     status: GameStatus,
     gameMode: GameMode,
     gameCode: string,
     spectators: Player[] | null,
     host: Player,
-    result: GameResult,
+    result: GameResult | null,
     boards: { [subgameId: string]: BoardData };
 }
 
-interface GameContextValue {
+/**
+ * @interface GameContext
+ * @brief Części składowe kontekstu GameContext.
+ *
+ * @property {GameContextData | null} game dane dotyczące gry.
+ * @property {function} updateGameContext funkcja pozwalająca na aktualizację danych gry poza plikiem konteksu.
+ * @property {function} fetchGameData funkcja pobierające dane nt. gry z serwera.
+ */
+interface GameContext {
     game: GameContextData | null,
-    loading: boolean,
-    error: string | null,
     updateGameContext: (data: Partial<GameContextData>) => void,
-    updateBoardContext: (subgameId: string, data: Partial<BoardData>) => void,
     fetchGameData: (gameCode: string) => void,
 }
 
-const GameContext = createContext<GameContextValue>({
+const GameContext = createContext<GameContext>({
     game: null,
-    loading: false,
-    error: null,
     updateGameContext: (data: Partial<GameContextData>) => {},
-    updateBoardContext: (subgameId: string, data: Partial<BoardData>) => {},
     fetchGameData: (gameCode: string) => {},
 });
 
@@ -86,8 +115,6 @@ export default GameContext;
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [contextData, setContextData] = useState<GameContextData | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
     const {user} = useContext(authContext);
 
     const updateGameContext = (data: Partial<GameContextData>) => {
@@ -111,6 +138,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     // todo update doesn't keep these values?
                     board.localPlayerIs = contextData?.boards[subgameId].localPlayerIs;
                     board.primaryGame = contextData?.boards[subgameId].primaryGame;
+                    if (subgameId == '1' && !board.primaryGame) {
+                        board.primaryGame = true;
+                    }
                     board.whitePlayer = contextData?.boards[subgameId].whitePlayer;
                     board.blackPlayer = contextData?.boards[subgameId].blackPlayer;
                 }
@@ -120,49 +150,26 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             ...prevData,
             ...data,
         }));
-    }
 
-    const updateBoardContext = (subgameId: string, data: Partial<BoardData>) => {
-        setContextData((prevData: GameContextData | null) => {
-            if (!prevData) return null;
-            console.log('updating', subgameId);
-            return {
-                ...prevData,
-                boards: {
-                    ...prevData.boards,
-                    [subgameId]: {
-                        ...prevData.boards[subgameId],
-                        ...data
-                    }
-                }
-            };
-        });
+        if (data.result) {
+            setTimeout(() => alert('The game has ended.'), 1);
+        }
     }
 
     const fetchGameData = async (gameCode: string) => {
-        try {
-            setLoading(true);
             const response = await fetch(
                 `${SERVER_URL}/api/${gameCode}/info/`);
             if (!response.ok) {
-                new Error("Failed to fetch game info");
+                toast.error("Failed to fetch game info");
             }
             const data: GameContextData = await response.json();
             console.log('received', data);
             updateGameContext(data);
-        } catch (error: any) {
-            setError(error.message);
-        } finally {
-            setLoading(false);
-        }
     };
 
     return (
         <GameContext.Provider value={{  game: contextData,
-                                        loading,
-                                        error,
                                         updateGameContext,
-                                        updateBoardContext,
                                         fetchGameData }}>
             {children}
         </GameContext.Provider>

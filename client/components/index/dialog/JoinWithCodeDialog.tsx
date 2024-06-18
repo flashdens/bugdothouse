@@ -45,7 +45,7 @@ const JoinWithCodeDialog: React.FC<JoinWithCodeDialogProps> = ({ isOpen, onClose
             animation={"animate-in slide-in-from-bottom duration-300"}
         >
             <div className="flex flex-col items-center space-y-4 p-4">
-                <p className="text-lg font-medium">Got a game code?</p>
+                <p className="text-xl font-medium">Got a game code?</p>
                 <input
                     className="border border-gray-300 rounded px-4 py-2 w-full text-center"
                     value={inputValue}

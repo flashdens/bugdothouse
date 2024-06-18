@@ -16,6 +16,13 @@ import assert from "assert";
 
 import copyIcon from '@/public/copyIcon.svg'
 
+/**
+ * @interface LobbyProps
+ * @brief Props komponentu Lobby.
+ *
+ * @property {GameContextData} gameData dane dotyczące gry, pobierane przed wyświetlaniem komponentu z serwera.
+ * @property {function} rerenderParent funkcja, której wywołanie wymusza ponowne załadowanie rodzica komponentu.
+ */
 interface LobbyProps {
     gameData: GameContextData;
     rerenderParent: () => void;

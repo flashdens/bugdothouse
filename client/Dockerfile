@@ -1,17 +1,19 @@
-# Use an official Node runtime as a parent image
-FROM node:18-slim
+# Użyj domyślnego obrazu Node.js 20
+FROM node:20-slim
 
-# Set the working directory in the container
-RUN mkdir -p "/app/client"
-WORKDIR /app/client
+# Stwórz katalog projektu
+RUN mkdir -p "/bugdothouse/client"
+WORKDIR /bugdothouse/client
 
-# Copy the package.json and package-lock.json files to the working directory
-COPY . .
+# Skopiuj package.json (zależności projektu) do folderu aplikacji
+COPY package.json .
 
+# Ustaw zmienne środowiskowe
 ENV WATCHPACK_POLLING true
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install dependencies
+# Zainstaluj zależności projektu
 RUN npm install
-# Start the Next.js app
+
+# Uruchom aplikację
 CMD ["npm", "run", "dev"]
