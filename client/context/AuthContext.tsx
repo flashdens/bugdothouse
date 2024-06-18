@@ -28,6 +28,7 @@ interface AuthContext {
     authTokens?: AuthTokens;
     loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any ) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+    updateToken: () => any
     registerUser: () => any
 }
 
@@ -188,6 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         authTokens: authTokens,
         loginUser: loginUser,
         logoutUser: logoutUser,
+        updateToken: updateToken,
         registerUser: registerUser
     };
 
