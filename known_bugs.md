@@ -9,9 +9,7 @@
 - WICHTIG -> REWORK SIDE DISPLAY!
 - WICHTIG -> refresh token with axios interceptor
 
-**stockfish container**
-- no clue how to communicate
-- sometimes exits with 137?
+
 
 **wsgi**
 - hot reload not working (requests don't reach the server)

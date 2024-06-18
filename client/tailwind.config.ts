@@ -18,7 +18,10 @@ const config: Config = {
       width: {
           '30dvh': '30dvh',
           '45dvh': '45dvh',
-          '60dvh': '60dvh'
+          '60dvh': '60dvh',
+          '70dvh': '70dvh',
+          '70vw': '70vw',
+          '95vw': '95vw',
       },
     },
   },

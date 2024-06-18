@@ -38,12 +38,13 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove,
 
     return(
         <>
-            <div className="flex justify-between items-center w-60dvh">
+            <div className="flex justify-between items-center w-95vw lg:w-60dvh">
                 <div className={`flex-1 text-center 
                 ${isPlayerTurn ? 'bg-green-500' : ''}
                 ${isLocalPlayer ? 'font-bold' : ''}`}>
                     {player.username}
                     {game.gameMode === GameMode.BUGHOUSE ? ' - TEAM ' + teamNumber : ''}
+                    {player.username === 'bugdothouse_ai' && ' 🤖'}
                 </div>
             </div>
         </>

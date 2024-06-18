@@ -27,7 +27,7 @@ const SpectatorList: React.FC<SpectatorListProps> = ({ spectators, hostId }) => 
                         key={index}
                         className={user.user_id === spectator.id ? "font-bold" : ""}
                     >
-                        {spectator.username} {spectator.id === hostId && '(host)'}
+                        {spectator.username} {spectator.id === hostId && '👑'}
                     </li>
                 ))}
             </ul>

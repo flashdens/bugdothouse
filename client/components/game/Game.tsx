@@ -47,91 +47,74 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
     }
 
     const flexClasses = game.boards[1].primaryGame
-        ? "flex flex-col lg:flex-row justify-around my-16"
-        : "flex flex-col-reverse lg:flex-row-reverse justify-around my-16";
+        ? "flex flex-col lg:flex-row justify-center items-center lg:justify-around"
+        : "flex flex-col-reverse lg:flex-row-reverse items-center justify-center lg:justify-around";
+
         // TODO above is broken for spectators only
 
         return (
-        // context=window fixes two backends error?
-            <DndProvider backend={HTML5Backend} context={window}>
-            {game && (
-            <div className={flexClasses}>
-                    {Object.keys(game.boards).map((subgameId) => {
-                        if (user) {
-                            let localPlayerIs: PlayerRole =
-                                game.boards[subgameId].localPlayerIs
-                            let playerSide: PlayerSide;
-                            console.log(game);
-                            if (localPlayerIs == PlayerRole.whitePlayer) {
-                                playerSide = 'WHITE';
-                            } else if (localPlayerIs == PlayerRole.blackPlayer) {
-                                playerSide = 'BLACK';
-                            } else if (localPlayerIs == PlayerRole.spectator) {
-                                playerSide = 'SPECTATOR'
-                            }
-                            else {
-                                assert(false);
-                            }
+    <div className="w-full">
+      <DndProvider backend={HTML5Backend} context={window}>
+        {game && (
+          <div className={flexClasses}>
+            {Object.keys(game.boards).map((subgameId) => {
+              if (user) {
+                const board = game.boards[subgameId];
+                const localPlayerIs = board.localPlayerIs;
+                let playerSide;
 
-                            let board = game.boards[subgameId];
+                if (localPlayerIs === PlayerRole.whitePlayer) {
+                  playerSide = 'WHITE';
+                } else if (localPlayerIs === PlayerRole.blackPlayer) {
+                  playerSide = 'BLACK';
+                } else if (localPlayerIs === PlayerRole.spectator) {
+                  playerSide = 'SPECTATOR';
+                } else {
+                  assert(false);
+                }
 
-                            return (
-                                /* todo - in the future i would like the second game to be expanded from the side.
-                                but it's a different story...
-                                */
-
-                                <div className={"flex flex-col items-center space-y-2 py-2 md:py-5 bg-white rounded-lg shadow-2xl px-8 w-auto"} key={subgameId}>
-                                    { game.gameMode !== GameMode.CLASSICAL &&
-                                    <GamePocket
-                                        pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "WHITE" : "BLACK"}
-                                        playerSide={playerSide}
-                                        subgameId={subgameId}
-                                    />
-                                    }
-                                    <PlayerInfo
-                                        player={playerSide === "BLACK"
-                                            ? board.whitePlayer
-                                            : board.blackPlayer }
-                                        playerColor = {playerSide === "BLACK" ? "WHITE" : "BLACK"}
-                                        sideToMove={board.sideToMove}
-                                        teamNumber={determineTeamNumber(
-                                            playerSide == "BLACK"
-                                                ? "WHITE"
-                                                : "BLACK"
-                                        )}
-                                    />
-                                    <GameChessboard
-                                        cbId={subgameId}
-                                        playerSide={playerSide}
-                                    />
-                                    <PlayerInfo
-                                        player={playerSide === "BLACK"
-                                            ? board.blackPlayer
-                                            : board.whitePlayer}
-                                        playerColor = {playerSide === "BLACK" ? "BLACK" : "WHITE"}
-                                        sideToMove={board.sideToMove}
-                                        teamNumber={determineTeamNumber(
-                                            playerSide == "BLACK"
-                                                ? "BLACK"
-                                                : "WHITE"
-                                        )}
-                                    />
-
-                                    { game.gameMode !== GameMode.CLASSICAL &&
-                                    <GamePocket
-                                        pocketOf={playerSide === ("SPECTATOR" || "BLACK") ? "BLACK" : "WHITE"}
-                                        playerSide={playerSide}
-                                        subgameId={subgameId}
-                                    />
-                                    }
-                                </div>
-                            );
-                        }
-                    })}
-            </div>
-            )}
-        </DndProvider>
-    );
+                return (
+                  <div
+                    className="flex flex-col items-center justify-center space-y-2 p-1 lg:px-8 m-2 lg:m-0 md:py-5 bg-white rounded-lg shadow-2xl w-max"
+                    key={subgameId}
+                  >
+                    {game.gameMode !== GameMode.CLASSICAL && (
+                      <GamePocket
+                        pocketOf={playerSide === 'SPECTATOR' || playerSide === 'BLACK' ? 'WHITE' : 'BLACK'}
+                        playerSide={playerSide}
+                        subgameId={subgameId}
+                      />
+                    )}
+                    <PlayerInfo
+                      player={playerSide === 'BLACK' ? board.whitePlayer : board.blackPlayer}
+                      playerColor={playerSide === 'BLACK' ? 'WHITE' : 'BLACK'}
+                      sideToMove={board.sideToMove}
+                      teamNumber={determineTeamNumber(playerSide === 'BLACK' ? 'WHITE' : 'BLACK')}
+                    />
+                    <GameChessboard cbId={subgameId} playerSide={playerSide} />
+                    <PlayerInfo
+                      player={playerSide === 'BLACK' ? board.blackPlayer : board.whitePlayer}
+                      playerColor={playerSide === 'BLACK' ? 'BLACK' : 'WHITE'}
+                      sideToMove={board.sideToMove}
+                      teamNumber={determineTeamNumber(playerSide === 'BLACK' ? 'BLACK' : 'WHITE')}
+                    />
+                    {game.gameMode !== GameMode.CLASSICAL && (
+                      <GamePocket
+                        pocketOf={playerSide === 'SPECTATOR' || playerSide === 'BLACK' ? 'BLACK' : 'WHITE'}
+                        playerSide={playerSide}
+                        subgameId={subgameId}
+                      />
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })}
+          </div>
+        )}
+      </DndProvider>
+    </div>
+  );
 };
 
 export default Game;

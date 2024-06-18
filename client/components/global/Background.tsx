@@ -7,11 +7,9 @@ const Background = () => {
             <div className="absolute inset-0 bg-pattern bg-opacity-20 animate-pattern"></div>
             <style jsx>{`
               .bg-pattern {
-                background-size: cover;
                 background-repeat: no-repeat;
                 background-position: center;
-                width: 100vw;
-                height: 100vh;
+                background-size: 100% 100%;
               }
               @keyframes move {
                 0% {

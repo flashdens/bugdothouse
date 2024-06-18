@@ -524,7 +524,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return None
 
-    async def find_new_game_host(self, game):
+    async def assign_new_game_host(self, game):
         """
         Funkcja znajdującego nowego hosta dla gry lub usuwająca ją w przypadku braku możliwości znalezienia go.
         """
@@ -573,10 +573,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.remove_user_from_game(user, game, player_role)
 
         if game.host.pk == user.pk:  # if a host left the game...
-            new_host_found = await self.find_new_game_host(game)  # ...we need to find a new one
-
-            if not new_host_found:
-                await game.adelete()  # no other players found in game
+            new_host_found = await self.assign_new_game_host(game)  # ...we need to find a new one
 
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.connect'})

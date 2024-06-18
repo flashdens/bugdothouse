@@ -178,6 +178,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     void updateToken();
                 }
             }, REFRESH_INTERVAL);
+
         return () => clearInterval(interval);
 
     }, [authTokens]);
