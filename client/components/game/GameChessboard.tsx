@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Chessboard} from "react-chessboard";
 import {getWebSocket} from "@/services/socket"
 import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
@@ -6,6 +6,8 @@ import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext, {GameResultStrings, GameStatus} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
+
+import {BLACK, Chess, PieceSymbol, Square, WHITE} from "chess.js";
 
 /**
  * @type PlayerSide {('WHITE' | 'BLACK' | 'SPECTATOR')}
@@ -44,10 +46,12 @@ interface GameChessboardProps {
 const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     const {game, updateGameContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
+    const {fen,sideToMove, whitePlayer, blackPlayer} = game.boards[cbId];
+    const [localFen, setLocalFen] = useState(fen);
+
     if (!game)
         return(<div>waiting...</div>);
     const {gameCode} = game;
-    const {fen,sideToMove, whitePlayer, blackPlayer} = game.boards[cbId]
     let socket = getWebSocket(gameCode);
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -58,6 +62,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
             const data = JSON.parse(e.data)
             if (data.type === 'move') {
                 updateGameContext(data);
+                setLocalFen(data.boards[cbId].fen);
 
                 const gameOverElement = document.getElementById("gameOver");
                 if (gameOverElement && data.gameOver) {
@@ -71,36 +76,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
                 }
             }
         }
-
-        if (game.result) {
-        }
     }, []);
-
-
-
-    /**
-     * @brief Wysyła wiadomość o ruchu do serwera.
-     *
-     * @param {MoveData} moveData - Obiekt zawierający dane ruchu.
-     * @returns {boolean} - Zwraca true, jeśli wiadomość została pomyślnie wysłana, false w przeciwnym razie.
-     */
-    const makeMove = (moveData: MoveData): boolean => {
-        if (!socket) {
-            console.log('no sockets?');
-            return false;
-        }
-        else {
-            socket.send(JSON.stringify({
-                type: 'move',
-                token: authTokens.access,
-                subgame: Number(cbId),
-                code: gameCode,
-                ...moveData
-            }));
-            return true;
-        }
-    };
-
 
     /**
      * @brief Sprawdza, czy ruch jest promocją pionka.
@@ -119,6 +95,61 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
                 (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
     }
 
+    const isUpperCase = (string: string) => /^[A-Z]*$/.test(string)
+
+
+    const makeMove = async (moveData: MoveData) => {
+    if (!socket) {
+        console.log('no sockets?');
+        return false;
+    }
+
+    const game = new Chess(fen);
+
+    // handle drop
+    if (moveData.fromSq === undefined) {
+        const {toSq, fromSq, droppedPiece} = moveData;
+        // .put() does not allow to drop on last ranks, so no need to check that
+        if (!game.put({
+            type: droppedPiece as PieceSymbol,
+            color: isUpperCase(droppedPiece) ? BLACK : WHITE
+            }, toSq as Square)) {
+                return false;
+        }
+    }
+    // handle move from board
+    else {
+        try {
+            const move = game.move(moveData.fromSq + moveData.toSq);
+            if (move === null) {
+                return false;
+            }
+        }
+        catch (e) {
+            // invalid move errors don't require any handling, just let them pass
+        }
+    }
+
+    // let socket.send() complete asynchronously
+    setTimeout(() => {
+        try {
+            socket.send(JSON.stringify({
+                type: 'move',
+                token: authTokens.access,
+                subgame: Number(cbId),
+                code: gameCode,
+                ...moveData
+            }));
+        } catch (error) {
+            console.error('Socket send error:', error);
+        }
+    }, 0);
+
+    setLocalFen(game.fen())
+
+    return true;
+};
+
     /**
      * @brief Funkcja wywoływana w momencie upuszczenia bierki na planszy.
      *
@@ -135,6 +166,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
             droppedPiece: piece[1].toLowerCase(),
             promotion: piece[1].toLowerCase() as MoveData['promotion']
         };
+
         return makeMove(moveData);
     }
 
@@ -143,7 +175,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
             {game && (
                 <div className={'w-60dvh lg:w-70dvh'}>
                     <Chessboard
-                        position={fen}
+                        position={localFen}
                         onPieceDrop={onDrop}
                         customDndBackend={HTML5Backend}
                         // todo bad solution, not working for spectators only, implement reverse board for spectators only?
