@@ -7,7 +7,7 @@ import { GameMode, Player } from "@/context/GameContext";
 import GameListEntry from "@/components/index/dialog/GameListEntry";
 import Image from "next/image";
 import refresh from "@/public/refresh.svg";
-import axiosInstance from "@/services/axiosInstance";
+import api from "@/services/api";
 
 interface RoomListDialogProps {
     isOpen: boolean;
@@ -30,7 +30,7 @@ const GameListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
 
     const fetchRoomList = async () => {
         try {
-          const response = await axiosInstance.get('/games/');
+          const response = await api.get('/games/');
           setRoomList(response.data);
         } catch (error) {
           console.error('Error fetching room list:', error);

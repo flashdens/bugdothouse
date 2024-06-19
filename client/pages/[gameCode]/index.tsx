@@ -6,6 +6,7 @@ import { GameContextData, GameProvider, GameStatus } from "@/context/GameContext
 import AuthContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
 import { toast } from "react-toastify";
+import api from "@/services/api";
 
 interface GameIndexProps {
     gameCode: string
@@ -34,46 +35,40 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
     }, []);
 
     const joinGame = async (gameCode: string) => {
+
         try {
-            const response = await fetch(`${SERVER_URL}/api/${gameCode}/join/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    authTokens
-                }),
+            const response = await api.post(`${gameCode}/join/`, {
+                authTokens
             });
-            if (!response.ok) throw new Error('error joining game...');
-            const data = await response.json();
+
+            const data = response.data;
+
             if (data.error) throw new Error(data.error);
             if (data.guestToken) {
-                console.log(data.guestToken)
+                console.log(data.guestToken);
                 await loginUser(undefined, undefined, data.guestToken); // Await loginUser
             }
 
             router.push(`/${gameCode}`);
         } catch (error: any) {
-            toast.error('Error:', error);
+            toast.error('Error: ' + error.message);
         }
     };
 
     const getGameInfo = async (gameCode: string) => {
         try {
-            const response = await fetch(`${SERVER_URL}/api/${gameCode}/info/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) {
+            const response = await api.get(`${gameCode}/info/`);
+
+            if (response.status !== 200) {
                 void router.push('/404');
                 throw new Error('Response not OK');
             }
-            const data = await response.json();
+
+            const data = response.data;
             setGame(data);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error fetching game:', error);
+            toast.error('Error fetching game information.');
         }
     };
 

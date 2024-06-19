@@ -34,6 +34,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove,
         || (playerColor == 'BLACK' && sideToMove == BLACK))
         && (game?.status == GameStatus.ONGOING)
 
+    // console.log(player)
     const isLocalPlayer =  (user?.user_id === player.id)
 
     return(

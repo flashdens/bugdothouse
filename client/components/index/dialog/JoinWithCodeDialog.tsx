@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Dialog from "@/components/Dialog";
 import { toast } from "react-toastify";
 import SERVER_URL from "@/config";
+import api from "@/services/api";
 
 interface JoinWithCodeDialogProps {
     isOpen: boolean;
@@ -33,9 +34,14 @@ const JoinWithCodeDialog: React.FC<JoinWithCodeDialogProps> = ({ isOpen, onClose
     };
 
     const gameExists = async (gameCode: string): Promise<boolean> => {
-        const response = await fetch(`${SERVER_URL}/api/${gameCode}/info/`);
-        return response.ok;
+    try {
+        const response = await api.get(`/api/${gameCode}/info/`);
+        return response.status === 200;
+    } catch (error) {
+        console.error(`Error checking if game ${gameCode} exists:`, error);
+        return false;
     }
+};
 
     return (
         <Dialog

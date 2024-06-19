@@ -15,6 +15,9 @@ import {bold} from "next/dist/lib/picocolors";
 import assert from "assert";
 
 import copyIcon from '@/public/copyIcon.svg'
+import api from "@/services/api";
+import {toast} from "react-toastify";
+import Head from "next/head";
 
 /**
  * @interface LobbyProps
@@ -101,7 +104,6 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 console.log(data);
                 if (data.type === 'lobbySwitch' || data.type === 'connect') {
                     fetchGameData(gameData.gameCode);
-                    console.log('dupa')
                 } else if (data.type == 'gameStart') {
                     fetchGameData(gameData.gameCode);
                     rerenderParent();
@@ -166,30 +168,35 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
         }
     };
 
-    const startGame = () => {
-        fetch(`${SERVER_URL}/api/${gameCode}/start/`, {
-            method: 'POST',
+   const startGame = async () => {
+    try {
+        const response = await api.post(`${gameCode}/start/`, {}, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + String(authTokens.access)
             },
-        })
-            .then(response => {
-                if (!response.ok)
-                    throw new Error('upsi');
-                else {
-                    // response ok -> game started
-                    socket?.send(JSON.stringify({ 'type': 'gameStart' }));
-                    return response.json();
-                }
-            })
+        });
+
+        if (!response.status || response.status !== 200) {
+            toast.error('Failed to start the game');
+        } else {
+            // Response ok -> game started
+            socket?.send(JSON.stringify({ 'type': 'gameStart' }));
+            return response.data;
+        }
+    } catch (error) {
+        console.error('Error starting the game:', error);
+        throw new Error('Failed to start the game');
     }
+};
 
     return (
         <>
+            <Head>
+                <title>Lobby | bug.house</title>
+            </Head>
             {game ? (
                 <>
-                    <div className="flex flex-col justify-center items-center gap-2 border bg-white rounded-lg shadow-2xl w-fit mx-auto p-5 mt-24 lg:mt-10">
+                    <div className="flex flex-col justify-center items-center gap-2 border bg-white rounded-lg shadow-2xl w-fit mx-auto p-5">
                         <button
                             className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
                             onClick={backToLobby}

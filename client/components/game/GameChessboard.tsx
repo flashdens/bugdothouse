@@ -6,8 +6,10 @@ import {toast} from 'react-toastify'
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import GameContext, {GameResultStrings, GameStatus} from "@/context/GameContext";
 import AuthContext from "@/context/AuthContext";
+import api, {getAuthTokens, refreshToken} from "@/services/api";
 
 import {BLACK, Chess, PieceSymbol, Square, WHITE} from "chess.js";
+import {jwtDecode} from "jwt-decode";
 
 /**
  * @type PlayerSide {('WHITE' | 'BLACK' | 'SPECTATOR')}
@@ -46,36 +48,32 @@ interface GameChessboardProps {
 const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     const {game, updateGameContext} = useContext(GameContext);
     const {user, authTokens} = useContext(AuthContext)
-    const {fen,sideToMove, whitePlayer, blackPlayer} = game.boards[cbId];
+    const {fen} = game!.boards[cbId];
     const [localFen, setLocalFen] = useState(fen);
 
-    if (!game)
-        return(<div>waiting...</div>);
-    const {gameCode} = game;
+    const {gameCode} = game!;
     let socket = getWebSocket(gameCode);
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
         if (!socket || !cbId) return;
-
-        socket.onmessage = (e) => {
-            const data = JSON.parse(e.data)
+        const handleMessage = (e: any) => {
+            const data = JSON.parse(e.data);
             if (data.type === 'move') {
                 updateGameContext(data);
                 setLocalFen(data.boards[cbId].fen);
+            }
+        };
 
-                const gameOverElement = document.getElementById("gameOver");
-                if (gameOverElement && data.gameOver) {
-                    gameOverElement.innerText = GameResultStrings[data.gameOver];
-                }
-            }
-            else if (data.type === 'error') {
-                const feedbackElement = document.getElementById("feedback");
-                if (feedbackElement && data.error) {
-                    toast.error(data.error, {autoClose: 2000, hideProgressBar: true})
-                }
-            }
+        if (socket) {
+            socket.addEventListener('message', handleMessage);
         }
+
+        // Clean up event listener on component unmount
+        return () => {
+            if (socket) {
+                socket.removeEventListener('message', handleMessage);
+            }
+        };
     }, []);
 
     /**
@@ -98,7 +96,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     const isUpperCase = (string: string) => /^[A-Z]*$/.test(string)
 
 
-    const makeMove = async (moveData: MoveData) => {
+    const makeMove = (moveData: MoveData) => {
     if (!socket) {
         console.log('no sockets?');
         return false;
@@ -133,14 +131,23 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     // let socket.send() complete asynchronously
     setTimeout(() => {
         try {
-            socket.send(JSON.stringify({
-                type: 'move',
-                token: authTokens.access,
-                subgame: Number(cbId),
-                code: gameCode,
-                ...moveData
-            }));
-        } catch (error) {
+            const tokens = getAuthTokens();
+            if (tokens && tokens.refresh) {
+                const decodedAccess = jwtDecode(tokens.access);
+                if (decodedAccess.exp! < Date.now() / 1000) {
+                   void refreshToken();
+                }
+
+                socket.send(JSON.stringify({
+                    type: 'move',
+                    token: authTokens!.access,
+                    subgame: Number(cbId),
+                    code: gameCode,
+                    ...moveData
+                }));
+            }
+        }
+        catch (error) {
             console.error('Socket send error:', error);
         }
     }, 0);
@@ -148,7 +155,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     setLocalFen(game.fen())
 
     return true;
-};
+    };
 
     /**
      * @brief Funkcja wywoływana w momencie upuszczenia bierki na planszy.
@@ -159,7 +166,6 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
      * @returns {boolean} - zraca true, jeśli ruch został pomyślnie przetworzony, w przeciwnym razie false.
      */
     const onDrop = (from: string, to: string, piece: Piece): boolean  => {
-        console.log(piece)
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
@@ -174,10 +180,12 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
         <>
             {game && (
                 <div className={'w-95vw lg:w-60dvh'}>
+                    {cbId}
                     <Chessboard
                         position={localFen}
                         onPieceDrop={onDrop}
-                        customDndBackend={HTML5Backend}
+                        id={cbId}
+                        // customDndBackend={HTML5Backend}
                         // todo bad solution, not working for spectators only, implement reverse board for spectators only?
                         boardOrientation={playerSide !== "SPECTATOR"
                             ? playerSide.toLowerCase() as BoardOrientation

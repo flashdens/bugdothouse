@@ -5,10 +5,9 @@ import logo from "@/public/logo.svg";
 import Image from "next/image";
 import GameListDialog from "@/components/index/dialog/GameListDialog";
 import authContext from "@/context/AuthContext";
-import Background from "@/components/global/Background";
 import JoinWithCodeDialog from "@/components/index/dialog/JoinWithCodeDialog";
 
-const HeroSection = () => {
+const Hero = () => {
     const [isHowToPlayDialogOpen, setIsHowToPlayDialogOpen] = useState(false);
     const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
     const [isRoomListDialogOpen, setIsRoomListDialogOpen] = useState(false);
@@ -26,7 +25,6 @@ const HeroSection = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen">
-            <Background />
             <div className="h-full flex flex-col justify-center items-center p-10 bg-white rounded-lg shadow-2xl">
                 <div className="flex justify-center">
                     <Image className="h-16 w-16" src={logo} alt={"logo"} />
@@ -40,7 +38,7 @@ const HeroSection = () => {
                         onClick={() => setNewGameDialogOpen(true)}
                         key={'1'}
                         className="pink-button w-full max-w-sm text-xl"
-                        disabled={!user || !authTokens.refresh} // guests don't own refresh tokens
+                        disabled={!user || !authTokens?.refresh} // guests don't own refresh tokens
                     >
                         {user ? 'CREATE A NEW GAME' : 'LOG IN TO CREATE GAMES'}
                     </button>
@@ -87,4 +85,4 @@ const HeroSection = () => {
     );
 };
 
-export default HeroSection;
+export default Hero;

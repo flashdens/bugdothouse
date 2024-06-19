@@ -1,11 +1,9 @@
-import React, { createContext, useState, ReactNode, FormEvent, useEffect } from "react";
-import {jwtDecode, JwtHeader, JwtPayload} from 'jwt-decode';
-import { useRouter } from 'next/router';
+import React, { createContext, FormEvent, ReactNode, useState } from "react";
+import { jwtDecode, JwtPayload } from 'jwt-decode';
+import Router, { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
-import {toast} from "react-toastify";
-import assert from "assert";
-import Router from 'next/router'
-
+import { toast } from "react-toastify";
+import api from "@/services/api";
 
 interface AuthTokens {
     access: string;
@@ -24,56 +22,63 @@ interface AuthTokens {
  * @property {function} registerUser funkcja rejestrująca użytkownika.
  */
 interface AuthContext {
-    user?: (JwtPayload & {user_id: number, username: string}) | null,
+    user?: (JwtPayload & { user_id: number, username: string }) | null,
     authTokens?: AuthTokens;
-    loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any ) => Promise<void>;
+    loginUser: (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any) => Promise<void>;
     logoutUser: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
-    updateToken: () => any
-    registerUser: () => any
+    registerUser:(e: any) => Promise<{success: boolean; message: any; data?: undefined;}
+        | {success: boolean; data: any; message?: undefined;}>;
 }
 
 const AuthContext = createContext<AuthContext>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-      let [user, setUser] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.getItem('authTokens') !== 'null' && localStorage.getItem('authTokens')) {
-            return jwtDecode(localStorage.getItem('authTokens'));
+    const [user, setUser] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const storedTokens = localStorage.getItem('authTokens');
+            if (storedTokens) {
+                return jwtDecode(storedTokens);
+            }
         }
         return null;
     });
 
-    let [authTokens, setAuthTokens] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.getItem('authTokens') != 'null' && localStorage.getItem('authTokens') ) {
-            return JSON.parse(localStorage.getItem('authTokens'));
+    const [authTokens, setAuthTokens] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const storedTokens = localStorage.getItem('authTokens');
+            if (storedTokens) {
+                return JSON.parse(storedTokens);
+            }
         }
         return null;
     });
-
-    const [loading, setLoading] = useState(true);
-    const router = useRouter();
 
     const loginUser = async (e?: FormEvent<HTMLFormElement>, data?: AuthTokens, guestToken?: any) => {
         if (e) e.preventDefault();
 
-        let respData = null;
+        let respData: any = null;
 
         if (!data && e) {
-            const response = await fetch(`${SERVER_URL}/auth/token/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
+            try {
+                const response = await api.post('/auth/token/', {
                     username: e.currentTarget.username.value,
                     password: e.currentTarget.password.value
-                })
-            });
+                });
 
-            respData = await response.json() /*as { access: AuthTokens, error?: string };*/
-            console.log(data);
-            if (!response.ok) {
-                toast.error(respData.detail)
+                respData = response.data;
+                console.log(respData);
+                if (response.status !== 200 && respData) {
+                    toast.error(respData.detail);
+                    return;
+                }
+            } catch (error: any) {
+                if (error.response && error.response.data) {
+                    toast.error(error.response.data.detail);
+                } else {
+                    console.error('Error logging in:', error);
+                    toast.error('An error occurred during login. Please try again.');
+                }
                 return;
             }
         }
@@ -81,16 +86,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (guestToken) {
             console.log(guestToken);
             setUser(jwtDecode(guestToken.access));
-            setAuthTokens(guestToken)
+            setAuthTokens(guestToken);
             localStorage.setItem('authTokens', JSON.stringify(guestToken));
-        }
-        else if (respData) {
+        } else if (respData) {
             setUser(jwtDecode(respData.access));
-            setAuthTokens(data);
+            setAuthTokens(respData);
             localStorage.setItem('authTokens', JSON.stringify(respData));
-        }
-        else {
-            assert(false);
+        } else {
+            throw new Error('Unexpected state: no tokens available.');
         }
 
         Router.reload();
@@ -103,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAuthTokens(null);
         setUser(null);
 
-        Router.reload();
+        Router.push('/');
     };
 
     const registerUser = async (e: any) => {
@@ -120,83 +123,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return { success: false, message: 'Passwords do not match.' };
             }
 
-            const response = await fetch(`${SERVER_URL}/auth/register/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    username: username.value,
-                    email: email.value,
-                    password: password.value,
-                    consent: consent.value
-                })
+            const response = await api.post(`${SERVER_URL}/auth/register/`, {
+                username: username.value,
+                email: email.value,
+                password: password.value,
+                consent: consent.value
             });
 
-            const data = await response.json();
-            if (!response.ok) {
-                return { success: false, message:
-                    data.username[0] || data.email[0]};
+            if (!response.data.success) {
+                return { success: false, message: response.data.message };
             }
 
-            return { success: true, data };
+            return { success: true, data: response.data };
 
         } catch (error: any) {
+            console.error('Error registering user:', error);
             return { success: false, message: error.message };
         }
     };
 
-    const updateToken = async () => {
-        const response = await fetch(`${SERVER_URL}/auth/token/refresh/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ refresh: authTokens?.refresh })
-        });
-
-        const data = await response.json();
-        if (response.status === 200) {
-            setAuthTokens(data);
-            setUser(jwtDecode(data.access));
-            localStorage.setItem('authTokens', JSON.stringify(data));
-        } else {
-            alert("Unauthorized to refresh the auth token! " +
-                "Guest accounts can only play for 30 minutes")
-            logoutUser();
-        }
-
-        if (loading) {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        const REFRESH_INTERVAL = 1000 * 60 * 1; // 30 minutes
-        let interval: NodeJS.Timeout =
-            setInterval(() => {
-                if (authTokens) {
-                    void updateToken();
-                }
-            }, REFRESH_INTERVAL);
-
-        return () => clearInterval(interval);
-
-    }, [authTokens]);
 
     const contextData: AuthContext = {
-        user: user as JwtPayload & {user_id: number, username: string},
+        user: user as JwtPayload & { user_id: number, username: string },
         authTokens: authTokens,
         loginUser: loginUser,
         logoutUser: logoutUser,
-        updateToken: updateToken,
         registerUser: registerUser
     };
 
     return (
         <>
             <AuthContext.Provider value={contextData}>
-            {children}
+                {children}
             </AuthContext.Provider>
         </>
     );

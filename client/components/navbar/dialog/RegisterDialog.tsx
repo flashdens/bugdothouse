@@ -29,7 +29,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log(registerUser(e)
+        registerUser(e)
             .then((result: { success: any; message: any }) => {
                 console.log(result.success)
                 if (!result.success) {
@@ -43,7 +43,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
             })
             .catch((error: { message: any; }) => {
                 setErrorMessage(error.message);
-            }));
+            });
     };
 
     return (

@@ -5,6 +5,7 @@ import AuthContext from "@/context/AuthContext";
 import { useRouter } from 'next/router'
 import { GameMode } from "@/context/GameContext";
 import {toast} from "react-toastify";
+import api from "@/services/api";
 
 interface NewGameDialogProps {
     isOpen: boolean;
@@ -29,36 +30,33 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
         1: 'Visible on the room list',
     }
 
-    const onCreateGame = () => {
+    const onCreateGame = async () => {
         console.log('creating...', gamemode, isRoomPrivate);
         if (!user) return;
         if (gamemode === undefined) {
             toast.error('Select gamemode', {hideProgressBar: true})
             return;
         }
-        fetch(`${SERVER_URL}/api/new_game/`, {
-            method: 'POST',
+            try {
+        const response = await api.post('/new_game/', {
+            user: user.user_id,
+            gamemode: gamemode,
+            isPrivate: isRoomPrivate,
+        }, {
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + String(authTokens?.access)
             },
-            body: JSON.stringify({
-                user: user.user_id,
-                gamemode: gamemode,
-                isPrivate: isRoomPrivate,
-            })
-        })
-            .then(response => {
-                if (!response.ok) {
-                    toast.error('Error creating lobby');
-                    return;
-                }
-                return response.json();
-            })
-            .then(data =>
-                router.push(`/${data.code}`))
-            .catch(error => console.error(error))
-    }
+        });
+
+        if (!response.data.code) {
+            throw new Error('Invalid response from server'); // Handle unexpected response structure
+        }
+
+        router.push(`/${response.data.code}`);
+    } catch (error) {
+        console.error('Error creating lobby:', error);
+        toast.error('Error creating lobby');
+    }}
 
     const handleGamemodeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         console.log(gamemode)

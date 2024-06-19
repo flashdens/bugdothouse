@@ -3,6 +3,7 @@ import SERVER_URL from "@/config";
 import authContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
 import {toast} from "react-toastify";
+import api from "@/services/api";
 
 export enum PlayerRole {
     'whitePlayer',
@@ -157,14 +158,21 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     const fetchGameData = async (gameCode: string) => {
-            const response = await fetch(
-                `${SERVER_URL}/api/${gameCode}/info/`);
-            if (!response.ok) {
+        try {
+            const response = await api.get(`/${gameCode}/info/`);
+
+            if (response.status !== 200) {
                 toast.error("Failed to fetch game info");
+                return;
             }
-            const data: GameContextData = await response.json();
+
+            const data: GameContextData = response.data;
             console.log('received', data);
             updateGameContext(data);
+        } catch (error) {
+            console.error('Error fetching game data:', error);
+            toast.error("Failed to fetch game info");
+        }
     };
 
     return (

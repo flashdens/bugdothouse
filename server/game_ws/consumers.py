@@ -325,6 +325,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False, {'type': 'error', 'error': 'Invalid JSON'}
 
         decoded_token = await self.parse_jwt_token_async(token)
+        print(decoded_token)
         user_id = decoded_token['user_id']
 
         user = await self.get_user_async(user_id)
@@ -502,12 +503,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         Metoda obsługująca ruch gracza komputerowego w grze.
         """
-        while self.is_ai_turn_in_game(game):
-            ai_player = await User.objects.aget(username='bugdothouse_ai')
-            await self.process_move(game,
-                                    board,
-                                    ai_player,
-                                    is_ai_move=True)
+        ai_player = await User.objects.aget(username='bugdothouse_ai')
+        await self.process_move(game,
+                                board,
+                                ai_player,
+                                is_ai_move=True)
 
     async def find_non_host_player_in_game(self, game):
         """
@@ -600,6 +600,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 while self.is_ai_turn_in_game(game):
                     await self.handle_ai_turn(game, board)
                     await self.send_move_to_clients(game)
+                    await asyncio.sleep(5)
 
     async def receive(self, text_data=None, bytes_data=None):
         """
