@@ -151,7 +151,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         if is_ai_move:
             engine_conn = EngineConnection()
             await engine_conn.connect("setoption name UCI_Variant value crazyhouse")
-            move = await engine_conn.get_engine_move(board, depth=3)
+            move = await engine_conn.get_engine_move(board, depth=5)
 
             if move not in board.legal_moves:
                 assert False  # ?
@@ -438,7 +438,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def handle_user_switch(self, data):
         """
-        Punkt wejścia dla wysłanego zdarzenia WebSocket "lobbySwitch".
+        Punkt wejścia dla zdarzenia WebSocket "lobbySwitch".
         """
         from_subgame = data['fromSubgame']
         from_side = data['fromSide']
@@ -513,13 +513,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         Pomocnicza metoda znajdującego gracza w ramach gry, który nie jest hostem.
         """
-        if game.white_player and game.white_player.pk != game.host.pk:
+        if game.white_player and game.white_player.username != 'bugdothouse_ai' and game.white_player.pk != game.host.pk:
             return game.white_player
-        elif game.black_player and game.black_player.pk != game.host.pk:
+        elif game.black_player and game.black_player.username != 'bugdothouse_ai' and game.black_player.pk != game.host.pk:
             return game.black_player
         else:
             async for spectator in game.spectators.all():
-                if spectator.pk != game.host.pk:
+                if spectator.pk != game.host.pk and spectator.username != 'bugdothouse_ai':
                     return spectator
 
         return None
@@ -582,13 +582,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         Punkt wejścia dla wysłanego zdarzenia WebSocket "gameStart".
         """
+        await self.channel_layer.group_send(
+            self.room_group_name, {'type': 'game.start'})
+
         started_games = await sync_to_async(list)(Game.objects
                                                   .select_related('white_player', 'black_player')
                                                   .filter(code=self.room_name))
 
         for game in started_games:
-            await self.channel_layer.group_send(
-                self.room_group_name, {'type': 'game.start'})
 
             if self.is_ai_turn_in_game(game):
                 if game.gamemode == GameMode.CLASSICAL.value:
@@ -624,8 +625,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.handle_user_disconnect(data)
             elif event_type == 'gameStart':
                 await self.handle_game_start()
-                await self.channel_layer.group_send(
-                    self.room_group_name, {'type': 'game.start'})
             else:
                 await self.send(text_data=json.dumps({'message': 'invalid request received'}))
 
@@ -644,7 +643,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def game_ai_move(self, event):
         move = event['message']
         await self.send(json.dumps(move))
-        await asyncio.sleep(1)
 
     async def lobby_switch(self, event):
         await self.send(text_data=json.dumps({"type": "lobbySwitch",

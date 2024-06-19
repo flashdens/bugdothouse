@@ -1,5 +1,6 @@
 import asyncio
 import os
+import random
 
 import asyncssh
 import chess
@@ -8,13 +9,6 @@ from asgiref.sync import sync_to_async
 
 
 class EngineConnection:
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super(EngineConnection, cls).__new__(cls)
-            cls._instance.__init__()
-        return cls._instance
 
     def __init__(self):
         self.host = 'bugdothouse_fairy-stockfish'
@@ -29,7 +23,6 @@ class EngineConnection:
             self.connect()
 
     async def connect(self, *args):
-        print(args)
         # args are for additional lines to send to the engine after init
         if not self.conn:
             try:
@@ -53,12 +46,17 @@ class EngineConnection:
     async def ping(self):
         await self.engine.ping()
 
-    async def analyse_position(self, board, depth=10):
-        await self.connect()
-        info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
-        return info
+    async def analyse_position(self, board, depth=5):
+        try:
+            await self.connect()
+            info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
+            return info
+        except chess.EngineError:  # sometimes even engines break...
+            legal_moves = list(board.legal_moves)  # if so, make a random legal move like nothing happened
+            random_move = random.choice(legal_moves)
+            return random_move.uci()
 
-    async def get_engine_move(self, board, depth=10):
+    async def get_engine_move(self, board, depth=5):
         info = await self.analyse_position(board, depth)
         best_move = info["pv"][0] if "pv" in info and info["pv"] else None
         return best_move

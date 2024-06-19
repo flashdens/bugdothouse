@@ -250,7 +250,8 @@ class StartGameView(APIView):
         for game in games:
             if self.can_start_game(game, user):
                 game.fen = \
-                    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1" if game.gamemode != GameMode.CLASSICAL.value else "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+                    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR[] w KQkq - 0 1" \
+                        if game.gamemode != GameMode.CLASSICAL.value else "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
                 game.status = GameStatus.ONGOING
                 game.save()
 

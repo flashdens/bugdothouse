@@ -9,7 +9,7 @@ import SpectatorList from "@/components/lobby/SpectatorList";
 import MoveToSpectatorsButton from "@/components/lobby/MoveToSpectatorsButton";
 import StartGameButton from "@/components/lobby/StartGameButton";
 import SERVER_URL from "@/config";
-import { useRouter } from "next/router";
+import Router, { useRouter } from "next/router";
 import SubLobby from "@/components/lobby/SubLobby";
 import {bold} from "next/dist/lib/picocolors";
 import assert from "assert";
@@ -88,7 +88,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 type: 'disconnect',
                 subgameId: board,
                 playerRole: playerRole,
-                token: authTokens.access
+                token: authTokens!.access
             }));
         };
 
@@ -151,7 +151,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 fromSide: playerRole,
                 toSubgame: toSubgame,
                 toSide: PlayerRole[toSide as keyof typeof PlayerRole],
-                token: authTokens.access,
+                token: authTokens!.access,
             }));
         }
     };
@@ -163,7 +163,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
                 event: msgType,
                 toSubgame: toSubgame,
                 toSide: PlayerRole[toSide as keyof typeof PlayerRole],
-                token: authTokens.access,
+                token: authTokens!.access,
             }));
         }
     };
@@ -176,11 +176,13 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             },
         });
 
-        if (!response.status || response.status !== 200) {
+        if (response.status !== 200) {
             toast.error('Failed to start the game');
         } else {
             // Response ok -> game started
             socket?.send(JSON.stringify({ 'type': 'gameStart' }));
+            fetchGameData(gameData.gameCode);
+            Router.reload();
             return response.data;
         }
     } catch (error) {
@@ -196,7 +198,7 @@ const Lobby: React.FC<LobbyProps> = ({ gameData, rerenderParent }) => {
             </Head>
             {game ? (
                 <>
-                    <div className="flex flex-col justify-center items-center gap-2 border bg-white rounded-lg shadow-2xl w-fit mx-auto p-5">
+                    <div className="flex flex-col justify-center mt-12 items-center gap-2 border bg-white rounded-lg shadow-2xl w-fit mx-auto p-5 h-auto lg:h-max">
                         <button
                             className={'self-start bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded'}
                             onClick={backToLobby}

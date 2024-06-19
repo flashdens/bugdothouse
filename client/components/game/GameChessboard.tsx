@@ -96,46 +96,44 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
     const isUpperCase = (string: string) => /^[A-Z]*$/.test(string)
 
 
-    const makeMove = (moveData: MoveData) => {
-    if (!socket) {
-        console.log('no sockets?');
-        return false;
-    }
-
-    const game = new Chess(fen);
-
-    // handle drop
-    if (moveData.fromSq === undefined) {
-        const {toSq, fromSq, droppedPiece} = moveData;
-        // .put() does not allow to drop on last ranks, so no need to check that
-        if (!game.put({
-            type: droppedPiece as PieceSymbol,
-            color: isUpperCase(droppedPiece) ? BLACK : WHITE
-            }, toSq as Square)) {
-                return false;
+    const makeMove = async (moveData: MoveData) => {
+        if (!socket) {
+            console.log('no sockets?');
+            return false;
         }
-    }
-    // handle move from board
-    else {
-        try {
-            const move = game.move(moveData.fromSq + moveData.toSq);
-            if (move === null) {
+
+        const game = new Chess(fen);
+
+        // handle drop
+        if (moveData.fromSq === undefined) {
+            const {toSq, fromSq, droppedPiece} = moveData;
+            // .put() does not allow to drop on last ranks, so no need to check that
+            if (!game.put({
+                type: droppedPiece as PieceSymbol,
+                color: isUpperCase(droppedPiece) ? BLACK : WHITE
+            }, toSq as Square)) {
                 return false;
             }
         }
-        catch (e) {
-            // invalid move errors don't require any handling, just let them pass
+        // handle move from board
+        else {
+            try {
+                const move = game.move(moveData.fromSq + moveData.toSq);
+                if (move === null) {
+                    return false;
+                }
+            } catch (e) {
+                // invalid move errors don't require any handling, just let them pass
+            }
         }
-    }
 
-    // let socket.send() complete asynchronously
-    setTimeout(() => {
+        // let socket.send() complete asynchronously
         try {
             const tokens = getAuthTokens();
             if (tokens && tokens.refresh) {
                 const decodedAccess = jwtDecode(tokens.access);
                 if (decodedAccess.exp! < Date.now() / 1000) {
-                   void refreshToken();
+                    await refreshToken();
                 }
 
                 socket.send(JSON.stringify({
@@ -146,15 +144,13 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
                     ...moveData
                 }));
             }
-        }
-        catch (error) {
+        } catch (error) {
             console.error('Socket send error:', error);
         }
-    }, 0);
 
-    setLocalFen(game.fen())
+        setLocalFen(game.fen())
 
-    return true;
+        return true;
     };
 
     /**

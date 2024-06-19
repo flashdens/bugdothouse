@@ -33,7 +33,6 @@ class GameSerializer(serializers.ModelSerializer):
         representation['currentPlayers'] = current_players
 
         if instance.gamemode == GameMode.BUGHOUSE.value:
-            print(instance.code)
             subgame = Game.objects.get(code=instance.code, subgame_id=2)
             subgame_current_players = 0
             if subgame.white_player is not None:

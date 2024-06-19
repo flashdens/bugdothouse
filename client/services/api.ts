@@ -37,9 +37,7 @@ export const refreshToken = async () => {
             toast.error('Unauthorized to refresh token');
         }
     }
-
 }
-
 
 api.interceptors.request.use(
     async (config: AxiosRequestConfig) => {

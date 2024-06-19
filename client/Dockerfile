@@ -1,19 +1,25 @@
-# Użyj domyślnego obrazu Node.js 20
+# Use the official Node.js 20 slim image as the base image
 FROM node:20-slim
 
-# Stwórz katalog projektu
-RUN mkdir -p "/bugdothouse/client"
+# Create and set the working directory
 WORKDIR /bugdothouse/client
 
-# Skopiuj package.json (zależności projektu) do folderu aplikacji
-COPY package.json .
+# Copy package.json and package-lock.json (if available) to the working directory
+COPY package.json package-lock.json ./
 
-# Ustaw zmienne środowiskowe
-ENV WATCHPACK_POLLING true
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Zainstaluj zależności projektu
+# Install project dependencies
 RUN npm install
 
-# Uruchom aplikację
+# Copy the rest of the application code to the working directory
+COPY . .
+
+# Set environment variables
+ENV WATCHPACK_POLLING=true
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Expose the port that the app runs on
+EXPOSE 3000
+
+# Command to run the application
 CMD ["npm", "run", "dev"]
+
