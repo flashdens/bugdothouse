@@ -24,7 +24,6 @@ export interface RoomListGame {
 }
 
 const GameListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
-    const { authTokens, loginUser } = useContext(authContext);
     const router = useRouter();
     const [roomList, setRoomList] = useState<RoomListGame[]>([]);
 
@@ -33,7 +32,7 @@ const GameListDialog: React.FC<RoomListDialogProps> = ({ isOpen, onClose }) => {
           const response = await api.get('/games/');
           setRoomList(response.data);
         } catch (error) {
-          console.error('Error fetching room list:', error);
+          // console.error('Error fetching room list:', error);
         }
     };
 

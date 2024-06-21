@@ -11,6 +11,8 @@ const api: AxiosInstance = axios.create({
     },
 });
 
+let isAwaitingNewToken = false;
+
 export const getAuthTokens = () => {
     const authTokens = localStorage.getItem('authTokens');
     return authTokens ? JSON.parse(authTokens) : null;
@@ -19,7 +21,8 @@ export const getAuthTokens = () => {
 export const refreshToken = async () => {
     const tokens = getAuthTokens();
     const decodedAccess = jwtDecode(tokens.access);
-    if (decodedAccess.exp! < Date.now() / 1000) {
+    if (decodedAccess.exp! < Date.now() / 1000 && !isAwaitingNewToken) {
+        isAwaitingNewToken = true;
         const response = await fetch(`${SERVER_URL}/api/auth/token/refresh/`, {
             method: 'POST',
             headers: {
@@ -30,28 +33,29 @@ export const refreshToken = async () => {
 
         const data = await response.json();
         if (response.status === 200) {
-            console.log(data)
             localStorage.setItem('authTokens', JSON.stringify(data));
+            return true;
         } else {
             alert("Unauthorized to refresh the auth token! Guest accounts can only play for 30 minutes");
             toast.error('Unauthorized to refresh token');
+            return false;
         }
+
+        isAwaitingNewToken = false;
     }
 }
 
 api.interceptors.request.use(
     async (config: AxiosRequestConfig) => {
-        const tokens = getAuthTokens();
-        if (tokens && tokens.refresh) {
-            const decodedAccess = jwtDecode(tokens.access);
-            if (decodedAccess.exp! < Date.now() / 1000) {
-                  await refreshToken();
-            }
+        let tokens = getAuthTokens();
+        if (tokens) {
+            // const decodedAccess = jwtDecode(tokens.access);
+            // if (decodedAccess.exp! < Date.now() / 1000) {
+            //       await refreshToken();
+            // }
+            // tokens = getAuthTokens();
             config.headers!['Authorization'] = `Bearer ${tokens.access}`;
         }
-        // else if (tokens.access) {
-        //     alert("Unauthorized to refresh the auth token! Guest accounts can only play for 30 minutes. If you're a registered user, please log in again.");
-        // }
 
         return config;
     },
@@ -65,6 +69,14 @@ api.interceptors.response.use(
         return response;
     },
     async (error) => {
+        const originalReq = error.config;
+        if (error.response.status == 401 && !originalReq._retry) {
+            originalReq._retry = true;
+            if (await refreshToken() === true) {
+                axios.defaults.headers.common['Authorization'] = 'Bearer ' + getAuthTokens().access;
+                return api(originalReq);
+            }
+        }
         return Promise.reject(error);
     }
 );
