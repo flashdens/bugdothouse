@@ -32,6 +32,7 @@ export const refreshToken = async () => {
         });
 
         const data = await response.json();
+        isAwaitingNewToken = false;
         if (response.status === 200) {
             localStorage.setItem('authTokens', JSON.stringify(data));
             return true;
@@ -40,8 +41,6 @@ export const refreshToken = async () => {
             toast.error('Unauthorized to refresh token');
             return false;
         }
-
-        isAwaitingNewToken = false;
     }
 }
 
@@ -70,9 +69,10 @@ api.interceptors.response.use(
     },
     async (error) => {
         const originalReq = error.config;
-        if (error.response.status == 401 && !originalReq._retry) {
-            originalReq._retry = true;
+        if (error.response && error.response.status == 401 && !isAwaitingNewToken) {
+            console.log('chuj zlamany na 4')
             if (await refreshToken() === true) {
+                console.log('wysylam znowu...')
                 axios.defaults.headers.common['Authorization'] = 'Bearer ' + getAuthTokens().access;
                 return api(originalReq);
             }

@@ -1,9 +1,9 @@
-import React, { createContext, FormEvent, ReactNode, useState } from "react";
+import React, {createContext, FormEvent, ReactNode, useEffect, useState} from "react";
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 import Router, { useRouter } from 'next/router';
 import SERVER_URL from "@/config";
 import { toast } from "react-toastify";
-import api from "@/services/api";
+import api, {getAuthTokens} from "@/services/api";
 
 interface AuthTokens {
     access: string;
@@ -82,7 +82,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return;
             }
         }
-
         if (guestToken) {
             console.log(guestToken);
             setUser(jwtDecode(guestToken.access));
@@ -95,9 +94,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
             throw new Error('Unexpected state: no tokens available.');
         }
-
+        console.log('dupa');
         Router.reload();
     };
+
+    useEffect(() => {
+        const tokens = getAuthTokens();
+        if (tokens) {
+            setUser(jwtDecode(tokens.access));
+            setAuthTokens(tokens);
+        }
+    }, []);
+
 
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         if (e) e.preventDefault();
@@ -123,7 +131,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return { success: false, message: 'Passwords do not match.' };
             }
 
-            const response = await api.post(`${SERVER_URL}/auth/register/`, {
+            const response = await api.post(`/auth/register/`, {
                 username: username.value,
                 email: email.value,
                 password: password.value,
@@ -131,7 +139,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
 
             if (!response.data.success) {
-                return { success: false, message: response.data.message };
+                return { success: false, message: response.data.error};
             }
 
             return { success: true, data: response.data };

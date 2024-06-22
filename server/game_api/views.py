@@ -155,7 +155,7 @@ class JoinGameView(APIView):
         if not game_code:
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        auth_tokens = request.data.get('authTokens')
+        auth_tokens = request.data.get('tokens')
         # spectators are shared between games, so joining to first one joins to second as well
         game = Game.objects.filter(code=game_code).first()
 
@@ -166,9 +166,9 @@ class JoinGameView(APIView):
                 user = get_object_or_404(User, pk=token.get('user_id'))
 
             except jwt.ExpiredSignatureError:
-                return Response({'error': 'Token has expired'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'error': 'Token has expired'}, status=status.HTTP_401_UNAUTHORIZED)
             except jwt.InvalidTokenError:
-                return Response({'error': 'Invalid token'}, status=status.HTTP_403_FORBIDDEN)
+                return Response({'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
 
         else:  # create a guest account
             guest_username = self.generate_guest_username()

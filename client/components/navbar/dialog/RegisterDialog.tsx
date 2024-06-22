@@ -31,14 +31,13 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
         e.preventDefault();
         registerUser(e)
             .then((result: { success: any; message: any }) => {
-                console.log(result.success)
                 if (!result.success) {
-                    console.log(result)
+                    console.log("disguisted toast");
                     toast.error(result.message)
                 }
                 else {
-                    onClose();
                     toast.success('Registered successfully! Now log in', {hideProgressBar: true, autoClose: 2000})
+                    onClose();
                 }
             })
             .catch((error: { message: any; }) => {

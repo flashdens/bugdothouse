@@ -60,17 +60,21 @@ class EngineConnection:
         try:
             await self.connect()
             info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
-            print(type(info["pv"][0]))
             return info
-        except chess.EngineError:  # sometimes even engines break...
+        except (chess.EngineError, chess.IllegalMoveError):  # sometimes even engines break...
             legal_moves = list(board.legal_moves)  # if so, make a random legal move like nothing happened
             random_move = random.choice(legal_moves)
-            return random_move
+            return {'pv': [random_move]}
 
     async def get_engine_move(self, board, depth=5):
         """
         Metoda owijająca .analyse_position(). Wycina łańcuch UCI najlepszego posunięcia z informacji o ruchu, a następnie go zwraca
         """
         info = await self.analyse_position(board, depth)
-        best_move = info["pv"][0] if "pv" in info["pv"] else info
+        print(info)
+        while True:  # really controversial
+            best_move = random.choice(info["pv"]) if info["pv"] else None
+            if best_move in board.legal_moves:
+                break
+
         return best_move

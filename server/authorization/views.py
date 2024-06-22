@@ -24,8 +24,11 @@ class RegisterView(generics.CreateAPIView):
         Metoda obsługująca zapytanie POST wysłane do widoku.
         Rejestruje użytkownika.
         """
+        # try:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response({'success': True}, status=status.HTTP_201_CREATED, headers=headers)
+        # except Exception as e:
+        #     return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)

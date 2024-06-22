@@ -153,6 +153,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await engine_conn.connect("setoption name UCI_Variant value crazyhouse")
             move = await engine_conn.get_engine_move(board, depth=5)
 
+            print(type(move))
             if move not in board.legal_moves:
                 assert False  # ?
 

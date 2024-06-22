@@ -6,7 +6,7 @@ import { GameContextData, GameProvider, GameStatus } from "@/context/GameContext
 import AuthContext from "@/context/AuthContext";
 import Game from "@/components/game/Game";
 import { toast } from "react-toastify";
-import api from "@/services/api";
+import api, { getAuthTokens } from "@/services/api";
 
 interface GameIndexProps {
     gameCode: string
@@ -15,7 +15,7 @@ interface GameIndexProps {
 const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
     const [game, setGame] = useState<GameContextData | null>(null);
     const router = useRouter();
-    const { authTokens, user, loginUser } = useContext(AuthContext);
+    const {authTokens, loginUser} = useContext(AuthContext);
     const [shouldRerender, setShouldRerender] = useState(false);
 
     const handleRerender = () => {
@@ -24,23 +24,27 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
         getGameInfo(gameCode);
     }
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!gameCode) return;
-            await joinGame(gameCode);
-            await getGameInfo(gameCode);
-        };
+    const fetchData = async () => {
+        if (!gameCode) return;
+        await joinGame(gameCode);
+        await getGameInfo(gameCode);
+    };
 
+    useEffect(() => {
         fetchData();
     }, []);
 
     const joinGame = async (gameCode: string) => {
-
+        const tokens = getAuthTokens();
         try {
             const response = await api.post(`${gameCode}/join/`, {
-                authTokens
+                tokens
             });
+            console.log(response);
 
+            if (response.status !== 200) {
+                throw new Error('response was not ok!');
+            }
             const data = response.data;
 
             if (data.error) throw new Error(data.error);
@@ -49,7 +53,6 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
                 await loginUser(undefined, undefined, data.guestToken); // Await loginUser
             }
 
-            router.push(`/${gameCode}`);
         } catch (error: any) {
             toast.error('Error: ' + error.message);
         }
@@ -60,10 +63,9 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
             const response = await api.get(`${gameCode}/info/`);
 
             if (response.status !== 200) {
-                void router.push('/404');
+                // void router.push('/404');
                 throw new Error('Response not OK');
             }
-
             const data = response.data;
             setGame(data);
         } catch (error: any) {

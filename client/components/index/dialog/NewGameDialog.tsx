@@ -42,14 +42,10 @@ const NewGameDialog: React.FC<NewGameDialogProps> = ({ isOpen, onClose }) => {
             user: user.user_id,
             gamemode: gamemode,
             isPrivate: isRoomPrivate,
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-            },
         });
 
         if (!response.data.code) {
-            throw new Error('Invalid response from server'); // Handle unexpected response structure
+            throw new Error('Invalid response from server');
         }
 
         router.push(`/${response.data.code}`);

@@ -138,7 +138,7 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
 
                 socket.send(JSON.stringify({
                     type: 'move',
-                    token: authTokens!.access,
+                    token: getAuthTokens().access,
                     subgame: Number(cbId),
                     code: gameCode,
                     ...moveData

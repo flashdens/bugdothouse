@@ -1,17 +1,12 @@
-FROM node:20-slim
+FROM node:18-slim
 
-WORKDIR /bugdothouse/client
-
-COPY package.json ./
-
-RUN npm install
+RUN mkdir -p "/app/client"
+WORKDIR /app/client
 
 COPY . .
 
-ENV WATCHPACK_POLLING=true
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV WATCHPACK_POLLING true
+ENV NEXT_TELEMETRY_DISABLED 1
 
-EXPOSE 3000
-
+RUN npm install
 CMD ["npm", "run", "dev"]
-
