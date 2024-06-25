@@ -139,9 +139,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     // todo update doesn't keep these values?
                     board.localPlayerIs = contextData?.boards[subgameId].localPlayerIs;
                     board.primaryGame = contextData?.boards[subgameId].primaryGame;
-                    if (subgameId == '1' && !board.primaryGame) {
-                        board.primaryGame = true;
-                    }
                     board.whitePlayer = contextData?.boards[subgameId].whitePlayer;
                     board.blackPlayer = contextData?.boards[subgameId].blackPlayer;
                 }

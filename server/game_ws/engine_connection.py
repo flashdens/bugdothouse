@@ -1,12 +1,18 @@
 import asyncio
 import os
 import random
+import re
+import traceback
 
 import asyncssh
 import chess
 import chess.engine
 from asgiref.sync import sync_to_async
 
+import logging
+
+# Enable debug logging.
+logging.basicConfig(level=logging.DEBUG)
 
 class EngineConnection:
     """
@@ -26,7 +32,7 @@ class EngineConnection:
         self.engine = None
 
         if not self.conn:
-            self.connect()
+          self.connect()
 
     async def connect(self, *args):
         """
@@ -57,14 +63,14 @@ class EngineConnection:
         Metoda wysyłająca łańcuch FEN do silnika, zwracająca informację nt. wybranego ruchu.
         W przypadku błędu silnika zwraca losowy, legalny ruch.
         """
-        try:
-            await self.connect()
-            info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
-            return info
-        except (chess.EngineError, chess.IllegalMoveError):  # sometimes even engines break...
-            legal_moves = list(board.legal_moves)  # if so, make a random legal move like nothing happened
-            random_move = random.choice(legal_moves)
-            return {'pv': [random_move]}
+        # try:
+        await self.connect()
+        info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
+        return info
+        # except Exception as e:
+        #     legal_moves = list(board.legal_moves)
+        #     random_move = random.choice(legal_moves)
+        #     return {'pv': [random_move]}
 
     async def get_engine_move(self, board, depth=5):
         """

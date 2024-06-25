@@ -108,9 +108,10 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
         if (moveData.fromSq === undefined) {
             const {toSq, fromSq, droppedPiece} = moveData;
             // .put() does not allow to drop on last ranks, so no need to check that
+            console.log(droppedPiece)
             if (!game.put({
                 type: droppedPiece as PieceSymbol,
-                color: isUpperCase(droppedPiece) ? BLACK : WHITE
+                color: game.turn() === "w" ? WHITE : BLACK
             }, toSq as Square)) {
                 return false;
             }

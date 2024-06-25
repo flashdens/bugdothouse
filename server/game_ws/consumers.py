@@ -1,7 +1,9 @@
 import asyncio
 import json
+import logging
 import random
 import re
+import traceback
 from enum import Enum
 from collections import Counter
 
@@ -591,18 +593,16 @@ class GameConsumer(AsyncWebsocketConsumer):
                                                   .filter(code=self.room_name))
 
         for game in started_games:
-
-            if self.is_ai_turn_in_game(game):
+            while self.is_ai_turn_in_game(game):
+                game = await Game.objects.select_related('white_player', 'black_player').aget(code=self.room_name,
+                                                                                              subgame_id=game.subgame_id)
                 if game.gamemode == GameMode.CLASSICAL.value:
                     board = chess.Board(fen=game.fen)
                 else:
                     board = chess.variant.CrazyhouseBoard(fen=game.fen)
-
-                print(self.is_ai_turn_in_game(game))
-                while self.is_ai_turn_in_game(game):
-                    await self.handle_ai_turn(game, board)
-                    await self.send_move_to_clients(game)
-                    await asyncio.sleep(5)
+                await self.handle_ai_turn(game, board)
+                await self.send_move_to_clients(game)
+                await asyncio.sleep(4)
 
     async def receive(self, text_data=None, bytes_data=None):
         """
@@ -635,7 +635,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     """
     Metody wysyłające zdarzenia WebSocket do wszystkich klientów podłączonych do gniazdka.
     """
-    
+
     async def game_move(self, event):
         move = event['message']
         await self.send(json.dumps(move))

@@ -30,7 +30,7 @@ interface AuthContext {
         | {success: boolean; data: any; message?: undefined;}>;
 }
 
-const AuthContext = createContext<AuthContext>(null);
+const AuthContext = createContext<AuthContext|null>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -98,13 +98,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         Router.reload();
     };
 
-    useEffect(() => {
-        const tokens = getAuthTokens();
-        if (tokens) {
-            setUser(jwtDecode(tokens.access));
-            setAuthTokens(tokens);
-        }
-    }, []);
 
 
     const logoutUser = (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -116,6 +109,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         Router.push('/');
     };
+
+    useEffect(() => {
+        const tokens = getAuthTokens();
+        // if (tokens) {
+        //     setUser(jwtDecode(tokens.access));
+        //     setAuthTokens(tokens);
+        // }
+        if (tokens && tokens.refresh && jwtDecode(tokens.refresh).exp! < Date.now() / 1000) {
+            alert('Refresh token has expired. Please log in again.');
+            logoutUser();
+        }
+    }, []);
 
     const registerUser = async (e: any) => {
         try {
