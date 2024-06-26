@@ -1,4 +1,5 @@
 from rest_framework import generics, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
@@ -24,11 +25,11 @@ class RegisterView(generics.CreateAPIView):
         Metoda obsługująca zapytanie POST wysłane do widoku.
         Rejestruje użytkownika.
         """
-        # try:
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response({'success': True}, status=status.HTTP_201_CREATED, headers=headers)
-        # except Exception as e:
-        #     return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response({'success': True}, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            return Response({'error': e.detail}, status=status.HTTP_400_BAD_REQUEST)

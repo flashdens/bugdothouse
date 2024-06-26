@@ -1,21 +1,21 @@
-# Use an official Python runtime as a parent image
 FROM python:3.11-alpine
 
-# Set environment variables
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 RUN mkdir -p /opt/bugdothouse
 WORKDIR /opt/bugdothouse
 
 COPY requirements.txt /opt/bugdothouse
 
-# Install system dependencies
 RUN apk update && \
-    apk add --no-cache git linux-headers musl-dev gcc python3-dev openssh-client
+    apk add --no-cache git linux-headers musl-dev gcc python3-dev openssh-client dcron
 
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY * /opt/bugdothouse
+COPY . /opt/bugdothouse
 
-CMD ["python3", "manage.py", "migrate"]
+RUN echo "*/5 * * * * /usr/local/bin/python /opt/bugdothouse/manage.py clear_empty_games >> /var/log/cron.log 2>&1" > /etc/crontabs/root
+
+RUN touch /var/log/cron.log
+
+CMD crond && tail -f /var/log/cron.log

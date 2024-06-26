@@ -40,7 +40,7 @@ const GamePocketPiece: React.FC<GamePocketPieceProps> = ({ piece, svg, count, si
             <div
                 ref={drag}
                 style={{
-                    opacity: (isDragging || !count || side !== pocketOf) ? 0.4 : 1,
+                    opacity: (isDragging || !count) ? 0.4 : 1,
                     fontSize: 25,
                     fontWeight: 'bold',
                     cursor: (side === pocketOf && count) ? 'move' : 'not-allowed',

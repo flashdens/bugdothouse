@@ -17,7 +17,6 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
         consent: false,
     });
 
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const {registerUser} = useContext(AuthContext)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -29,26 +28,29 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
         registerUser(e)
-            .then((result: { success: any; message: any }) => {
+            .then((result: any) => {
                 if (!result.success) {
-                    console.log("disguisted toast");
                     toast.error(result.message)
+                    return;
                 }
                 else {
                     toast.success('Registered successfully! Now log in', {hideProgressBar: true, autoClose: 2000})
                     onClose();
                 }
             })
-            .catch((error: { message: any; }) => {
-                setErrorMessage(error.message);
+            .catch((error: any) => {
+                console.log(error.response.data.error);
+                // @ts-ignore
+                toast.error(error.username || Object.values(error.response.data.error)[0][0]);
             });
+
     };
 
     return (
         <Dialog isOpen={isOpen} onClose={onClose} title="Register" animation="animate-in slide-in-from-bottom duration-300">
             <form onSubmit={handleSubmit} className="mt-4 flex flex-col items-center">
-                {errorMessage && <p className="mb-4 text-red-500">{errorMessage}</p>}
                 <div className="mb-4 w-full">
                     <input
                         type="text"
@@ -76,6 +78,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
                         type="password"
                         name="password"
                         placeholder="Enter password"
+                        minLength={8}
                         value={formValues.password}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"
@@ -87,6 +90,7 @@ const RegisterDialog: React.FC<RegisterDialogProps> = ({ isOpen, onClose }) => {
                         type="password"
                         name="repeatPassword"
                         placeholder="Repeat password"
+                        minLength={8}
                         value={formValues.repeatPassword}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:border-blue-300"

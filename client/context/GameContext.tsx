@@ -67,6 +67,8 @@ export interface BoardData{
     blackPlayer: Player | null,
     localPlayerIs: PlayerRole,
     primaryGame: boolean,
+    lastMoveFromSquare: string,
+    lastMoveToSquare: string,
 }
 
 /**
@@ -89,7 +91,7 @@ export interface GameContextData {
     spectators: Player[] | null,
     host: Player,
     result: GameResult | null,
-    boards: { [subgameId: string]: BoardData };
+    boards: { [subgameId: string]: BoardData },
 }
 
 /**

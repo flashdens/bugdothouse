@@ -19,7 +19,7 @@ const SpectatorList: React.FC<SpectatorListProps> = ({ spectators, hostId }) => 
     if (!user) return null;
 
     return (
-        <div className="p-3 mt-2 max-h-24 overflow-y-auto">
+        <div className="p-3 mt-2 max-h-24 overflow-y-auto text-center">
             <h3>Spectators:</h3>
             <ul>
                 {spectators?.map((spectator, index) => (
@@ -30,6 +30,7 @@ const SpectatorList: React.FC<SpectatorListProps> = ({ spectators, hostId }) => 
                         {spectator.username} {spectator.id === hostId && '👑'}
                     </li>
                 ))}
+                {spectators?.length == 0 && '(none)'}
             </ul>
         </div>
     );

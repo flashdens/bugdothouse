@@ -1,15 +1,16 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {Chessboard} from "react-chessboard";
-import {getWebSocket} from "@/services/socket"
-import {BoardOrientation, Piece} from "react-chessboard/dist/chessboard/types";
-import {toast} from 'react-toastify'
-import HTML5Backend from "@/services/CustomHTML5Backend";
-import GameContext, {GameResultStrings, GameStatus} from "@/context/GameContext";
-import AuthContext from "@/context/AuthContext";
-import api, {getAuthTokens, refreshToken} from "@/services/api";
-
-import {BLACK, Chess, PieceSymbol, Square, WHITE} from "chess.js";
-import {jwtDecode} from "jwt-decode";
+import React, { useContext, useEffect, useState } from 'react';
+import { Chessboard } from 'react-chessboard';
+import { getWebSocket } from '@/services/socket';
+import { BoardOrientation, Piece } from 'react-chessboard/dist/chessboard/types';
+import { toast } from 'react-toastify';
+import HTML5Backend from '@/services/CustomHTML5Backend';
+import GameContext, { GameResultStrings, GameStatus } from '@/context/GameContext';
+import AuthContext from '@/context/AuthContext';
+import api, { getAuthTokens, refreshToken } from '@/services/api';
+import { BLACK, Chess, Color, PieceSymbol, Square, WHITE } from 'chess.js';
+import { jwtDecode } from 'jwt-decode';
+import game from '@/components/game/Game';
+import assert from 'assert';
 
 /**
  * @type PlayerSide {('WHITE' | 'BLACK' | 'SPECTATOR')}
@@ -41,40 +42,84 @@ interface MoveData {
  * @property {playerSide} strona, którą zajmuje gracz
  */
 interface GameChessboardProps {
-    cbId: string,
-    playerSide: PlayerSide
+    cbId: string;
+    playerSide: PlayerSide;
 }
 
-const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
-    const {game, updateGameContext} = useContext(GameContext);
-    const {user, authTokens} = useContext(AuthContext)
-    const {fen} = game!.boards[cbId];
+const GameChessboard: React.FC<GameChessboardProps> = ({ cbId, playerSide }) => {
+    const { game, updateGameContext } = useContext(GameContext);
+    const { fen } = game!.boards[cbId];
     const [localFen, setLocalFen] = useState(fen);
+    const [attackedKingSquare, setAttackedKingSquare] = useState<string | null>(null);
+    const [lastMoveFromSquare, setLastMoveFromSquare] = useState<Square|null>(null);
+    const [lastMoveToSquare, setLastMoveToSquare] = useState<Square|null>(null);
 
-    const {gameCode} = game!;
+    const { gameCode } = game!;
     let socket = getWebSocket(gameCode);
-
     useEffect(() => {
+        const attackedSquare = getAttackedKingSquare(fen);
+        setAttackedKingSquare(attackedSquare!);
+        console.log(game?.boards[cbId].lastMoveFromSquare)
+        setLastMoveFromSquare(game?.boards[cbId].lastMoveFromSquare as Square);
+        setLastMoveToSquare(game?.boards[cbId].lastMoveToSquare as Square);
+
         if (!socket || !cbId) return;
-        const handleMessage = (e: any) => {
+
+        const handleWsMessage = (e: any) => {
             const data = JSON.parse(e.data);
             if (data.type === 'move') {
                 updateGameContext(data);
                 setLocalFen(data.boards[cbId].fen);
+                console.log(data);
+
+                setLastMoveFromSquare(data.boards[cbId].lastMoveFromSquare as Square)
+                setLastMoveToSquare(data.boards[cbId].lastMoveToSquare as Square);
+
+                if (!game?.result) {
+                    const attackedSquare = getAttackedKingSquare(data.boards[cbId].fen);
+                    setAttackedKingSquare(attackedSquare!);
+                }
             }
+
         };
 
         if (socket) {
-            socket.addEventListener('message', handleMessage);
+            socket.addEventListener('message', handleWsMessage);
         }
 
-        // Clean up event listener on component unmount
         return () => {
             if (socket) {
-                socket.removeEventListener('message', handleMessage);
+                socket.removeEventListener('message', handleWsMessage);
             }
         };
     }, []);
+
+    const getAttackedKingSquare = (localFen: string) => {
+        const getKingSquareOfSide = (game: any, piece: { type: 'k'; color: Color }) => {
+            return []
+                .concat(...game.board())
+                .map((p: { type: 'k'; color: Color }, index: number) => {
+                    if (p !== null && p.type === piece.type && p.color === piece.color) {
+                        return index;
+                    }
+                })
+                .filter(Number.isInteger)
+                .map((piece_index) => {
+                    const row = 'abcdefgh'[piece_index! % 8];
+                    const column = Math.ceil((64 - piece_index!) / 8);
+                    return row + column;
+                })[0];
+        };
+
+        const isSquareAttacked = (game: Chess, square: string, color: 'w' | 'b'): boolean => {
+            return game.isAttacked(square as Square, color);
+        };
+
+        const localGame = new Chess(localFen);
+        const kingSquare = getKingSquareOfSide(localGame, { type: 'k', color: localGame.turn()[0] as Color });
+        const attackedColor = localGame.turn() === BLACK ? WHITE : BLACK;
+        if (isSquareAttacked(localGame, kingSquare!, attackedColor)) return kingSquare;
+    };
 
     /**
      * @brief Sprawdza, czy ruch jest promocją pionka.
@@ -85,72 +130,69 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
      * @returns {boolean} - Zwraca true, jeśli ruch jest promocją pionka, false w przeciwnym razie.
      */
     const isPromotion = (sourceSquare: string, targetSquare: string, piece: Piece): boolean => {
-            if (!sourceSquare)
-                return false;
+        if (!sourceSquare) return false;
 
-            return ((piece === "wP" && sourceSquare[1] === "7" && targetSquare[1] === "8") ||
-                (piece === "bP" && sourceSquare[1] === "2" && targetSquare[1] === "1")) &&
-                (Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1)
-    }
+        return (
+            ((piece === 'wP' && sourceSquare[1] === '7' && targetSquare[1] === '8') ||
+                (piece === 'bP' && sourceSquare[1] === '2' && targetSquare[1] === '1')) &&
+            Math.abs(sourceSquare.charCodeAt(0) - targetSquare.charCodeAt(0)) <= 1
+        );
+    };
 
-    const isUpperCase = (string: string) => /^[A-Z]*$/.test(string)
-
-
-    const makeMove = async (moveData: MoveData) => {
+    const makeMove = async (moveData: MoveData): Promise<boolean> => {
         if (!socket) {
-            console.log('no sockets?');
+            toast.error('socket error!');
             return false;
         }
 
         const game = new Chess(fen);
 
-        // handle drop
         if (moveData.fromSq === undefined) {
-            const {toSq, fromSq, droppedPiece} = moveData;
-            // .put() does not allow to drop on last ranks, so no need to check that
-            console.log(droppedPiece)
-            if (!game.put({
-                type: droppedPiece as PieceSymbol,
-                color: game.turn() === "w" ? WHITE : BLACK
-            }, toSq as Square)) {
+            const { toSq, droppedPiece } = moveData;
+            if (
+                game.get(toSq as Square)
+                || !game.put(
+                    {
+                        type: droppedPiece as PieceSymbol,
+                        color: game.turn() === 'w' ? WHITE : BLACK,
+                    },
+                    toSq as Square
+                )
+            ) {
+                console.log(game.get(toSq as Square))
                 return false;
             }
-        }
-        // handle move from board
-        else {
+        } else {
             try {
                 const move = game.move(moveData.fromSq + moveData.toSq);
                 if (move === null) {
                     return false;
                 }
-            } catch (e) {
-                // invalid move errors don't require any handling, just let them pass
-            }
+            } catch (e) {}
         }
 
-        // let socket.send() complete asynchronously
-        try {
-            const tokens = getAuthTokens();
-            if (tokens && tokens.refresh) {
-                const decodedAccess = jwtDecode(tokens.access);
-                if (decodedAccess.exp! < Date.now() / 1000) {
-                    await refreshToken();
-                }
+        setLastMoveFromSquare(moveData.fromSq as Square)
+        setLastMoveToSquare(moveData.toSq as Square)
+        const attackedSquare = getAttackedKingSquare(game.fen());
+        setAttackedKingSquare(attackedSquare!);
 
-                socket.send(JSON.stringify({
+        try {
+            await refreshToken();
+
+            socket.send(
+                JSON.stringify({
                     type: 'move',
                     token: getAuthTokens().access,
                     subgame: Number(cbId),
                     code: gameCode,
-                    ...moveData
-                }));
-            }
+                    ...moveData,
+                })
+            );
         } catch (error) {
             console.error('Socket send error:', error);
         }
 
-        setLocalFen(game.fen())
-
+        setLocalFen(game.fen());
         return true;
     };
 
@@ -160,47 +202,70 @@ const GameChessboard: React.FC<GameChessboardProps> = ({cbId, playerSide} ) => {
      * @param {string} from - pole, z którego został wykonany ruch.
      * @param {string} to - pole będące celem ruchu.
      * @param {Piece} piece - bierka, która została przesunięta.
-     * @returns {boolean} - zraca true, jeśli ruch został pomyślnie przetworzony, w przeciwnym razie false.
+     * @returns {boolean} - zwraca true, jeśli ruch został pomyślnie przetworzony, w przeciwnym razie false.
      */
-    const onDrop = (from: string, to: string, piece: Piece): boolean  => {
+    const onDrop = (from: string, to: string, piece: Piece): Promise<boolean> | boolean => {
+        if (
+            (playerSide === 'BLACK' && game?.boards[cbId].sideToMove) ||
+            (playerSide === 'WHITE' && !game?.boards[cbId].sideToMove)
+        )
+            return false;
+
         const moveData: MoveData = {
             fromSq: from,
             toSq: to,
             droppedPiece: piece[1].toLowerCase(),
-            promotion: piece[1].toLowerCase() as MoveData['promotion']
+            promotion: piece[1].toLowerCase() as MoveData['promotion'],
         };
 
         return makeMove(moveData);
-    }
+    };
+
+    const getCustomSquareStyles = () => {
+        let styles: {[key: string]: React.CSSProperties} = {};
+
+        if (attackedKingSquare) styles[attackedKingSquare] = { backgroundColor: 'red' };
+        if (lastMoveFromSquare) styles[lastMoveFromSquare] = { backgroundColor: 'beige' };
+        if (lastMoveToSquare) {
+            if (!lastMoveFromSquare) {
+                styles[lastMoveToSquare] = { backgroundColor: 'chocolate' };
+            }
+            else {
+                styles[lastMoveToSquare] = { backgroundColor: 'beige' };
+            }
+        }
+
+        return styles;
+    };
 
     return (
         <>
             {game && (
-                <div className={'w-95vw lg:w-60dvh'}>
+                <div className="w-95vw lg:w-60dvh">
                     {cbId}
                     <Chessboard
                         position={localFen}
                         onPieceDrop={onDrop}
                         id={cbId}
-                        // customDndBackend={HTML5Backend}
-                        // todo bad solution, not working for spectators only, implement reverse board for spectators only?
-                        boardOrientation={playerSide !== "SPECTATOR"
-                            ? playerSide.toLowerCase() as BoardOrientation
-                            : 'black'}
+                        boardOrientation={
+                            playerSide !== 'SPECTATOR' ? (playerSide.toLowerCase() as BoardOrientation) : 'black'
+                        }
                         isDraggablePiece={({ piece }) => {
-                            return (game?.status === GameStatus.ONGOING)
-                                && ((playerSide === "WHITE" && piece[0] === 'w')
-                                || (playerSide === "BLACK" && piece[0] === 'b')
-                                || (playerSide !== "SPECTATOR"));
+                            return (
+                                game?.status === GameStatus.ONGOING
+                                && playerSide !== 'SPECTATOR'
+                                && ((playerSide === 'WHITE' && piece[0] === WHITE && game.boards[cbId].sideToMove) ||
+                                    (playerSide === 'BLACK' && piece[0] === BLACK && !game.boards[cbId].sideToMove))
+                            );
                         }}
                         onPromotionCheck={isPromotion}
+                        customSquareStyles={getCustomSquareStyles()}
+                        showBoardNotation={false}
                     />
                 </div>
             )}
-
-
-    </>
-);
-}
+        </>
+    );
+};
 
 export default GameChessboard;

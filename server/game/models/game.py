@@ -94,6 +94,8 @@ class Game(models.Model):
     white_player = models.ForeignKey(User, related_name='white_player', on_delete=models.SET_NULL, null=True)
     black_player = models.ForeignKey(User, related_name='black_player', on_delete=models.SET_NULL, null=True)
     spectators = models.ManyToManyField(User, related_name='spectators', blank=True)
+    last_move_from_square = models.CharField(max_length=2, null=True)
+    last_move_to_square = models.CharField(max_length=2, null=True)
     brother_game = models.ForeignKey('self', on_delete=models.SET_NULL, null=True)
     subgame_id = models.IntegerField(choices=SUBGAME_ID_CHOICES, null=False, default=1)
     result = models.IntegerField(null=True, choices=GameResult.choices)  # null -> result undetermined

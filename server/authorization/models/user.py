@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 
 class UserManager(BaseUserManager):
@@ -14,15 +15,18 @@ class UserManager(BaseUserManager):
         Tworzy i zwraca użytkownika.
         """
         if not email:
-            raise ValueError('The Email field must be set')
+            raise ValidationError('The email field must be set')
+        if len(password) < 8:
+            raise ValidationError('Password must be at least 8 characters long!')
         if User.objects.filter(email=email).exists():
-            raise ValueError('A user with this email already exists')
+            raise ValidationError('A user with this email already exists')
         elif User.objects.filter(username=username).exists():
-            raise ValueError('A user with this username already exists')
+            raise ValidationError('A user with this username already exists')
         email = self.normalize_email(email)
         user = User(email=email, username=username, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
+
         return user
 
     def create_superuser(self, email, username, password=None, **extra_fields):

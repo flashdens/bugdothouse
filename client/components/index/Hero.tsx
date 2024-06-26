@@ -6,12 +6,14 @@ import Image from "next/image";
 import GameListDialog from "@/components/index/dialog/GameListDialog";
 import authContext from "@/context/AuthContext";
 import JoinWithCodeDialog from "@/components/index/dialog/JoinWithCodeDialog";
+import LoginDialog from "@/components/navbar/dialog/LoginDialog";
 
 const Hero = () => {
     const [isHowToPlayDialogOpen, setIsHowToPlayDialogOpen] = useState(false);
     const [isNewGameDialogOpen, setNewGameDialogOpen] = useState(false);
     const [isRoomListDialogOpen, setIsRoomListDialogOpen] = useState(false);
     const [isJoinWithCodeDialogOpen, setIsJoinWithCodeDialogOpen] = useState(false);
+    const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
     const [isRendered, setIsRendered] = useState(false);
     const { user, authTokens } = useContext(authContext);
 
@@ -35,17 +37,20 @@ const Hero = () => {
                 <span className={'text-lg'}>Play bughouse chess online!</span>
                 <div className="w-full flex flex-col items-center space-y-6 mt-4">
                     <button
-                        onClick={() => setNewGameDialogOpen(true)}
-                        key={'1'}
-                        className="pink-button w-full max-w-sm text-xl"
-                        disabled={!user || !authTokens?.refresh} // guests don't own refresh tokens
+                        onClick={
+                        user
+                            ? () => setNewGameDialogOpen(true)
+                            : () => setIsLoginDialogOpen(true)
+                        }
+                        className={`${authTokens?.refresh ? 'pink-button' : 'gray-button'} w-full max-w-sm text-xl`}
                     >
-                        {user ? 'CREATE A NEW GAME' : 'LOG IN TO CREATE GAMES'}
+                        {authTokens?.refresh ? 'CREATE A NEW GAME' : 'LOG IN TO CREATE GAMES'}
                     </button>
                     <NewGameDialog
                         isOpen={isNewGameDialogOpen}
                         onClose={() => setNewGameDialogOpen(false)}
                     />
+                    <LoginDialog isOpen={isLoginDialogOpen} onClose={() => setIsLoginDialogOpen(false)} />
 
                     <button
                         onClick={() => setIsRoomListDialogOpen(true)}

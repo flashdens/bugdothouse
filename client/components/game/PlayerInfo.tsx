@@ -20,7 +20,6 @@ interface PlayerInfoProps {
 
 
 const PlayerInfo: React.FC<PlayerInfoProps> = ({player, playerColor, sideToMove, teamNumber}) => {
-
     const {game} = useContext(GameContext);
     const {user} = useContext(AuthContext);
     const WHITE: boolean = true;

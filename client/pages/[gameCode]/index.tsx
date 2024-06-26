@@ -54,7 +54,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
             }
 
         } catch (error: any) {
-            toast.error('Error: ' + error.message);
+            // toast.error('Error: ' + error.message);
         }
     };
 
@@ -63,7 +63,7 @@ const Index: React.FC<GameIndexProps> = ({ gameCode }) => {
             const response = await api.get(`${gameCode}/info/`);
 
             if (response.status !== 200) {
-                // void router.push('/404');
+                void router.push('/404');
                 throw new Error('Response not OK');
             }
             const data = response.data;

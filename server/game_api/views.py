@@ -2,6 +2,7 @@ import re
 import secrets
 from collections import Counter
 import random
+from time import sleep
 
 import jwt
 from rest_framework import status
@@ -115,7 +116,9 @@ class GameInfoView(APIView):
                 "gameOver": game.result,
                 # todo more elegant way
                 "whitePlayer": UserSerializer(game.white_player).data if game.white_player else None,
-                "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None
+                "blackPlayer": UserSerializer(game.black_player).data if game.black_player else None,
+                "lastMoveFromSquare": game.last_move_from_square,
+                "lastMoveToSquare": game.last_move_to_square,
             }
 
         game = games[0]
@@ -152,18 +155,22 @@ class JoinGameView(APIView):
         Obsługuje zapytania POST przychodzące do widoku.
         Dołącza użytkowników do gier,
         """
+
         if not game_code:
             return Response({'error': 'Game ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        auth_tokens = request.data.get('tokens')
+        auth_token = request.headers.get('Authorization', None)
+        if auth_token:
+            auth_token = auth_token.split(' ')[1]
+
         # spectators are shared between games, so joining to first one joins to second as well
         game = Game.objects.filter(code=game_code).first()
 
-        if auth_tokens:
+        if auth_token:
             guest_token = None
             try:
-                token = jwt.decode(auth_tokens['access'], SECRET_KEY, algorithms=['HS256'])
-                user = get_object_or_404(User, pk=token.get('user_id'))
+                decoded_token = jwt.decode(auth_token, SECRET_KEY, algorithms=['HS256'])
+                user = get_object_or_404(User, pk=decoded_token.get('user_id'))
 
             except jwt.ExpiredSignatureError:
                 return Response({'error': 'Token has expired'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -177,9 +184,7 @@ class JoinGameView(APIView):
 
             # Create a token for the guest user
             access = AccessToken.for_user(user)
-            refresh = RefreshToken.for_user(user)
             guest_token = {
-                'refresh': str(refresh),
                 'access': str(access),
             }
 

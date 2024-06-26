@@ -14,6 +14,7 @@ import logging
 # Enable debug logging.
 logging.basicConfig(level=logging.DEBUG)
 
+
 class EngineConnection:
     """
     Klasa obsługująca połączenie z silnikiem szachowym.
@@ -32,7 +33,7 @@ class EngineConnection:
         self.engine = None
 
         if not self.conn:
-          self.connect()
+            self.connect()
 
     async def connect(self, *args):
         """
@@ -59,26 +60,16 @@ class EngineConnection:
                 raise e
 
     async def analyse_position(self, board, depth=5):
-        """
-        Metoda wysyłająca łańcuch FEN do silnika, zwracająca informację nt. wybranego ruchu.
-        W przypadku błędu silnika zwraca losowy, legalny ruch.
-        """
-        # try:
         await self.connect()
         info = await self.engine.analyse(board, chess.engine.Limit(depth=depth))
         return info
-        # except Exception as e:
-        #     legal_moves = list(board.legal_moves)
-        #     random_move = random.choice(legal_moves)
-        #     return {'pv': [random_move]}
 
     async def get_engine_move(self, board, depth=5):
         """
         Metoda owijająca .analyse_position(). Wycina łańcuch UCI najlepszego posunięcia z informacji o ruchu, a następnie go zwraca
         """
         info = await self.analyse_position(board, depth)
-        print(info)
-        while True:  # really controversial
+        while True:
             best_move = random.choice(info["pv"]) if info["pv"] else None
             if best_move in board.legal_moves:
                 break

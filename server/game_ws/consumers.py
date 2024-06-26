@@ -148,14 +148,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         """
         Metoda konstruująca ruch UCI z podanych parametrów lub pozyskująca go od silnika szachowego.
         Jeśli ruch jest poprawny, jest wykonywany na planszy.
-        Zwraca łańcuch UCI.
+        Zwraca obiekt klasy Move.
         """
         if is_ai_move:
             engine_conn = EngineConnection()
             await engine_conn.connect("setoption name UCI_Variant value crazyhouse")
             move = await engine_conn.get_engine_move(board, depth=5)
-
-            print(type(move))
             if move not in board.legal_moves:
                 assert False  # ?
 
@@ -202,7 +200,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             board.pockets[prev_side].remove(piece_to_pop.piece_type)
 
         else:  # if it's not bughouse, just make the move :)
-            board.push(move)
+            if move in board.legal_moves:
+                board.push(move)
 
         return move
 
@@ -239,6 +238,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "blackPocket": dict(Counter([p for p in pockets if p.islower()])),
                 "sideToMove": game.side_to_move,
                 "result": game.result,
+                "lastMoveFromSquare": game.last_move_from_square,
+                "lastMoveToSquare": game.last_move_to_square,
             }
 
             if result_found or status_update:
@@ -300,6 +301,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             move_instance = Move(game=game,
                                  player=move_maker,
                                  move=move)
+
+            print(move)
+            game.last_move_from_square = chess.square_name(move.from_square) if not move.drop else None
+            game.last_move_to_square = chess.square_name(move.to_square)
+
             await move_instance.asave()
 
             if board.is_checkmate() or self.is_game_draw(board):
@@ -328,7 +334,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             return False, {'type': 'error', 'error': 'Invalid JSON'}
 
         decoded_token = await self.parse_jwt_token_async(token)
-        print(decoded_token)
         user_id = decoded_token['user_id']
 
         user = await self.get_user_async(user_id)
@@ -532,10 +537,13 @@ class GameConsumer(AsyncWebsocketConsumer):
         Funkcja znajdującego nowego hosta dla gry lub usuwająca ją w przypadku braku możliwości znalezienia go.
         """
         found_player = await self.find_non_host_player_in_game(game)
-        brother_game = await Game.objects.select_related('white_player', 'black_player', 'host').aget(
-            code=self.room_name,
-            subgame_id=2 if game.subgame_id == 1
-            else 2)
+        if game.gamemode == GameMode.BUGHOUSE.value:
+            brother_game = await Game.objects.select_related('white_player', 'black_player', 'host').aget(
+                code=self.room_name,
+                subgame_id=2 if game.subgame_id == 1
+                else 2)
+        else:
+            brother_game = None
 
         if found_player:
             game.host = found_player
@@ -546,7 +554,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             return True
 
         if game.gamemode == GameMode.BUGHOUSE:
-
             found_player = await self.find_non_host_player_in_game(brother_game)
             if found_player:
                 game.host = found_player
@@ -572,12 +579,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         game = await Game.objects.select_related('white_player', 'black_player', 'host').aget(code=self.room_name,
                                                                                               subgame_id=subgame_id)
-
-        await self.remove_user_from_game(user, game, player_role)
+        if game.status == GameStatus.WAITING_FOR_START.value:
+            await self.remove_user_from_game(user, game, player_role)
 
         if game.host.pk == user.pk:  # if a host left the game...
             new_host_found = await self.assign_new_game_host(game)  # ...we need to find a new one
-
         await self.channel_layer.group_send(
             self.room_group_name, {'type': 'lobby.connect'})
 
@@ -591,7 +597,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         started_games = await sync_to_async(list)(Game.objects
                                                   .select_related('white_player', 'black_player')
                                                   .filter(code=self.room_name))
-
         for game in started_games:
             while self.is_ai_turn_in_game(game):
                 game = await Game.objects.select_related('white_player', 'black_player').aget(code=self.room_name,
@@ -602,7 +607,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     board = chess.variant.CrazyhouseBoard(fen=game.fen)
                 await self.handle_ai_turn(game, board)
                 await self.send_move_to_clients(game)
-                await asyncio.sleep(4)
+                await asyncio.sleep(5)
 
     async def receive(self, text_data=None, bytes_data=None):
         """

@@ -30,7 +30,7 @@ interface AuthContext {
         | {success: boolean; data: any; message?: undefined;}>;
 }
 
-const AuthContext = createContext<AuthContext|null>(null);
+const AuthContext = createContext<AuthContext>(null);
 export default AuthContext;
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -60,27 +60,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         let respData: any = null;
 
         if (!data && e) {
-            try {
                 const response = await api.post('/auth/token/', {
                     username: e.currentTarget.username.value,
                     password: e.currentTarget.password.value
                 });
 
                 respData = response.data;
-                console.log(respData);
+                console.log(respData)
                 if (response.status !== 200 && respData) {
                     toast.error(respData.detail);
                     return;
                 }
-            } catch (error: any) {
-                if (error.response && error.response.data) {
-                    toast.error(error.response.data.detail);
-                } else {
-                    console.error('Error logging in:', error);
-                    toast.error('An error occurred during login. Please try again.');
-                }
-                return;
-            }
+
         }
         if (guestToken) {
             console.log(guestToken);
@@ -94,7 +85,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
             throw new Error('Unexpected state: no tokens available.');
         }
-        console.log('dupa');
         Router.reload();
     };
 
@@ -107,23 +97,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAuthTokens(null);
         setUser(null);
 
-        Router.push('/');
+        void Router.push('/');
     };
 
     useEffect(() => {
-        const tokens = getAuthTokens();
-        // if (tokens) {
-        //     setUser(jwtDecode(tokens.access));
-        //     setAuthTokens(tokens);
-        // }
-        if (tokens && tokens.refresh && jwtDecode(tokens.refresh).exp! < Date.now() / 1000) {
+        if (authTokens && authTokens.refresh && jwtDecode(authTokens.refresh).exp! < Date.now() / 1000) {
             alert('Refresh token has expired. Please log in again.');
             logoutUser();
         }
     }, []);
 
     const registerUser = async (e: any) => {
-        try {
             e.preventDefault();
 
             const { username, email, password, repeatPassword, consent } = e.currentTarget;
@@ -143,16 +127,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 consent: consent.value
             });
 
+        console.log(response.data)
             if (!response.data.success) {
-                return { success: false, message: response.data.error};
+                return { success: false, message: response.data};
             }
 
             return { success: true, data: response.data };
 
-        } catch (error: any) {
-            console.error('Error registering user:', error);
-            return { success: false, message: error.message };
-        }
     };
 
 

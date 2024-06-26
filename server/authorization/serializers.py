@@ -23,11 +23,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if not attrs['consent']:
             raise serializers.ValidationError({"consent": "You must agree to the website rules."})
-
         return attrs
 
     def create(self, validated_data):
         user_manager = UserManager()
+        
         user = user_manager.create_user(
             username=validated_data['username'],
             email=validated_data['email'],

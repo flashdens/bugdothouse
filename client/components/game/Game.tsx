@@ -1,6 +1,6 @@
 import GameChessboard, {PlayerSide} from "@/components/game/GameChessboard";
 import GamePocket from "@/components/game/GamePocket";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect} from "react";
 import HTML5Backend from "@/services/CustomHTML5Backend";
 import {DndProvider} from "react-dnd";
 import GameContext, {GameContextData, GameMode, PlayerRole} from "@/context/GameContext";
@@ -79,7 +79,10 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
 
                                 return (
                                     <div
-                                        className="flex flex-col items-center justify-center space-y-2 p-1 lg:px-8 m-2 lg:m-0 md:py-5 bg-white rounded-lg shadow-2xl w-max"
+                                        className={`flex flex-col items-center justify-center space-y-2 p-1
+                                        lg:px-8 m-2 lg:m-0 md:my-5 bg-white rounded-lg border-8 shadow-2xl
+                                        ${board.primaryGame ? 'border-green-500' : 'border-gray-500'}
+                                         ${game.gameMode !== GameMode.BUGHOUSE && 'border-none'} w-max`}
                                         key={subgameId}
                                     >
                                         {game.gameMode !== GameMode.CLASSICAL && (

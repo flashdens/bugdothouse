@@ -7,3 +7,4 @@ class GameApiConfig(AppConfig):
 
     def ready(self):
         import game_api.signals
+
