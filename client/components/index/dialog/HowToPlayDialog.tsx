@@ -11,7 +11,12 @@ const HowToPlayDialog: React.FC<HowToPlayDialogProps> = ({ isOpen, onClose}) => 
      <Dialog isOpen={isOpen} onClose={onClose} title="How To play?"
                 animation={"animate-in slide-in-from-bottom duration-300"}
         >
-        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+         <div>
+
+         <p>Bughouse chess is a team-based variant played by four players in pairs, using two chessboards. Each team consists of two players sitting side by side. One player handles the white pieces on one board, while their partner handles the black pieces on the adjacent board.</p>
+
+         <p>The game involves capturing opponent pieces and passing them to your partner, who can then place them on their board as a move instead of making a regular move. Pieces must be placed legally according to standard chess rules. The objective remains the same as in traditional chess: to checkmate the opponent&apos;s king.</p>
+         </div>
      </Dialog>
     );
 }

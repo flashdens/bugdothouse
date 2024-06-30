@@ -80,8 +80,8 @@ const Game: React.FC<GameProps> = ({ gameData }) => {
                                 return (
                                     <div
                                         className={`flex flex-col items-center justify-center space-y-2 p-1
-                                        lg:px-8 m-2 lg:m-0 md:my-5 bg-white rounded-lg border-8 shadow-2xl
-                                        ${board.primaryGame ? 'border-green-500' : 'border-gray-500'}
+                                        lg:px-8 m-2 lg:m-0 md:my-5 bg-white rounded-lg border-y-16 border-x-8 shadow-2xl
+                                        ${board.primaryGame ? 'border-blue-700' : 'border-gray-500'}
                                          ${game.gameMode !== GameMode.BUGHOUSE && 'border-none'} w-max`}
                                         key={subgameId}
                                     >
