@@ -19,3 +19,4 @@ RUN echo "*/5 * * * * /usr/local/bin/python /opt/bugdothouse/manage.py clear_emp
 RUN touch /var/log/cron.log
 
 CMD crond && tail -f /var/log/cron.log
+

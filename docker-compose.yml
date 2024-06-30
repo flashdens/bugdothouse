@@ -5,10 +5,11 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    command: npm run dev
     environment:
       - WATCHPACK_POLLING=true
     ports:
-      - "3001:3000"
+      - "32104:3000"
     volumes:
       - ./client:/app/client
 
@@ -17,8 +18,8 @@ services:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    ports:
-      - "5433:5432"
+        # ports:
+        #- "5433:5432"
     environment:
       - POSTGRES_USER=bugdothouse
       - POSTGRES_PASSWORD=bugdothouse
@@ -61,7 +62,7 @@ services:
       - .docker/nginx:/etc/nginx/conf.d
       - ./server/static:/var/www/static
     ports:
-      - "80:80"
+      - "32184:80"
     depends_on:
       - asgi
       - wsgi

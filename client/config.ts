@@ -1,3 +1,3 @@
-const SERVER_URL = process.env.NODE_ENV === 'production' ? 'dupa' : 'http://localhost';
+const SERVER_URL = 'http://jawor.wzks.uj.edu.pl:32184';
 
 export default SERVER_URL;
