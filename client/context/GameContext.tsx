@@ -152,7 +152,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
 
         if (data.result) {
-            setTimeout(() => alert('The game has ended.'), 1);
+            toast('The game has ended.')
         }
     }
 

@@ -23,6 +23,9 @@ const config: Config = {
           '70vw': '70vw',
           '95vw': '95vw',
       },
+        borderWidth: {
+          '16': '16px',
+        },
     },
   },
   plugins: [
